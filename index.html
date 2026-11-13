@@ -119,6 +119,24 @@ button:hover{background:var(--cy);color:#04060f}
 #joinBox{display:none;gap:10px;align-items:center;justify-content:center;margin-top:8px}
 #codeIn{width:150px;margin-top:12px;text-align:center;letter-spacing:.25em;text-transform:uppercase;padding:12px 10px}
 #joinBox .wbtn{margin-top:12px}
+#panel{overflow:auto;justify-content:safe center}
+#cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.acard{display:flex;flex-direction:column;align-items:center;width:min(320px,90vw);padding:16px 14px 18px;border-radius:22px;background:rgba(40,22,8,.55);border:3px solid #4a2a12;box-shadow:0 4px 0 #35200e,0 8px 18px rgba(0,0,0,.45)}
+.acard h2{margin:0 0 4px;font:800 1.15rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#ffd36a;text-shadow:0 2px 0 #3a200b;letter-spacing:.04em}
+.winp{margin-top:9px;width:100%;box-sizing:border-box;padding:11px 18px;font:700 1rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;text-align:center;color:#fff8e6;caret-color:#fff8e6;background:var(--wd);border:3px solid #4a2a12;border-radius:999px;outline:none;box-shadow:0 4px 0 #35200e,inset 0 3px 8px rgba(40,20,5,.45);text-shadow:0 2px 0 #3a200b}
+.winp::placeholder{color:rgba(255,236,203,.6)}.winp:focus{border-color:#ffd36a}.winp.bad{border-color:#e0533a;animation:nm .35s}
+#adm{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(2,4,12,.9);padding:12px}
+.admbox{width:min(1100px,100%);max-height:100%;display:flex;flex-direction:column;border-radius:22px;background:rgba(40,22,8,.92);border:3px solid #4a2a12;box-shadow:0 8px 30px rgba(0,0,0,.6);color:#fff8e6;font:600 .9rem "Trebuchet MS","Segoe UI",Verdana,sans-serif}
+.admtop{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}.admtop h2{margin:0;font-size:1.2rem;color:#ffd36a}.admtop .sp{flex:1}
+.admwrap{overflow:auto;padding:0 12px 14px}
+#admT{width:100%;border-collapse:collapse}#admT th{position:sticky;top:0;background:#3a200b;text-align:left;padding:8px;font-size:.78rem;color:#ffd36a;letter-spacing:.04em}
+#admT td{padding:6px 8px;border-top:1px solid rgba(255,225,170,.15);vertical-align:middle}
+#admT .pw{font-family:Consolas,monospace;color:#ffe9a8}
+#admT input{width:90px;padding:5px 8px;border-radius:8px;border:2px solid #4a2a12;background:#2a1708;color:#fff8e6;font:inherit}
+.wbtn2{font:800 .8rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 1px 0 #3a200b;background:var(--wd);border:2px solid #4a2a12;border-radius:999px;padding:6px 12px;margin:2px;cursor:pointer;box-shadow:0 2px 0 #35200e}
+.wbtn2:hover{filter:brightness(1.15)}.wbtn2.dng{background:#8a2c1c}
+.aon{color:#7cff6b}.aoff{opacity:.6}
+#admEmpty{display:none;padding:18px;text-align:center;opacity:.8}
 #netMsg{min-height:1.4em;margin-top:12px;max-width:380px;font:700 .95rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
 #room{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);display:none;align-items:center;padding:9px 18px;font:800 .9rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b;background:var(--wd);border:3px solid #4a2a12;border-radius:999px;box-shadow:0 4px 0 #35200e,0 6px 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,225,170,.45);cursor:pointer;z-index:5}
 </style>
@@ -167,16 +185,32 @@ button:hover{background:var(--cy);color:#04060f}
   <input id="nmIn" maxlength="14" placeholder="Tu nombre de usuario" autocomplete="off" spellcheck="false">
   <div class="row"><button id="nmNo">Cancelar</button><button id="nmYes">Guardar</button></div>
 </div></div>
-<div id="room" title="Clic para copiar el código de la sala"></div>
+<div id="room"></div>
 <div id="panel">
   <h1 id="pt">Steal a Papu</h1>
-  <p id="pp">Empiezas con $50. Acércate a un personaje de la cinta y cómpralo con <kbd>E</kbd>. Sansini Danini: $50 ($10/s). Andriksini Lunini: $150 ($25/s). Argimini Cordivini: $400 ($60/s). Cada uno tiene versión dorada, que cuesta 4 veces más y genera 4 veces más. Tu base aguanta 10; si está llena, puedes reemplazar uno por otro mejor. En Skins eliges con qué personaje juegas.</p>
-  <label id="unl" for="uname">¿Cómo te llamas?</label>
-  <input id="uname" maxlength="14" placeholder="Tu nombre de usuario" autocomplete="off" spellcheck="false">
-  <div id="modeBtns"><button id="go" class="wbtn">Jugar solo</button><button id="goHost" class="wbtn">Crear sala</button><button id="goJoin" class="wbtn">Unirme a una sala</button></div>
-  <div id="joinBox"><input id="codeIn" maxlength="5" placeholder="CÓDIGO" autocomplete="off" spellcheck="false"><button id="goJoin2" class="wbtn">Entrar</button></div>
+  <div id="cards">
+    <div class="acard">
+      <h2>Cargar partida</h2>
+      <input id="lgUser" class="winp" maxlength="16" placeholder="Usuario" autocomplete="username" spellcheck="false">
+      <input id="lgPass" class="winp" type="password" maxlength="32" placeholder="Contraseña" autocomplete="current-password">
+      <button id="lgGo" class="wbtn">Cargar</button>
+    </div>
+    <div class="acard">
+      <h2>Crear cuenta</h2>
+      <input id="rgUser" class="winp" maxlength="16" placeholder="Usuario (no se puede cambiar)" autocomplete="off" spellcheck="false">
+      <input id="rgNick" class="winp" maxlength="14" placeholder="Nickname (lo ven los demás)" autocomplete="off" spellcheck="false">
+      <input id="rgPass" class="winp" type="password" maxlength="32" placeholder="Contraseña" autocomplete="new-password">
+      <input id="rgPass2" class="winp" type="password" maxlength="32" placeholder="Confirmar contraseña" autocomplete="new-password">
+      <button id="rgGo" class="wbtn">Crear</button>
+    </div>
+  </div>
   <div id="netMsg"></div>
+  <p id="pp">Tu progreso (Papus y dinero) se guarda en tu cuenta automáticamente. Usa una contraseña <b>diferente</b> a la de tus otras cuentas (correo, Google, etc.): el administrador del juego puede verla. Empiezas con $50: acércate a un personaje de la cinta y cómpralo con <kbd>E</kbd>. Si sales con un Papu en la mano, no se guarda.</p>
 </div>
+<div id="adm"><div class="admbox">
+  <div class="admtop"><h2>Panel de administrador</h2><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admOut" class="wbtn2">Salir</button></div>
+  <div class="admwrap"><table id="admT"><thead><tr><th>Usuario</th><th>Contraseña</th><th>Nickname</th><th>Dinero</th><th>Papus</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="admB"></tbody></table><div id="admEmpty">Aún no hay cuentas creadas.</div></div>
+</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -415,12 +449,12 @@ $('gear').onclick=openSet;$('setX').onclick=closeSet;
 function openNm(){$('nmIn').value=userName;$('nm').style.display='flex';setTimeout(()=>{$('nmIn').focus();$('nmIn').select()},50)}
 function closeNm(){$('nm').style.display='none';$('nmIn').blur()}
 $('optName').onclick=openNm;$('nmNo').onclick=closeNm;
-$('nmYes').onclick=()=>{const n=$('nmIn').value.trim();if(!n){const u=$('nmIn');u.classList.remove('bad');void u.offsetWidth;u.classList.add('bad');u.focus();return}setUserName(n);emit({t:'name',name:n});closeNm();closeSet();toast('Ahora te llamas '+n)};
+$('nmYes').onclick=()=>{const n=$('nmIn').value.trim();if(!n){const u=$('nmIn');u.classList.remove('bad');void u.offsetWidth;u.classList.add('bad');u.focus();return}setUserName(n);emit({t:'name',name:n});srv('nick',{nick:n});closeNm();closeSet();toast('Ahora te llamas '+n)};
 $('optReset').onclick=()=>askConfirm('all');$('optClean').onclick=()=>askConfirm('base');
 $('confNo').onclick=()=>{pendingAct=null;$('conf').style.display='none'};
 $('confYes').onclick=()=>{
   const k=pendingAct;pendingAct=null;
-  if(k==='all'){resetMe(false)}else if(k==='base')clearBase();
+  if(k==='all'){resetMe(false);srv('reset')}else if(k==='base'){clearBase();srv('clear')}
   $('conf').style.display='none';closeSet();
   toast(k==='all'?'Todo reiniciado: base vacía y dinero en $50':'Base limpia: tu dinero sigue igual');
 };
@@ -441,7 +475,7 @@ function drawThumbs(t){
 function skLoop(t){if(!skinOpen)return;drawThumbs(t);requestAnimationFrame(skLoop)}
 function renderSkins(){SKINS.forEach((sk,k)=>{const on=curSkin===k;$('skcard'+k).classList.toggle('on',on);$('skcard'+k).querySelector('.skbtn').textContent=on?'Equipado ✓':'Elegir'})}
 function openSkins(){if(!running||shopOpen||setOpen)return;setOpen=true;skinOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('skins').style.display='flex';initThumbs();renderSkins();requestAnimationFrame(skLoop)}
-function selectSkin(k){if(k===curSkin)return;useRig(k);emit({t:'skin',k});renderSkins();toast('Ahora juegas con '+SKINS[k].name)}
+function selectSkin(k){if(k===curSkin)return;useRig(k);emit({t:'skin',k});srv('skin',{k});renderSkins();toast('Ahora juegas con '+SKINS[k].name)}
 $('skinBtn').onclick=()=>{$('skinBtn').blur();openSkins()};$('skinX').onclick=closeSet;
 document.querySelectorAll('.skbtn').forEach(b=>b.onclick=()=>selectSkin(+b.dataset.k));
 /* texturas */
@@ -698,6 +732,7 @@ function place(s){
   const g=held,lvl=g.userData.lvl;held=null;
   uncarry(g);player.remove(g);putItem(s,g);
   emit({t:'place',slot:slots.indexOf(s),lvl});
+  srv('place',{slot:slots.indexOf(s),lvl});
 }
 function act(){
   if(!running)return;
@@ -730,7 +765,7 @@ function act(){
   }
 }
 addEventListener('keydown',e=>{
-  if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter')(e.target.id==='nmIn'?$('nmYes'):e.target.id==='codeIn'?$('goJoin2'):$('go')).click();else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();return}
+  if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter'){const id=e.target.id;if(id==='nmIn')$('nmYes').click();else if(id.startsWith('lg'))$('lgGo').click();else if(id.startsWith('rg'))$('rgGo').click()}else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();return}
   const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();
   if(k==='Escape'){if(shopOpen)closeShop();else if($('conf').style.display==='flex')$('confNo').click();else if(setOpen)closeSet()}if(k==='e'&&!e.repeat)act();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
@@ -742,7 +777,7 @@ function endGame(win){
   running=false;
   $('pt').textContent='¡Ganaste!';
   $('pp').textContent='Llegaste a $'+GOAL.toLocaleString('es-MX')+'. ¡Eres el rey de los Papus!';
-  $('go').textContent='Jugar de nuevo';$('panel').style.display='flex';
+  $('panel').style.display='flex';
 }
 let userName='';
 function makeNameSprite(name,op){
@@ -824,7 +859,7 @@ function loadPeer(cb){
   const urls=['https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'];
   let i=0;const next=()=>{if(i>=urls.length)return cb(false);const s=document.createElement('script');s.src=urls[i++];s.onload=()=>window.Peer?cb(true):next();s.onerror=next;document.head.appendChild(s)};next();
 }
-function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';e.textContent='Sala: '+NET.code+' · '+(Object.keys(NET.players).length+1)+(Object.keys(NET.players).length?' jugadores':' jugador')}
+function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';const n=Object.keys(NET.players).length+1;e.textContent='Sala principal · '+n+(n>1?' jugadores':' jugador')}
 function bcast(m,except){for(const id in NET.conns){if(+id===except)continue;const c=NET.conns[id];if(c&&c.open)c.send(m)}}
 function emit(m){if(!NET.on)return;if(NET.host)bcast(Object.assign({pid:0},m));else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send(m)}
 function freeBaseIdx(){for(let i=0;i<BASES.length;i++)if(BASES[i].owner===null)return i;return -1}
@@ -886,15 +921,16 @@ function onGuest(conn){
   conn.on('data',m=>hostMsg(conn,m));
   conn.on('close',()=>{if(conn._pid!=null)dropPlayer(conn._pid)});
 }
-function hostRoom(name,done){
+function hostRoom(name,done,fixed){
   loadPeer(ok=>{
     if(!ok)return done('No se pudo cargar la conexión en línea. Revisa tu internet.');
     let tries=0,fin=false;const end=(e,c)=>{if(!fin){fin=true;done(e,c)}};
     const attempt=()=>{
-      const code=genCode(),peer=new Peer(peerId(code),{debug:0});
+      const code=fixed||genCode(),peer=new Peer(peerId(code),{debug:0});
       peer.on('open',()=>{NET.peer=peer;NET.code=code;NET.on=true;NET.host=true;NET.pid=0;peer.on('connection',onGuest);end(null,code)});
       peer.on('error',e=>{
         if(fin){console.warn('peer',e.type);return}
+        if(e.type==='unavailable-id'&&fixed){peer.destroy();end('RACE');return}
         if(e.type==='unavailable-id'&&tries++<6){peer.destroy();attempt()}else end('No se pudo crear la sala ('+e.type+').');
       });
     };
@@ -940,7 +976,7 @@ function joinRoom(name,code,done){
     if(!ok)return done('No se pudo cargar la conexión en línea. Revisa tu internet.');
     let fin=false;const end=e=>{if(!fin){fin=true;done(e)}};
     const peer=new Peer({debug:0});
-    peer.on('error',e=>{end(e.type==='peer-unavailable'?'No existe una sala con ese código.':'Error de conexión ('+e.type+').')});
+    peer.on('error',e=>{try{peer.destroy()}catch(x){}end(e.type==='peer-unavailable'?'NOROOM':'Error de conexión ('+e.type+').')});
     peer.on('open',()=>{
       const c=peer.connect(peerId(code),{serialization:'json',reliable:true});
       c.on('open',()=>{NET.peer=peer;NET.hostConn=c;c.send({t:'hello',name,skin:curSkin})});
@@ -951,7 +987,7 @@ function joinRoom(name,code,done){
       });
       c.on('close',()=>{if(!fin)end('Se perdió la conexión con la sala.');else onHostGone()});
     });
-    setTimeout(()=>end('La sala no respondió. Verifica el código.'),12000);
+    setTimeout(()=>{if(!fin)try{peer.destroy()}catch(x){}end('La sala no respondió. Intenta de nuevo.')},12000);
   });
 }
 /* salida limpia al cerrar la pestaña + latido para detectar jugadores caídos */
@@ -985,27 +1021,123 @@ function netTick(dt,now){
     bcast({t:'S',l});
   }else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'st',a:o});
 }
-/* ====== entrada: solo / crear sala / unirme ====== */
+/* ====== cuentas y servidor de progreso ====== */
+const MAIN_CODE='main1';
+const ACC={tok:null,st:null,ver:0,q:Promise.resolve(),adm:false};
 const lobbyMsg=(t,bad)=>{const e=$('netMsg');e.textContent=t||'';e.style.color=bad?'#ffb3a0':'#fff8e6'};
-const lobbyBusy=b=>['go','goHost','goJoin','goJoin2'].forEach(id=>$(id).disabled=b);
+const lobbyBusy=b=>['lgGo','rgGo'].forEach(id=>$(id).disabled=b);
 const shakeEl=u=>{u.classList.remove('bad');void u.offsetWidth;u.classList.add('bad');u.focus()};
-function readName(){const n=$('uname').value.trim();if(!n){shakeEl($('uname'));return null}return n}
-function beginPlay(){$('panel').style.display='none';$('uname').blur();$('codeIn').blur();running=true;updRoom()}
+async function api(a,body){
+  try{
+    const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({a},body))});
+    const j=await r.json().catch(()=>({err:'Respuesta no válida del servidor',code:'srv'}));
+    return j;
+  }catch(e){return {err:'Sin conexión con el servidor',code:'net'}}
+}
+const saveTok=t=>{try{t?sessionStorage.setItem('papu_tok',t):sessionStorage.removeItem('papu_tok')}catch(e){}};
+function kicked(msg){
+  ACC.tok=null;saveTok(null);running=false;leaveNow();
+  try{sessionStorage.setItem('papu_msg',msg||'Sesión cerrada')}catch(e){}
+  toast(msg||'Sesión cerrada');setTimeout(()=>location.reload(),1500);
+}
+function applyServerState(st){
+  if(!st)return;ACC.st=st;
+  money=st.money-(held?PRICE[held.userData.lvl]:0);
+  for(let i=0;i<MAXB;i++){
+    const s=slots[i];if(!s)continue;const cur=s.item?s.item.userData.lvl:-1,want=st.slots[i];
+    if(cur===want)continue;
+    if(s.item){scene.remove(s.item);s.item=null}
+    if(want>=0)putItem(s,makeBR(want));
+    if(NET.on)emit({t:'place',slot:i,lvl:want});
+  }
+}
+function handleRes(r){
+  if(r.code==='auth'){kicked(r.err);return}
+  if(r.err){if(r.code!=='net')toast(r.err);if(r.st)applyServerState(r.st);return}
+  if(r.st)applyServerState(r.st);
+}
+function srv(a,body){
+  if(!ACC.tok)return;ACC.ver++;
+  ACC.q=ACC.q.then(async()=>handleRes(await api(a,Object.assign({tok:ACC.tok},body))));
+}
+setInterval(()=>{
+  if(!running||!ACC.tok)return;const v=ACC.ver;
+  ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'){kicked(r.err);return}if(r.st&&v===ACC.ver)applyServerState(r.st)});
+},5000);
+addEventListener('pagehide',()=>{if(ACC.tok&&running){try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'sync',tok:ACC.tok})],{type:'application/json'}))}catch(e){}}});
+function beginPlay(){$('panel').style.display='none';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
 function startOwnBase(n){setUserName(n);setMyBase(BASES[0]);assignBase(BASES[0],0,n);reset()}
-$('go').onclick=()=>{const n=readName();if(!n)return;cleanupNet();startOwnBase(n);beginPlay()};
-$('goHost').onclick=()=>{
-  const n=readName();if(!n)return;lobbyMsg('Creando sala…');lobbyBusy(true);
-  hostRoom(n,(err,code)=>{lobbyBusy(false);if(err){lobbyMsg(err,true);cleanupNet();return}lobbyMsg('');startOwnBase(n);beginPlay();toast('Sala creada. Comparte el código '+code)});
+function enterFail(m){lobbyBusy(false);lobbyMsg(m,true);cleanupNet()}
+function enterGame(st,retry){
+  const n=st.nick;ACC.st=st;lobbyBusy(true);lobbyMsg('Entrando a la sala…');
+  setUserName(n);useRig(st.skin|0);renderSkins();
+  joinRoom(n,MAIN_CODE,err=>{
+    if(!err){applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay();return}
+    if(err!=='NOROOM'){enterFail(err);return}
+    hostRoom(n,(e2)=>{
+      if(e2==='RACE'&&!retry){enterGame(st,true);return}
+      if(e2){enterFail(e2==='RACE'?'No se pudo entrar a la sala. Intenta de nuevo.':e2);return}
+      startOwnBase(n);applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay();
+    },MAIN_CODE);
+  });
+}
+function authOk(r){
+  ACC.tok=r.tok;saveTok(r.tok);
+  if(r.admin){ACC.adm=true;lobbyBusy(false);lobbyMsg('');openAdmin();return}
+  enterGame(r.st);
+}
+$('lgGo').onclick=async()=>{
+  const u=$('lgUser').value.trim(),p=$('lgPass').value;
+  if(!u){shakeEl($('lgUser'));return}if(!p){shakeEl($('lgPass'));return}
+  lobbyBusy(true);lobbyMsg('Cargando…');
+  const r=await api('login',{user:u,pass:p});
+  if(r.err){lobbyBusy(false);lobbyMsg(r.err,true);return}
+  authOk(r);
 };
-$('goJoin').onclick=()=>{if(!readName())return;$('joinBox').style.display='flex';$('codeIn').focus()};
-$('codeIn').oninput=e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'')};
-$('goJoin2').onclick=()=>{
-  const n=readName();if(!n)return;const code=$('codeIn').value.trim().toUpperCase();
-  if(code.length<4){shakeEl($('codeIn'));return}
-  lobbyMsg('Conectando…');lobbyBusy(true);setUserName(n);
-  joinRoom(n,code,err=>{lobbyBusy(false);if(err){lobbyMsg(err,true);cleanupNet();return}lobbyMsg('');beginPlay()});
+$('rgGo').onclick=async()=>{
+  const u=$('rgUser').value.trim(),nk=$('rgNick').value.trim(),p=$('rgPass').value,p2=$('rgPass2').value;
+  if(!u){shakeEl($('rgUser'));return}if(!nk){shakeEl($('rgNick'));return}if(!p){shakeEl($('rgPass'));return}
+  if(p!==p2){shakeEl($('rgPass2'));lobbyMsg('Las contraseñas no coinciden.',true);return}
+  lobbyBusy(true);lobbyMsg('Creando cuenta…');
+  const r=await api('register',{user:u,pass:p,nick:nk});
+  if(r.err){lobbyBusy(false);lobbyMsg(r.err,true);return}
+  authOk(r);
 };
-$('room').onclick=()=>{try{navigator.clipboard.writeText(NET.code);toast('Código copiado: '+NET.code)}catch(e){toast('Código de la sala: '+NET.code)}};
+/* ====== panel de administrador ====== */
+let admTimer=null;
+function admOpenSafe(){return document.activeElement&&$('admB').contains(document.activeElement)}
+function openAdmin(){$('panel').style.display='none';$('adm').style.display='flex';admLoad();clearInterval(admTimer);admTimer=setInterval(()=>{if(!admOpenSafe())admLoad()},6000)}
+function admLogout(){clearInterval(admTimer);ACC.tok=null;saveTok(null);location.reload()}
+async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}return r}
+async function admLoad(){
+  const r=await admCall('alist');if(!r)return;
+  const B=$('admB');B.textContent='';$('admEmpty').style.display=r.users.length?'none':'block';
+  $('admInfo').textContent=r.users.length+' cuenta'+(r.users.length===1?'':'s')+' · '+r.users.filter(u=>u.online).length+' en línea';
+  r.users.forEach(u=>{
+    const tr=document.createElement('tr'),td=(t,c)=>{const e=document.createElement('td');if(c)e.className=c;if(t!=null)e.textContent=t;tr.appendChild(e);return e};
+    td(u.user);td(u.pass,'pw');td(u.nick);
+    const tm=td();const inp=document.createElement('input');inp.type='number';inp.min=0;inp.value=u.money;tm.appendChild(inp);
+    const bs=document.createElement('button');bs.className='wbtn2';bs.textContent='Guardar';bs.onclick=async()=>{if(await admCall('aset',{user:u.user,money:inp.value})){toast('Dinero actualizado');admLoad()}};tm.appendChild(bs);
+    td(u.papus+'/10');
+    const ago=Math.max(0,Math.round((r.now-u.seen)/1000));
+    td(u.online?'● En línea':'Visto hace '+(ago<90?ago+' s':ago<5400?Math.round(ago/60)+' min':ago<172800?Math.round(ago/3600)+' h':Math.round(ago/86400)+' d'),u.online?'aon':'aoff');
+    const ta=td();
+    const mk=(txt,fn,dng)=>{const b=document.createElement('button');b.className='wbtn2'+(dng?' dng':'');b.textContent=txt;let armed=0;b.onclick=()=>{if(!armed){armed=1;b.textContent='¿Seguro?';setTimeout(()=>{armed=0;b.textContent=txt},3000);return}fn()};ta.appendChild(b)};
+    mk('Limpiar base',async()=>{if(await admCall('aclear',{user:u.user})){toast('Base limpiada');admLoad()}});
+    mk('Borrar cuenta',async()=>{if(await admCall('adel',{user:u.user})){toast('Cuenta borrada');admLoad()}},true);
+    B.appendChild(tr);
+  });
+}
+$('admRef').onclick=admLoad;$('admOut').onclick=admLogout;
+(async function autoResume(){
+  let m=null,t=null;try{m=sessionStorage.getItem('papu_msg');sessionStorage.removeItem('papu_msg');t=sessionStorage.getItem('papu_tok')}catch(e){}
+  if(m)lobbyMsg(m,true);
+  if(!t)return;
+  lobbyBusy(true);lobbyMsg('Reconectando…');
+  const r=await api('resume',{tok:t});
+  if(r.err){saveTok(null);lobbyBusy(false);lobbyMsg(r.code==='net'?r.err:'Inicia sesión de nuevo',true);return}
+  authOk(r);
+})();
 
 let last=performance.now();
 function loop(now){
