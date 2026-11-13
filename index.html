@@ -871,6 +871,9 @@ function hostMsg(conn,m){
     return;
   }
   if(pid==null)return;
+  {const pl=NET.players[pid];if(pl)pl.seen=performance.now()}
+  if(m.t==='ping')return;
+  if(m.t==='bye'){dropPlayer(pid);try{conn.close()}catch(e){}return}
   if(m.t==='st'){const p=NET.players[pid];if(p&&m.a)setTgt(p,m.a)}
   else if(m.t==='buy'){
     const k=items.findIndex(o=>o.iid===m.iid);
@@ -918,7 +921,10 @@ function finishBuy(m){
   money-=pd.cost;takeItem(g,pd.lv,pd.cost);
 }
 function clientMsg(m){
+  NET.hseen=performance.now();
   switch(m.t){
+    case 'ping':break;
+    case 'bye':onHostGone();break;
     case 'join':addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false);break;
     case 'leave':dropPlayer(m.pid);break;
     case 'S':m.l.forEach(a=>{const p=NET.players[a[0]];if(p)setTgt(p,a.slice(1))});break;
@@ -948,6 +954,26 @@ function joinRoom(name,code,done){
     setTimeout(()=>end('La sala no respondió. Verifica el código.'),12000);
   });
 }
+/* salida limpia al cerrar la pestaña + latido para detectar jugadores caídos */
+function leaveNow(){
+  try{
+    if(!NET.on)return;
+    if(NET.host)bcast({t:'bye'});else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'bye'});
+    NET.peer&&NET.peer.destroy();
+  }catch(e){}
+}
+addEventListener('pagehide',leaveNow);addEventListener('beforeunload',leaveNow);
+setInterval(()=>{
+  if(!NET.on)return;const now=performance.now();
+  if(NET.host){
+    bcast({t:'ping'});
+    for(const id in NET.players){const p=NET.players[id];if(p.seen==null)p.seen=now;if(now-p.seen>20000){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
+  }else{
+    if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'ping'});
+    if(NET.hseen==null)NET.hseen=now;
+    if(now-NET.hseen>20000)onHostGone();
+  }
+},2000);
 function cleanupNet(){try{NET.peer&&NET.peer.destroy()}catch(e){}NET.peer=null;NET.on=false;NET.host=true;NET.hostConn=null;NET.pid=0;NET.code='';updRoom()}
 function netTick(dt,now){
   if(NET.pend&&now-NET.pend.t>2500)NET.pend=null;
