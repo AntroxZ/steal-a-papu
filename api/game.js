@@ -8,9 +8,9 @@ const ADMIN_USER = process.env.ADMIN_USER || '';
 const ADMIN_PASS = process.env.ADMIN_PASS || '';
 
 /* mismos valores que el juego: nivel -> ingreso por segundo y precio */
-const INC = [1, 5, 12, 25, 50, 10, 40, 25, 100, 60, 240];
-const PRICE = [0, 0, 0, 0, 0, 50, 200, 150, 600, 400, 1600];
-const START = 50, NSLOT = 10, NSKIN = 3, TOKEN_DAYS = 30, MAX_DT = 12000;
+const INC = [1, 5, 12, 25, 50, 10, 40, 25, 100, 60, 240, 150, 600];
+const PRICE = [0, 0, 0, 0, 0, 50, 200, 150, 600, 400, 1600, 1000, 4000];
+const START = 50, NSLOT = 10, NSKIN = 4, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -136,7 +136,7 @@ const actions = {
   async place(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const slot = b.slot, lvl = b.lvl;
-    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT || !Number.isInteger(lvl) || lvl < 5 || lvl > 10) throw new Err('Jugada no válida.', 'bad');
+    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT || !Number.isInteger(lvl) || lvl < 5 || lvl > 12) throw new Err('Jugada no válida.', 'bad');
     const cur = r.slots[slot];
     if (cur >= 0 && INC[lvl] <= INC[cur]) { await saveRec(r); throw Object.assign(new Err('Ese lugar ya tiene uno igual o mejor.', 'bad'), { st: view(r) }); }
     if (r.money < PRICE[lvl]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
