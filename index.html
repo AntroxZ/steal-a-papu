@@ -222,11 +222,19 @@ const START=50,PRICE=[,,,,,50,200,150,600,400,1600],WGT=[0,0,0,0,0,20,17,14,8,7,
 const GOAL=12000,SPAWN=2,BELT_V=3.2,MAXB=10,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
 const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true});
-R.setPixelRatio(Math.min(devicePixelRatio,2));
+let PR=Math.min(devicePixelRatio,2),FPS=60,fpsN=0,fpsT=performance.now();R.setPixelRatio(PR);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xbfe3ff);scene.fog=new THREE.Fog(0xbfe3ff,150,450);
 const cam=new THREE.PerspectiveCamera(55,1,.1,1200);
 function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
+function perfTick(now){
+  fpsN++;if(now-fpsT<2000)return;
+  FPS=Math.round(fpsN*1000/(now-fpsT));fpsN=0;fpsT=now;
+  if(running&&!document.hidden){
+    if(FPS<40&&PR>1){PR=Math.max(1,PR-.25);R.setPixelRatio(PR);resize()}   /* PC/celular lento: baja la resolución para ganar FPS */
+  }
+  updRoom();
+}
 const B=(c,o={})=>new THREE.MeshBasicMaterial(Object.assign({color:c},o));
 let ROOT=scene;
 const add=(m,x,y,z)=>{m.position.set(x,y,z);ROOT.add(m);return m};
@@ -860,7 +868,7 @@ function loadPeer(cb){
   const urls=['https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'];
   let i=0;const next=()=>{if(i>=urls.length)return cb(false);const s=document.createElement('script');s.src=urls[i++];s.onload=()=>window.Peer?cb(true):next();s.onerror=next;document.head.appendChild(s)};next();
 }
-function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';const n=Object.keys(NET.players).length+1;e.textContent='Sala principal · '+n+(n>1?' jugadores':' jugador')}
+function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';const n=Object.keys(NET.players).length+1;e.textContent='Sala principal · '+n+(n>1?' jugadores':' jugador')+' · '+FPS+' FPS'+(NET.host||NET.rtt==null?'':' · '+NET.rtt+' ms')}
 function bcast(m,except){for(const id in NET.conns){if(+id===except)continue;const c=NET.conns[id];if(c&&c.open)c.send(m)}}
 function emit(m){if(!NET.on)return;if(NET.host)bcast(Object.assign({pid:0},m));else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send(m)}
 function freeBaseIdx(){for(let i=0;i<BASES.length;i++)if(BASES[i].owner===null)return i;return -1}
@@ -908,7 +916,7 @@ function hostMsg(conn,m){
   }
   if(pid==null)return;
   {const pl=NET.players[pid];if(pl)pl.seen=performance.now()}
-  if(m.t==='ping')return;
+  if(m.t==='ping'){if(m.ts!=null)conn.send({t:'pong',ts:m.ts});return}
   if(m.t==='bye'){dropPlayer(pid);try{conn.close()}catch(e){}return}
   if(m.t==='st'){const p=NET.players[pid];if(p&&m.a)setTgt(p,m.a)}
   else if(m.t==='buy'){
@@ -968,6 +976,7 @@ function clientMsg(m){
   NET.hseen=performance.now();
   switch(m.t){
     case 'ping':break;
+    case 'pong':NET.rtt=Math.round(performance.now()-m.ts);updRoom();break;
     case 'bye':onHostGone();break;
     case 'join':addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false);break;
     case 'leave':dropPlayer(m.pid);break;
@@ -1020,7 +1029,7 @@ setInterval(()=>{
     bcast({t:'ping'});
     for(const id in NET.players){const p=NET.players[id];if(p.seen==null)p.seen=now;if(now-p.seen>20000){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
   }else{
-    if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'ping'});
+    if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'ping',ts:performance.now()});
     if(NET.hseen==null)NET.hseen=now;
     if(now-NET.hseen>20000)onHostGone();
   }
@@ -1169,7 +1178,7 @@ function bgTick(){
 (function(){let w=null;try{w=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(1)},50)'],{type:'application/javascript'})));w.onmessage=bgTick}catch(e){w=null}if(!w)setInterval(bgTick,50)})();
 let last=performance.now();
 function loop(now){
-  const dt=Math.min((now-last)/1000,.05);last=now;
+  const dt=Math.min((now-last)/1000,.05);last=now;perfTick(now);
   beltTex.offset.x-=dt*BELT_V/7.2;
   clouds.forEach(s=>{s.position.x+=dt*2;if(s.position.x>400)s.position.x=-400});
   if(running){
