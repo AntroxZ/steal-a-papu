@@ -8,8 +8,8 @@ const ADMIN_USER = process.env.ADMIN_USER || '';
 const ADMIN_PASS = process.env.ADMIN_PASS || '';
 
 /* mismos valores que el juego: nivel -> ingreso por segundo y precio */
-const INC = [1, 5, 12, 25, 50, 10, 40, 25, 100, 60, 240, 150, 600, 375, 1500];
-const PRICE = [0, 0, 0, 0, 0, 50, 200, 150, 600, 400, 1600, 1000, 4000, 2500, 10000];
+const INC = [1, 5, 12, 25, 50, 10, 40, 25, 100, 60, 240, 150, 600, 375, 1500, 900, 3600];
+const PRICE = [0, 0, 0, 0, 0, 50, 200, 150, 600, 400, 1600, 1000, 4000, 2500, 10000, 6000, 24000];
 const START = 50, NSLOT = 10, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
@@ -150,7 +150,7 @@ const actions = {
   async buy(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const lvl = b.lvl;
-    if (!Number.isInteger(lvl) || lvl < 5 || lvl > 14) throw new Err('Jugada no válida.', 'bad');
+    if (!Number.isInteger(lvl) || lvl < 5 || lvl > 16) throw new Err('Jugada no válida.', 'bad');
     if (r.held >= 0) { await saveRec(r); throw Object.assign(new Err('Ya llevas un Papu.', 'bad'), { st: view(r) }); }
     if (r.money < PRICE[lvl]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
     r.money -= PRICE[lvl]; r.held = lvl; r.hpaid = PRICE[lvl];
