@@ -230,7 +230,7 @@ const SRC=[];
 const INC=[1,5,12,25,50,10,40,25,100,60,240,150,600],COL=['#00f0ff','#7cff6b','#ffd400','#ff6a3d','#ff2bd6','#9d8cff','#ffc400','#5cf2c8','#ffc400','#ff7a59','#ffc400','#ff4fa3','#ffc400'];
 const MODEL=[0,0,0,0,0,1,1,1,1,1,1,1,1],NAMES=[,,,,,'Sansini Danini','Sansini Danini Dorado','Andriksini Lunini','Andriksini Lunini Dorado','Argimini Cordivini','Argimini Cordivini Dorado','Betini Heribirtini','Betini Heribirtini Dorado'],isGold=l=>l===6||l===8||l===10||l===12;
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
-const STUN=2,SLAM_R=11,STEAL_T=7,GROUND_LIFE=5000,BAR_ON=80000,BAR_CD=60000;let barEnd=0,barCd=0;
+const STUN=2,SLAM_R=7,STEAL_T=7,GROUND_LIFE=5000,BAR_ON=80000,BAR_CD=60000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,150,600,400,1600,1000,4000],WGT=[0,0,0,0,0,20,17,14,8,7,3,3,1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7];
 const GOAL=12000,SPAWN=2,BELT_V=3.2,MAXB=10,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
@@ -364,7 +364,28 @@ function buildBase(idx,cx,z0,dir){
      x.font='800 54px Orbitron,sans-serif';x.fillStyle=b.barrierOn?'#ff5a5a':'#9aa7b5';x.fillText(b.barrierOn?'ACTIVAS':'APAGADAS',256,112);t.needsUpdate=true};
    const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,fog:false}));s.scale.set(4,1.25,1);s.position.set(bt.x,BH+3,bt.z);G.add(s);
    b.drawBtn();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(b.drawBtn)}
+  /* contador físico de la barrera, colgado frente a la puerta para que todos lo vean */
+  {const c=document.createElement('canvas');c.width=512;c.height=160;const x=c.getContext('2d'),t=new THREE.CanvasTexture(c);
+   b.barEnd=0;b.barCd=0;b.barSt='';
+   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,fog:false}));sp.scale.set(6.4,2,1);sp.position.set(0,RH-5.3,BZ0+1.2);sp.visible=false;G.add(sp);
+   b.drawBar=(now)=>{
+     let lab,val,col;
+     if(b.owner===null){if(sp.visible)sp.visible=false;b.barSt='';return}
+     if(b.barrierOn){lab='BARRERA ACTIVA';val=Math.max(0,Math.ceil((b.barEnd-now)/1000))+' s';col='#ff6a6a'}
+     else if(now<b.barCd){lab='ENFRIAMIENTO';val=Math.ceil((b.barCd-now)/1000)+' s';col='#b9c2cc'}
+     else{lab='BARRERA';val='LISTA';col='#8dff7a'}
+     const key=lab+val;sp.visible=true;if(key===b.barSt)return;b.barSt=key;
+     x.clearRect(0,0,512,160);
+     x.fillStyle='#4a2810';x.strokeStyle='#2a1508';x.lineWidth=8;
+     x.beginPath();x.roundRect?x.roundRect(6,6,500,148,22):x.rect(6,6,500,148);x.fill();x.stroke();
+     x.strokeStyle='#b0703c';x.lineWidth=4;x.beginPath();x.roundRect?x.roundRect(14,14,484,132,16):x.rect(14,14,484,132);x.stroke();
+     x.textAlign='center';x.textBaseline='middle';x.shadowColor=col;x.shadowBlur=14;
+     x.fillStyle='#fff8e6';x.font='800 34px Orbitron,sans-serif';x.fillText(lab,256,46);
+     x.fillStyle=col;x.font='800 64px Orbitron,sans-serif';x.fillText(val,256,106);
+     t.needsUpdate=true};
+  }
   b.upd=(dt,now)=>{
+    b.drawBar(now);
     b.barrierT+=((b.barrierOn?1:0)-b.barrierT)*Math.min(1,dt*7);
     barrier.visible=b.barrierT>.02;barrier.scale.y=Math.max(.001,b.barrierT);
     barGlow.opacity=.2+.12*Math.sin(now/150);
@@ -381,7 +402,7 @@ BASE_POS.forEach(([cx,z0,dir],i)=>buildBase(i,cx,z0,dir));
 let myBase=BASES[0],slots=myBase.slots;
 function setMyBase(b){myBase=b;slots=b.slots}
 function assignBase(b,pid,name){b.owner=pid;b.name=name;b.drawSign()}
-function freeBaseObj(b){b.slots.forEach(s=>{if(s.item){scene.remove(s.item);s.item=null}});b.barrierOn=false;b.owner=null;b.name='';b.drawSign();b.drawBtn()}
+function freeBaseObj(b){b.slots.forEach(s=>{if(s.item){scene.remove(s.item);s.item=null}});b.barrierOn=false;b.barEnd=0;b.barCd=0;b.owner=null;b.name='';b.drawSign();b.drawBtn()}
 /* colinas lejanas con neblina (diseno propio) */
 {const W=2048,Hh=256,c=document.createElement('canvas');c.width=W;c.height=Hh;const x=c.getContext('2d');
  const layer=(base,amps,col)=>{x.beginPath();x.moveTo(0,Hh);for(let i=0;i<=W;i+=8){let y=base;amps.forEach(([k,a,ph])=>{y-=a*Math.sin(2*Math.PI*k*i/W+ph)});x.lineTo(i,y)}x.lineTo(W,Hh);x.closePath();x.fillStyle=col;x.fill()};
@@ -668,7 +689,7 @@ const mkQ=()=>Array.from({length:NB},()=>new THREE.Quaternion()),TQ=mkQ(),FQ=mkQ
 const ARMI=['LeftArm','RightArm','LeftForeArm','RightForeArm'].map(n=>BI[n]);
 const waves=[];
 function shockwave(x,z){[0x00f0ff,0xff2bd6].forEach((c,i)=>{const m=new THREE.Mesh(new THREE.RingGeometry(.9,1.25,48),B(c,{side:THREE.DoubleSide,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(x,groundY(x,z)+.12+i*.02,z);m.visible=false;scene.add(m);waves.push({m,t:-i*.12})})}
-function updWaves(dt){for(let i=waves.length-1;i>=0;i--){const w=waves[i];w.t+=dt;if(w.t<0)continue;const k=w.t/.7;w.m.visible=true;w.m.scale.setScalar(1+k*10);w.m.material.opacity=Math.max(0,1-k);if(k>=1){scene.remove(w.m);waves.splice(i,1)}}}
+function updWaves(dt){for(let i=waves.length-1;i>=0;i--){const w=waves[i];w.t+=dt;if(w.t<0)continue;const k=w.t/.7;w.m.visible=true;w.m.scale.setScalar(1+k*(SLAM_R/1.25-1));w.m.material.opacity=Math.max(0,1-k);if(k>=1){scene.remove(w.m);waves.splice(i,1)}}}
 function spacePress(){
   if(!running||shopOpen||setOpen||stunT>0)return;
   if(mode==='ground'||mode==='land'){vy=JV;mode='air';airT=0;py=.001}
@@ -828,7 +849,8 @@ function toggleBarrier(){
     if(now<barCd){toast('Barrera en enfriamiento: espera '+Math.ceil((barCd-now)/1000)+' s');return}
     myBase.barrierOn=true;barEnd=now+BAR_ON;
   }else{myBase.barrierOn=false;barCd=now+BAR_CD}
-  myBase.btnPress=.25;myBase.drawBtn();emit({t:'bar',on:myBase.barrierOn});
+  myBase.barEnd=barEnd;myBase.barCd=barCd;
+  myBase.btnPress=.25;myBase.drawBtn();emit(myBase.barrierOn?{t:'bar',on:true,left:BAR_ON}:{t:'bar',on:false,cd:BAR_CD});
   toast(myBase.barrierOn?'Barrera ACTIVADA por 80 s: nadie más puede pasar':'Barrera desactivada (enfriamiento de 60 s)')
 }
 function updBarrier(dt,now){BASES.forEach(b=>b.upd(dt,now))}
@@ -914,7 +936,7 @@ function freeBaseIdx(){for(let i=0;i<BASES.length;i++)if(BASES[i].owner===null)r
 function setTgt(p,a){p.tgt={x:a[0],y:a[1],z:a[2],h:a[3],sp:a[4],m:a[5],vy:a[6],fa:a[7],hl:a[8],st:a[9]|0}}
 function addPlayer(pid,name,skin,base,bar,aid){
   if(NET.players[pid]){if(aid)NET.players[pid].aid=aid;return NET.players[pid]}
-  assignBase(BASES[base],pid,name);if(bar){BASES[base].barrierOn=true;BASES[base].drawBtn()}
+  assignBase(BASES[base],pid,name);if(bar){BASES[base].barrierOn=true;BASES[base].barEnd=performance.now()+BAR_ON;BASES[base].drawBtn()}
   const p={pid,name,skin,base,aid,tgt:null,av:makeAvatar(skin,name)};
   NET.players[pid]=p;updRoom();return p;
 }
@@ -934,7 +956,7 @@ function applyEvt(pid,m){
   const p=NET.players[pid];if(!p)return;const b=BASES[p.base];
   if(m.t==='place')putRemoteSlot(b,m.slot,m.lvl);
   else if(m.t==='clr')b.slots.forEach((s,i)=>putRemoteSlot(b,i,-1));
-  else if(m.t==='bar'){b.barrierOn=!!m.on;b.btnPress=.25;b.drawBtn()}
+  else if(m.t==='bar'){b.barrierOn=!!m.on;b.btnPress=.25;b.drawBtn();const n=performance.now();if(m.on){b.barEnd=n+(m.left||BAR_ON)}else b.barCd=n+(m.cd||0)}
   else if(m.t==='name'){p.name=m.name;b.name=m.name;b.drawSign();if(p.av){p.av.g.remove(p.av.ns);p.av.ns=makeNameSprite(m.name,1);p.av.ns.position.y=4.9;p.av.g.add(p.av.ns)}}
   else if(m.t==='skin'){p.skin=m.k;if(p.av)setAvSkin(p.av,m.k)}
 }
@@ -1375,7 +1397,7 @@ async function finishSteal(t){
 }
 /* barrera: 80 s activa + 60 s de enfriamiento */
 function updBar(now){
-  if(myBase.barrierOn&&now>=barEnd){myBase.barrierOn=false;myBase.btnPress=.25;myBase.drawBtn();barCd=now+BAR_CD;emit({t:'bar',on:false});toast('Tu barrera se desactivó (enfriamiento de 60 s)')}
+  if(myBase.barrierOn&&now>=barEnd){myBase.barrierOn=false;myBase.btnPress=.25;myBase.drawBtn();barCd=now+BAR_CD;myBase.barCd=barCd;emit({t:'bar',on:false,cd:BAR_CD});toast('Tu barrera se desactivó (enfriamiento de 60 s)')}
   const c=$('barCard'),v=$('barVal'),f=$('barFill');
   if(myBase.barrierOn){const left=barEnd-now;v.textContent=Math.ceil(left/1000)+' s';f.style.width=Math.max(0,left/BAR_ON*100)+'%';c.className='card act'}
   else if(now<barCd){const left=barCd-now;v.textContent='Espera '+Math.ceil(left/1000)+' s';f.style.width=(100-left/BAR_CD*100)+'%';c.className='card cd'}
