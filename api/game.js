@@ -61,7 +61,17 @@ function accrue(r, now) {
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
   r.money += inc * dt; r.t = now; r.seen = now;
 }
-const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots });
+const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held });
+/* id público de cuenta (para robar): no revela el usuario ni la contraseña */
+async function ensureAid(r) {
+  if (!r.aid) { r.aid = crypto.randomBytes(6).toString('base64url'); }
+  await db('SET', 'a:' + r.aid, r.user);
+}
+/* si te sales con un Papu en la mano no se guarda: se te devuelve lo que pagaste */
+function settleHeld(r) {
+  if (r.held != null && r.held >= 0) { r.money += r.hpaid || 0; }
+  r.held = -1; r.hpaid = 0;
+}
 async function loadRec(user) {
   const s = await db('GET', ukey(user));
   return s ? JSON.parse(s) : null;
@@ -103,9 +113,11 @@ const actions = {
     if (!nick) throw new Err('Escribe un nickname.');
     if (ADMIN_USER && user.toLowerCase() === ADMIN_USER.toLowerCase()) throw new Err('Ese usuario ya existe.');
     const sid = crypto.randomBytes(9).toString('base64url'), now = Date.now();
-    const r = { user, pass: encPass(pass), nick, skin: 0, money: START, slots: emptySlots(), t: now, seen: now, created: now, sid };
+    const r = { user, pass: encPass(pass), nick, skin: 0, money: START, slots: emptySlots(), held: -1, hpaid: 0, t: now, seen: now, created: now, sid };
+    r.aid = crypto.randomBytes(6).toString('base64url');
     const ok = await db('SET', ukey(user), JSON.stringify(r), 'NX');
     if (!ok) throw new Err('Ese usuario ya existe.');
+    await ensureAid(r);
     await db('SADD', 'users', user.toLowerCase());
     return { tok: signTok({ u: user, sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r) };
   },
@@ -120,6 +132,7 @@ const actions = {
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
     r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; /* sin ingresos mientras estuviste fuera */
+    settleHeld(r); await ensureAid(r);
     await saveRec(r);
     return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r) };
   },
@@ -127,24 +140,68 @@ const actions = {
     const t = readTok(b.tok);
     if (t && t.adm) return { admin: true, tok: b.tok };
     const r = await userFromTok(b.tok);
-    r.t = Date.now(); r.seen = r.t; await saveRec(r);
+    r.t = Date.now(); r.seen = r.t; settleHeld(r); await ensureAid(r); await saveRec(r);
     return { tok: b.tok, st: view(r) };
   },
   async sync(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r); return { st: view(r) };
   },
-  async place(b) {
+  /* comprar un Papu de la cinta: se cobra al agarrarlo (si lo pierdes, lo pierdes) */
+  async buy(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
-    const slot = b.slot, lvl = b.lvl;
-    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT || !Number.isInteger(lvl) || lvl < 5 || lvl > 12) throw new Err('Jugada no válida.', 'bad');
-    const cur = r.slots[slot];
-    if (cur >= 0 && INC[lvl] <= INC[cur]) { await saveRec(r); throw Object.assign(new Err('Ese lugar ya tiene uno igual o mejor.', 'bad'), { st: view(r) }); }
+    const lvl = b.lvl;
+    if (!Number.isInteger(lvl) || lvl < 5 || lvl > 12) throw new Err('Jugada no válida.', 'bad');
+    if (r.held >= 0) { await saveRec(r); throw Object.assign(new Err('Ya llevas un Papu.', 'bad'), { st: view(r) }); }
     if (r.money < PRICE[lvl]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
-    r.money -= PRICE[lvl]; r.slots[slot] = lvl;
+    r.money -= PRICE[lvl]; r.held = lvl; r.hpaid = PRICE[lvl];
     await saveRec(r); return { st: view(r) };
   },
+  /* colocar en tu base el Papu que llevas (comprado, recogido del suelo o robado) */
+  async place(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const slot = b.slot, lvl = r.held;
+    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT) throw new Err('Jugada no válida.', 'bad');
+    if (lvl == null || lvl < 0) { await saveRec(r); throw Object.assign(new Err('No llevas ningún Papu.', 'bad'), { st: view(r) }); }
+    const cur = r.slots[slot];
+    if (cur >= 0 && INC[lvl] <= INC[cur]) { await saveRec(r); throw Object.assign(new Err('Ese lugar ya tiene uno igual o mejor.', 'bad'), { st: view(r) }); }
+    r.slots[slot] = lvl; r.held = -1; r.hpaid = 0;
+    await saveRec(r); return { st: view(r) };
+  },
+  /* el Papu cae al suelo (aturdido): se puede recoger durante unos segundos */
+  async drop(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const gid = String(b.gid || '');
+    if (!/^[a-z0-9]{4,12}$/.test(gid)) throw new Err('Jugada no válida.', 'bad');
+    if (r.held >= 0) { await db('SET', 'g:' + gid, String(r.held), 'EX', 8); r.held = -1; r.hpaid = 0; }
+    await saveRec(r); return { st: view(r) };
+  },
+  async pick(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const gid = String(b.gid || '');
+    if (!/^[a-z0-9]{4,12}$/.test(gid) || r.held >= 0) { await saveRec(r); return { ok: false, st: view(r) }; }
+    const v = await db('GETDEL', 'g:' + gid);
+    if (v == null) { await saveRec(r); return { ok: false, st: view(r) }; }
+    r.held = +v; r.hpaid = 0; await saveRec(r);
+    return { ok: true, lvl: r.held, st: view(r) };
+  },
+  /* robar de la base de otro jugador (el cliente exige mantener E 7 s) */
+  async steal(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const aid = String(b.aid || ''), slot = b.slot;
+    if (!/^[A-Za-z0-9_-]{4,16}$/.test(aid) || !Number.isInteger(slot) || slot < 0 || slot >= NSLOT) throw new Err('Jugada no válida.', 'bad');
+    if (r.held >= 0) { await saveRec(r); throw Object.assign(new Err('Ya llevas un Papu.', 'bad'), { st: view(r) }); }
+    const vu = await db('GET', 'a:' + aid);
+    const v = vu ? await loadRec(vu) : null;
+    if (!v || v.user === r.user) { await saveRec(r); return { ok: false, st: view(r) }; }
+    accrue(v, Date.now());
+    const lvl = v.slots[slot];
+    if (lvl == null || lvl < 0) { await saveRec(v); await saveRec(r); return { ok: false, st: view(r) }; }
+    v.slots[slot] = -1; await saveRec(v);
+    r.held = lvl; r.hpaid = 0; await saveRec(r);
+    return { ok: true, lvl, st: view(r) };
+  },
   async clear(b) { const r = await userFromTok(b.tok); accrue(r, Date.now()); r.slots = emptySlots(); await saveRec(r); return { st: view(r) }; },
-  async reset(b) { const r = await userFromTok(b.tok); r.slots = emptySlots(); r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
+  async reset(b) { const r = await userFromTok(b.tok); r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
   async nick(b) {
     const r = await userFromTok(b.tok), n = cleanNick(b.nick);
     if (!n) throw new Err('Escribe un nickname.');
