@@ -862,6 +862,12 @@ function updRemotes(dt){
 const NET={uc:{},byPeer:{},ucon:null,on:false,host:true,pid:0,code:'',peer:null,conns:{},players:{},nextPid:1,iid:0,hostConn:null,stT:0,pend:null};
 const CODE_CH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const genCode=()=>Array.from({length:5},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join('');
+const ICE={iceServers:[
+  {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478']},
+  {urls:'turn:eu-0.turn.peerjs.com:3478',username:'peerjs',credential:'peerjsp'},
+  {urls:'turn:us-0.turn.peerjs.com:3478',username:'peerjs',credential:'peerjsp'},
+  {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}
+],iceCandidatePoolSize:4};
 const peerId=c=>'steal-a-papu-'+c.toLowerCase();
 function loadPeer(cb){
   if(window.Peer)return cb(true);
@@ -942,7 +948,7 @@ function hostRoom(name,done,fixed){
     if(!ok)return done('No se pudo cargar la conexión en línea. Revisa tu internet.');
     let tries=0,fin=false;const end=(e,c)=>{if(!fin){fin=true;done(e,c)}};
     const attempt=()=>{
-      const code=fixed||genCode(),peer=new Peer(peerId(code),{debug:0});
+      const code=fixed||genCode(),peer=new Peer(peerId(code),{debug:0,config:ICE});
       peer.on('open',()=>{NET.peer=peer;NET.code=code;NET.on=true;NET.host=true;NET.pid=0;peer.on('connection',onGuest);end(null,code)});
       peer.on('error',e=>{
         if(fin){console.warn('peer',e.type);return}
@@ -999,7 +1005,7 @@ function joinRoom(name,code,done){
   loadPeer(ok=>{
     if(!ok)return done('No se pudo cargar la conexión en línea. Revisa tu internet.');
     let fin=false;const end=e=>{if(!fin){fin=true;done(e)}};
-    const peer=new Peer({debug:0});
+    const peer=new Peer({debug:0,config:ICE});
     peer.on('error',e=>{try{peer.destroy()}catch(x){}end(e.type==='peer-unavailable'?'NOROOM':'Error de conexión ('+e.type+').')});
     peer.on('open',()=>{
       const c=peer.connect(peerId(code),{serialization:'json',reliable:true});
@@ -1011,7 +1017,7 @@ function joinRoom(name,code,done){
       });
       c.on('close',()=>{if(!fin)end('Se perdió la conexión con la sala.');else onHostGone()});
     });
-    setTimeout(()=>{if(!fin)try{peer.destroy()}catch(x){}end('La sala no respondió. Intenta de nuevo.')},12000);
+    setTimeout(()=>{if(!fin)try{peer.destroy()}catch(x){}end('La sala no respondió. Intenta de nuevo.')},10000);
   });
 }
 /* salida limpia al cerrar la pestaña + latido para detectar jugadores caídos */
@@ -1092,14 +1098,17 @@ addEventListener('pagehide',()=>{if(ACC.tok&&running){try{navigator.sendBeacon('
 function beginPlay(){$('panel').style.display='none';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
 function startOwnBase(n){setUserName(n);setMyBase(BASES[0]);assignBase(BASES[0],0,n);reset()}
 function enterFail(m){lobbyBusy(false);lobbyMsg(m,true);cleanupNet()}
-function enterGame(st,retry){
+function enterGame(st,retry,tries){
+  tries=tries||0;
   const n=st.nick;ACC.st=st;lobbyBusy(true);lobbyMsg('Entrando a la sala…');
   setUserName(n);useRig(st.skin|0);renderSkins();
   joinRoom(n,MAIN_CODE,err=>{
     if(!err){applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay();return}
-    if(err!=='NOROOM'){enterFail(err);return}
+    if(err!=='NOROOM'){
+      if(/respondió|conexión/.test(err)&&tries<2){lobbyMsg('Reintentando conexión…');cleanupNet();setTimeout(()=>enterGame(st,retry,tries+1),600);return}
+      enterFail(err);return}
     hostRoom(n,(e2)=>{
-      if(e2==='RACE'&&!retry){enterGame(st,true);return}
+      if(e2==='RACE'&&!retry){enterGame(st,true,tries);return}
       if(e2){enterFail(e2==='RACE'?'No se pudo entrar a la sala. Intenta de nuevo.':e2);return}
       startOwnBase(n);applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay();
     },MAIN_CODE);
