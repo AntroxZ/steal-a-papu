@@ -216,6 +216,25 @@ const actions = {
     r.held = lvl; r.hpaid = 0; await saveRec(r);
     return { ok: true, lvl, st: view(r) };
   },
+  /* mover un Papu de tu base: lo levanta a la mano (se coloca con place) */
+  async lift(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const slot = b.slot;
+    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT) throw new Err('Jugada no válida.', 'bad');
+    if (r.held >= 0) { await saveRec(r); throw Object.assign(new Err('Ya llevas un Papu.', 'bad'), { st: view(r) }); }
+    const lvl = r.slots[slot];
+    if (lvl == null || lvl < 0) { await saveRec(r); return { ok: false, st: view(r) }; }
+    r.slots[slot] = -1; r.held = lvl; r.hpaid = 0; await saveRec(r);
+    return { ok: true, lvl, st: view(r) };
+  },
+  /* eliminar un Papu de tu base (sin reembolso) */
+  async delslot(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const slot = b.slot;
+    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT) throw new Err('Jugada no válida.', 'bad');
+    r.slots[slot] = -1; await saveRec(r);
+    return { ok: true, st: view(r) };
+  },
   async clear(b) { const r = await userFromTok(b.tok); accrue(r, Date.now()); r.slots = emptySlots(); await saveRec(r); return { st: view(r) }; },
   async reset(b) { const r = await userFromTok(b.tok); r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
   async nick(b) {
