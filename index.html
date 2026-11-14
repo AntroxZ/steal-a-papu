@@ -109,6 +109,7 @@ button:hover{background:var(--cy);color:#04060f}
 .cattag.d{background:linear-gradient(180deg,#ffe27a,#e0a812)}
 .cattag.u{background:linear-gradient(180deg,#ff6a4a,#c4180a);color:#fff}
 .catp{font-size:.68rem;font-weight:700;color:#ffeccb;text-shadow:0 1px 0 #3a200b}
+#catFil{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:2px 0 8px}#catFil button{padding:5px 12px;font-size:.8rem;border-radius:12px;margin:0;border:2px solid #4a2a12;background:linear-gradient(180deg,#d9a566,#c08846);color:#3a200b;text-shadow:none}#catFil button.sel{background:linear-gradient(180deg,#ffe08a,#f2b83a);box-shadow:0 0 0 2px #fff8e6 inset}
 #catInfo{min-height:1.6em;text-align:center;font:700 .95rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
 .sbox #catX{width:42px;height:42px;font-size:1.6rem;border-radius:50%;padding:0;margin:0;color:var(--tx);background:linear-gradient(180deg,#c2603f,#a4472b 55%,#8a361e);border:3px solid #4a2a12}
 @media(max-width:620px){.catcard{flex-direction:column;text-align:center;padding:6px 4px;gap:4px}.cattxt{align-items:center}.catcard img,.catcard .noimg{width:56px}.catname{font-size:.7rem}.catp{font-size:.6rem}.catgrid{gap:6px}#cat .stitle{font-size:1.15rem}#cat .smoney{padding:4px 12px;font-size:.7rem}#cat .smoney b{font-size:1rem}#cat .shead{gap:8px}}
@@ -192,7 +193,7 @@ button:hover{background:var(--cy);color:#04060f}
 <div id="gtFlash"></div>
 <div id="gt"></div>
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
-<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas mover · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
+<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas mover · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>F</kbd> mover un Papu de tu base · <kbd>H</kbd> eliminarlo · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
 <div id="prompt"></div>
 <div id="shop"><div class="sbox">
   <div class="shead"><div class="stitle">TIENDA</div><div class="smoney">Dinero<b id="shopMoney">$0</b></div><button id="shopX" aria-label="Cerrar">&times;</button></div>
@@ -206,6 +207,7 @@ button:hover{background:var(--cy);color:#04060f}
 <div id="cat"><div class="sbox sm">
   <div class="shead"><div class="stitle">CATÁLOGO</div><div class="smoney">Descubiertos<b id="catCount">0/12</b></div><button id="catX" aria-label="Cerrar">&times;</button></div>
   <p class="skhint">Coloca cada Papu en tu base para registrarlo. Toca uno que ya tengas para ver cuándo lo conseguiste.</p>
+  <div id="catFil"></div>
   <div id="catInfo"></div>
   <div class="catgrid" id="catGrid"></div>
 </div></div>
@@ -535,6 +537,7 @@ function updPrompt(){
         tipHtml=key+'<b>Comprar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="'+(ok?'ok':'no')+'">$'+fm(PRICE[l])+(ok?'':' · te faltan $'+fm(Math.ceil(PRICE[l]-money)))+'</i>'}
       else if(nr&&nr.k==='ground'){const o=nr.o;tipPos=[o.g.position.x,o.g.position.y+2.1,o.g.position.z];tipHtml=key+'<b>Agarrar '+NAMES[o.lvl]+'</b>'+rarTag(o.lvl)+'<i class="ok">¡del suelo!</i>'}
       else if(nr&&nr.k==='steal'&&!STL){const q=nr.o,l=q.s.item.userData.lvl;tipPos=[q.s.x,BH+2.2,q.s.z];tipHtml=key+'<b>Mantén E para robar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="ok">'+STEAL_T+' s</i>'}
+      if(!tipHtml){const on=ownSlotNear();if(on){tipPos=[on.s.x,BH+2.2,on.s.z];tipHtml='<span class="k">F</span><b>Mover</b> &nbsp;<span class="k">H</span><b>Eliminar</b>'}}
     }else{
       let bd=5,bs=null;slots.forEach(s=>{const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;bs=s}});
       if(bs){const can=!bs.item||INC[held.userData.lvl]>INC[bs.item.userData.lvl];
@@ -602,11 +605,15 @@ function catInfo(l){
   const cat=(ACC.st&&ACC.st.cat)||{};
   $('catInfo').textContent=cat[l]?NAMES[l]+' · conseguido el '+catDate(cat[l]):'Aún no lo has conseguido. Colócalo en tu base para registrarlo.';
 }
+let catFil=-1;
+const CAT_FILS=[['Todos',-1],['Común',0],['Épico',1],['Legendario',2],['Dorado',3],['Ultra',4]];
 function renderCat(){
   catThumbs();
+  {const f=$('catFil');f.textContent='';CAT_FILS.forEach(([n,v])=>{const b=document.createElement('button');b.textContent=n;if(v===catFil)b.className='sel';b.onclick=()=>{catFil=v;renderCat()};f.appendChild(b)})}
   const cat=(ACC.st&&ACC.st.cat)||{},g=$('catGrid');g.textContent='';let n=0;
   CAT_ORDER.forEach(l=>{
     const has=!!cat[l];if(has)n++;
+    if(catFil>=0&&RAR_OF(l)!==catFil)return;
     const d=document.createElement('div');d.className='catcard '+(has?'have':'lock')+(catSel===l?' sel':'');
     const th=catImgs&&catImgs[l];
     if(th&&(has?th.full:th.plain)){const im=document.createElement('img');im.alt='';im.src=has?th.full:th.plain;d.appendChild(im)}
@@ -975,6 +982,29 @@ function place(s){
   emit({t:'place',slot:slots.indexOf(s),lvl});
   srv('place',{slot:slots.indexOf(s)});
 }
+function ownSlotNear(){
+  const p=player.position;let bd=5,bs=null,bi=-1;
+  slots.forEach((s,i)=>{if(!s.item)return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;bs=s;bi=i}});
+  return bs?{s:bs,i:bi}:null;
+}
+function slotOk(){return running&&!shopOpen&&!setOpen&&stunT<=0&&(mode==='ground'||mode==='land')}
+let delArm=null;
+function liftSlot(){
+  if(!slotOk())return;
+  if(held){toast('Ya llevas un Papu en la mano');return}
+  const n=ownSlotNear();if(!n){toast('Acércate a un Papu de tu base para moverlo');return}
+  const lvl=n.s.item.userData.lvl;scene.remove(n.s.item);n.s.item=null;
+  emit({t:'stl',b:myBase.idx,slot:n.i});mkHeld(lvl);srv('lift',{slot:n.i});
+  toast('Moviendo '+NAMES[lvl]+': presiona E en otro lugar de tu base');
+}
+function delSlot(){
+  if(!slotOk())return;
+  if(held){toast('Suelta primero el Papu que llevas');return}
+  const n=ownSlotNear();if(!n){toast('Acércate a un Papu de tu base para eliminarlo');return}
+  const now=performance.now(),lvl=n.s.item.userData.lvl;
+  if(!delArm||delArm.i!==n.i||now-delArm.t>3000){delArm={i:n.i,t:now};toast('Presiona H otra vez para eliminar '+NAMES[lvl]+' (no recibes nada a cambio)');return}
+  delArm=null;scene.remove(n.s.item);n.s.item=null;emit({t:'stl',b:myBase.idx,slot:n.i});srv('delslot',{slot:n.i});toast('Eliminaste '+NAMES[lvl]);
+}
 function act(){
   if(!running)return;
   if(setOpen||stunT>0)return;
@@ -1011,7 +1041,7 @@ addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter'){const id=e.target.id;if(id==='nmIn')$('nmYes').click();else if(id.startsWith('lg'))$('lgGo').click();else if(id.startsWith('rg'))$('rgGo').click()}else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();return}
   const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();
-  if(k==='Escape'){if(shopOpen)closeShop();else if($('conf').style.display==='flex')$('confNo').click();else if(setOpen)closeSet()}if(k==='e'&&!e.repeat)act();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
+  if(k==='Escape'){if(shopOpen)closeShop();else if($('conf').style.display==='flex')$('confNo').click();else if(setOpen)closeSet()}if(k==='e'&&!e.repeat)act();if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
 addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='e'||e.key==='E')cancelSteal();keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 let pitch=1.15;
 addEventListener('contextmenu',e=>e.preventDefault());
@@ -1759,8 +1789,7 @@ const plankC=(()=>{const c=document.createElement('canvas');c.width=LW;c.height=
 const plankTex=new THREE.CanvasTexture(plankC);plankTex.magFilter=THREE.NearestFilter;
 const signG=new THREE.Group();signG.position.set(-81.6,0,BELT_Z);
 {const bm=new THREE.MeshBasicMaterial({map:legTex,toneMapped:false}),sm=new THREE.MeshBasicMaterial({map:plankTex,toneMapped:false});
- const board=new THREE.Mesh(new THREE.BoxGeometry(8.4,4.7,.35),[sm,sm,sm,sm,bm,bm]);board.position.y=10.0;signG.add(board);
- {const post=new THREE.Mesh(new THREE.BoxGeometry(.9,1.3,.6),new THREE.MeshBasicMaterial({color:0x6f4e26,toneMapped:false}));post.position.set(0,7.4,0);signG.add(post)}
+ const board=new THREE.Mesh(new THREE.BoxGeometry(5,3.4,5),[bm,bm,sm,sm,bm,bm]);board.position.y=9.6;signG.add(board);
  scene.add(signG)}
 function updLegSign(now){
   const sn=srvNow(),left=Math.max(0,Math.ceil(((Math.floor(sn/LEG_MS)+1)*LEG_MS-sn)/1000));
