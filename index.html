@@ -16,6 +16,7 @@ canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block}
 .card b{display:block;font-size:1.3rem;font-weight:800;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
 #gt{position:fixed;top:calc(env(safe-area-inset-top,0px) + 92px);left:50%;transform:translateX(-50%);display:none;padding:7px 22px;border-radius:999px;border:3px solid #4a2a12;background:linear-gradient(180deg,#ffe27a,#e0a812);box-shadow:0 4px 0 #35200e,0 0 22px rgba(255,200,40,.8);font:800 1.05rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#4a2a12;text-shadow:0 1px 0 rgba(255,240,200,.7);letter-spacing:.03em;white-space:nowrap;pointer-events:none;z-index:6;animation:gtp 1s ease-in-out infinite}
 @keyframes gtp{50%{box-shadow:0 4px 0 #35200e,0 0 34px rgba(255,230,90,1)}}
+#gtFlash{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;z-index:4}
 #toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);left:0;right:0;text-align:center;font-size:.9rem;color:#fff;text-shadow:0 0 6px #000,0 0 10px var(--cy);pointer-events:none;opacity:0;transition:opacity .3s}
 #hint{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:0;right:0;text-align:center;font-size:.6rem;letter-spacing:.08em;color:#fff;text-shadow:0 0 6px #000,0 0 3px #000;pointer-events:none;line-height:1.7}
 kbd{border:1px solid var(--mg);border-radius:4px;padding:1px 5px;color:var(--mg)}
@@ -188,6 +189,7 @@ button:hover{background:var(--cy);color:#04060f}
   <div class="card" id="barCard"><small>Barrera</small><b id="barVal">Lista</b><div id="barBar"><i id="barFill"></i></div></div>
 </div>
 <div id="toast"></div>
+<div id="gtFlash"></div>
 <div id="gt"></div>
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
 <div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas mover · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>Shift</kbd> correr rápido · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
@@ -277,16 +279,16 @@ button:hover{background:var(--cy);color:#04060f}
 const SRC=[];
 const INC=[1,5,12,25,50,10,40,5500,22000,40000,160000,700,2800,75,300,600000,2500000],COL=['#00f0ff','#7cff6b','#ffd400','#ff6a3d','#ff2bd6','#9d8cff','#ffc400','#5cf2c8','#ffc400','#ff7a59','#ffc400','#ff4fa3','#ffc400','#38e0a0','#ffc400','#ff5ad1','#ff2a2a'];
 const MODEL=[0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],NAMES=[,,,,,'Sansini Danini','Sansini Danini Dorado','Andriksini Lunini','Andriksini Lunini Dorado','Argimini Cordivini','Argimini Cordivini Dorado','Betini Heribirtini','Betini Heribirtini Dorado','Emimaxini Gaisini','Emimaxini Gaisini Dorado','Andrikini Argimini','Andrikini Argimini Ultra'],isGold=l=>l===6||l===8||l===10||l===12||l===14;const isFx=l=>isGold(l)||l>=15;
-/* categorias: 0 comun (gris) · 1 epico (morado) · 2 legendario (dorado) · 3 ultra (rojo) */
-const RAR_OF=l=>l===16?3:(l===9||l===10||l===15)?2:(l===11||l===12||l===7||l===8)?1:0;
-const RAR_N=['COMÚN','ÉPICO','LEGENDARIO','ULTRA'],RAR_C=['#b8bcc4','#b36bff','#ffd23a','#ff2a2a'];
+/* 5 categorias: 0 comun (gris) · 1 epico (morado) · 2 legendario (naranja) · 3 dorado (amarillo) · 4 ultra (rojo) */
+const RAR_OF=l=>l===16?4:isGold(l)?3:(l===7||l===9||l===15)?2:l===11?1:0;
+const RAR_N=['COMÚN','ÉPICO','LEGENDARIO','DORADO','ULTRA'],RAR_C=['#b8bcc4','#b36bff','#ff8a1f','#ffd23a','#ff2a2a'];
 const fm=n=>Math.floor(n).toLocaleString('es-MX'),fc=n=>n>=1e6?+(n/1e6).toFixed(2)+'M':n>=1e3?+(n/1e3).toFixed(1)+'K':String(n);
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
 const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=7,GROUND_LIFE=5000,BAR_ON=80000,BAR_CD=60000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
 const SPAWN=3,BELT_V=3.2,MAXB=10,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
-const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.toneMapping=THREE.LinearToneMapping;R.toneMappingExposure=1;
 let PR=Math.min(devicePixelRatio,2),FPS=60,fpsN=0,fpsT=performance.now();R.setPixelRatio(PR);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xbfe3ff);scene.fog=new THREE.Fog(0xbfe3ff,150,450);
 const cam=new THREE.PerspectiveCamera(55,1,.1,1200);
@@ -645,7 +647,7 @@ function makeBR(i){
   if(MODEL[i])s=makeModel(i);
   else{s=new THREE.Sprite(new THREE.SpriteMaterial({map:faceT[i],transparent:true,fog:false}));s.scale.set(SC[i],SC[i],1)}
   s.position.y=bobY(i);g.add(s);
-  const l=new THREE.Sprite(new THREE.SpriteMaterial({map:labT[i],transparent:true,fog:false,depthTest:false}));
+  const l=new THREE.Sprite(new THREE.SpriteMaterial({map:labT[i],transparent:true,fog:false,depthTest:false,toneMapped:false}));
   if(MODEL[i])l.scale.set(5.2,1.95,1);else l.scale.set(2.8,1.05,1);
   l.position.y=SC[i]+2.05;g.add(l);
   const p=new THREE.Mesh(new THREE.CylinderGeometry(.9,1.1,.3,24),B(COL[i]));p.position.y=.15;g.add(p);
@@ -675,12 +677,12 @@ const goldMatB=new THREE.MeshBasicMaterial({map:goldTexB,vertexColors:!HASTEX_B,
 const auraMat=new THREE.MeshBasicMaterial({color:0xffc400,side:THREE.BackSide,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false});
 const haloMat=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),g=x.createRadialGradient(64,64,4,64,64,62);
   g.addColorStop(0,'rgba(255,236,150,.95)');g.addColorStop(.45,'rgba(255,190,30,.45)');g.addColorStop(1,'rgba(255,170,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);
-  return new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false})})();
+  return new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false})})();
 const REDSTOPS=[[0,[34,0,0]],[.35,[125,8,6]],[.65,[226,28,18]],[.85,[255,92,52]],[1,[255,205,170]]];
 const redAuraMat=new THREE.MeshBasicMaterial({color:0xff1e00,side:THREE.BackSide,transparent:true,opacity:.55,blending:THREE.AdditiveBlending,depthWrite:false});
 const redHaloMat=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),g=x.createRadialGradient(64,64,4,64,64,62);
   g.addColorStop(0,'rgba(255,170,120,.95)');g.addColorStop(.45,'rgba(255,40,10,.5)');g.addColorStop(1,'rgba(255,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);
-  return new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false})})();
+  return new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false})})();
 /* fuego del Papu Ultra: llamas que suben en espiral alrededor */
 const flameTex=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
   x.translate(64,78);x.scale(.62,1);const g=x.createRadialGradient(0,0,2,0,0,58);
@@ -691,7 +693,7 @@ function makeFire(o){
   o=o||{};const n=o.n||14,rs=o.r||1,hs=o.h||1,ss=o.s||1,add=o.add!==false;
   const g=new THREE.Group();
   for(let i=0;i<n;i++){
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,color:FCOL[i%3],transparent:true,blending:add?THREE.AdditiveBlending:THREE.NormalBlending,depthWrite:false,fog:false}));
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,color:FCOL[i%3],transparent:true,blending:add?THREE.AdditiveBlending:THREE.NormalBlending,depthWrite:false,fog:false,toneMapped:false}));
     sp.userData={a:Math.random()*6.283,r:(.85+Math.random()*.9)*rs,ph:Math.random(),per:.9+Math.random()*.7,s:(1.7+Math.random()*1.3)*ss,hs};g.add(sp);
   }
   FIRES.push(g);return g;
@@ -731,6 +733,7 @@ function mkGl(){const c=document.createElement('canvas');c.width=640;c.height=24
 const GLS={6:mkGl(),8:mkGl(),10:mkGl(),12:mkGl(),14:mkGl(),15:mkGl(),16:mkGl()};
 function fitFont(x,txt,px,max){x.font='800 '+px+'px Orbitron,sans-serif';while(x.measureText(txt).width>max&&px>16){px-=2;x.font='800 '+px+'px Orbitron,sans-serif'}}
 function neon(x,txt,cx,cy,strokeS,glow,blur,core){
+  x.shadowBlur=0;x.lineJoin='round';x.lineWidth=14;x.strokeStyle='rgba(18,8,30,.92)';x.strokeText(txt,cx,cy);
   x.shadowColor=glow;x.shadowBlur=blur;x.lineJoin='round';x.lineWidth=7;x.strokeStyle=strokeS;x.strokeText(txt,cx,cy);
   x.shadowBlur=blur*.45;x.fillStyle=core||'#fff';x.fillText(txt,cx,cy);
 }
@@ -742,9 +745,6 @@ function drawGold(t,only){
     const G=GLS[l],x=G.ctx,ul=l===16,pl=Math.sin(t/170);
     x.clearRect(0,0,640,240);x.shadowBlur=0;
     /* panel oscuro con borde de neon */
-    const hb=ul?(350+pl*8)%360:(h+120)%360;
-    x.fillStyle='rgba(10,4,26,.66)';rr(x,10,10,620,220,34);x.fill();
-    x.lineWidth=5;x.strokeStyle='hsl('+hb+',100%,'+(ul?58:64)+'%)';x.shadowColor=x.strokeStyle;x.shadowBlur=22+8*pl;rr(x,10,10,620,220,34);x.stroke();
     x.textAlign='center';x.textBaseline='middle';
     const g=x.createLinearGradient(40,0,600,0);
     if(ul)for(let k=0;k<=8;k++)g.addColorStop(k/8,k%2?'hsl('+((h*1.6+k*45)%360)+',100%,62%)':'hsl('+(352+(k*3)%12)%360+',100%,'+(52+8*pl)+'%)');
@@ -1003,7 +1003,7 @@ function makeNameSprite(name,op){
   x.textAlign='center';x.textBaseline='middle';x.font='800 64px "Trebuchet MS","Segoe UI",Verdana,sans-serif';
   while(x.measureText(name).width>480&&parseInt(x.font)>24)x.font='800 '+(parseInt(x.font)-4)+'px "Trebuchet MS","Segoe UI",Verdana,sans-serif';
   x.lineJoin='round';x.lineWidth=12;x.strokeStyle='#2a1708';x.strokeText(name,256,66);x.fillStyle='#fff8e6';x.fillText(name,256,66);
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,opacity:op,depthTest:false,fog:false}));
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,opacity:op,depthTest:false,fog:false,toneMapped:false}));
   sp.scale.set(5,1.25,1);sp.renderOrder=10;return sp;
 }
 let nameSpr=null;
@@ -1527,7 +1527,7 @@ function spinStars(g,now){g.children.forEach((s,i)=>{const a=now/260+i*Math.PI*2
 const myStars=makeStars();player.add(myStars);
 function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+r,b,r);x.closePath()}
 /* contador de enfriamiento del sentón: texto blanco + barrita; lo ven todos sobre la cabeza del que lo dio */
-function makeCd(){const c=document.createElement('canvas');c.width=256;c.height=112;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,fog:false}));sp.scale.set(3.4,1.49,1);sp.renderOrder=12;sp.visible=false;sp.userData={c,last:-1};return sp}
+function makeCd(){const c=document.createElement('canvas');c.width=256;c.height=112;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,fog:false,toneMapped:false}));sp.scale.set(3.4,1.49,1);sp.renderOrder=12;sp.visible=false;sp.userData={c,last:-1};return sp}
 function setCdT(sp,tn){
   if(tn<=0){sp.visible=false;sp.userData.last=-1;return}
   sp.visible=true;if(sp.userData.last===tn)return;sp.userData.last=tn;
@@ -1632,71 +1632,127 @@ function gameTick(dt,now){
   {setCdT(myCd,slamCd>0?Math.ceil(slamCd*10):0);if(camD<1.2)myCd.visible=false;myCd.position.y=(nameSpr?nameSpr.position.y:4.9)+1.45}
   updSteal(dt);updBar(now);
 }
-/* ====== ambiente de fiesta: antorchas, confeti azul y fuegos artificiales ====== */
+/* ====== PAPU GOLDEN TIME: noche de fiesta (solo mientras dura el evento) ====== */
+const PARTY={k:0,fa:0,fh:0,fnext:.3},FOG_DAY=new THREE.Color(0xbfe3ff),FOG_NIGHT=new THREE.Color(0x0a0824);
+const partyG=new THREE.Group();partyG.visible=false;scene.add(partyG);
+const nightTex=(()=>{const c=document.createElement('canvas');c.width=1024;c.height=512;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,512);g.addColorStop(0,'#02030e');g.addColorStop(.5,'#10073a');g.addColorStop(.85,'#3b0f66');g.addColorStop(1,'#16183f');x.fillStyle=g;x.fillRect(0,0,1024,512);
+  [[200,230,'rgba(255,40,200,.28)'],[560,170,'rgba(0,200,255,.26)'],[860,260,'rgba(120,80,255,.3)'],[40,200,'rgba(0,255,170,.2)']].forEach(([a,b,col])=>{const r=x.createRadialGradient(a,b,0,a,b,190);r.addColorStop(0,col);r.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=r;x.fillRect(0,0,1024,512)});
+  for(let i=0;i<520;i++){const a=Math.random()*1024,b=Math.random()*380,sz=Math.random()*1.8+.4;x.fillStyle='rgba(255,255,'+(200+Math.floor(Math.random()*55))+','+(.5+Math.random()*.5)+')';x.beginPath();x.arc(a,b,sz,0,7);x.fill()}
+  const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;return t})();
+const nightSky=new THREE.Mesh(new THREE.SphereGeometry(515,24,16),new THREE.MeshBasicMaterial({map:nightTex,side:THREE.BackSide,fog:false,transparent:true,opacity:0,depthWrite:false,toneMapped:false}));nightSky.visible=false;nightSky.renderOrder=-2;scene.add(nightSky);
+const flashSky=new THREE.Mesh(new THREE.SphereGeometry(510,16,12),new THREE.MeshBasicMaterial({color:0xff00ff,side:THREE.BackSide,fog:false,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));flashSky.visible=false;flashSky.renderOrder=-1;scene.add(flashSky);
+/* antorchas con fuego */
 function makeTorch(x,z,big){
   const g=new THREE.Group();g.position.set(x,0,z);
   const post=new THREE.Mesh(new THREE.CylinderGeometry(.16,.24,3,8),B(0x4a2a12));post.position.y=1.5;g.add(post);
   const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.5,.28,.35,10),B(0x2a1708));bowl.position.y=3.1;g.add(bowl);
   const f=makeFire(big?{n:12,r:1.5,h:1.5,s:1.7,add:false}:{n:7,r:.35,h:.8,s:.8,add:false});f.position.y=3.15;g.add(f);
-  scene.add(g);return g;
+  partyG.add(g);return g;
 }
 [-80,-48,-16,16,48,80].forEach(x=>[BELT_Z-6,BELT_Z+6].forEach(z=>makeTorch(x,z,false)));
 [-92,92].forEach(x=>makeTorch(x,BELT_Z+10,true));
+/* confeti de colores del arcoiris */
 const CONF_N=380,confPos=new Float32Array(CONF_N*3),confVel=new Float32Array(CONF_N*2),confCol=new Float32Array(CONF_N*3);
-const confGeo=new THREE.BufferGeometry(),confAttr=new THREE.BufferAttribute(confPos,3);
-{const pal=[0x1e90ff,0x00bfff,0x4169e1,0x00e5ff,0x6a8dff,0x2a6bff].map(h=>new THREE.Color(h));
- for(let i=0;i<CONF_N;i++){confPos[i*3]=(Math.random()-.5)*150;confPos[i*3+1]=Math.random()*46;confPos[i*3+2]=(Math.random()-.5)*150+20;confVel[i*2]=3+Math.random()*4;confVel[i*2+1]=Math.random()*6.28;const c=pal[i%pal.length];confCol[i*3]=c.r;confCol[i*3+1]=c.g;confCol[i*3+2]=c.b}
- confGeo.setAttribute('position',confAttr);confGeo.setAttribute('color',new THREE.BufferAttribute(confCol,3))}
-const confetti=new THREE.Points(confGeo,new THREE.PointsMaterial({size:.55,vertexColors:true,transparent:true,opacity:.95,depthWrite:false,fog:false}));confetti.frustumCulled=false;scene.add(confetti);
-const FW=[],FW_N=64,FW_COL=[0xff3b3b,0xffd23a,0x3bb0ff,0xff4fd8,0x56ff7a,0xffffff,0xff9a2e,0x7a5cff];let fwNext=1.2;
+const confGeo=new THREE.BufferGeometry(),confAttr=new THREE.BufferAttribute(confPos,3),tmpC=new THREE.Color();
+for(let i=0;i<CONF_N;i++){confPos[i*3]=(Math.random()-.5)*150;confPos[i*3+1]=Math.random()*46;confPos[i*3+2]=(Math.random()-.5)*150+20;confVel[i*2]=3+Math.random()*4;confVel[i*2+1]=Math.random()*6.28;tmpC.setHSL((i*.61803)%1,1,.6);confCol[i*3]=tmpC.r;confCol[i*3+1]=tmpC.g;confCol[i*3+2]=tmpC.b}
+confGeo.setAttribute('position',confAttr);confGeo.setAttribute('color',new THREE.BufferAttribute(confCol,3));
+const confetti=new THREE.Points(confGeo,new THREE.PointsMaterial({size:.6,vertexColors:true,transparent:true,opacity:.95,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending}));confetti.frustumCulled=false;partyG.add(confetti);
+/* lluvia de rayas arcoiris */
+const RAIN_N=420,rainPos=new Float32Array(RAIN_N*6),rainCol=new Float32Array(RAIN_N*6),rainSp=new Float32Array(RAIN_N);
+const rainGeo=new THREE.BufferGeometry(),rainAttr=new THREE.BufferAttribute(rainPos,3);
+for(let i=0;i<RAIN_N;i++){const x=(Math.random()-.5)*150,y=Math.random()*50,z=(Math.random()-.5)*150+20,j=i*6;
+  rainPos[j]=x;rainPos[j+1]=y;rainPos[j+2]=z;rainPos[j+3]=x;rainPos[j+4]=y+2.4;rainPos[j+5]=z;rainSp[i]=34+Math.random()*14;
+  tmpC.setHSL((i/RAIN_N*7)%1,1,.62);for(let q=0;q<2;q++){rainCol[j+q*3]=tmpC.r;rainCol[j+q*3+1]=tmpC.g;rainCol[j+q*3+2]=tmpC.b}}
+rainGeo.setAttribute('position',rainAttr);rainGeo.setAttribute('color',new THREE.BufferAttribute(rainCol,3));
+const rain=new THREE.LineSegments(rainGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.85,fog:false,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending}));rain.frustumCulled=false;partyG.add(rain);
+/* reflectores de colores */
+const BEAMS=[];[[-110,-50],[-60,100],[0,-60],[60,100],[110,-50],[-100,40],[100,40],[0,110]].forEach(([x,z])=>{
+  const geo=new THREE.CylinderGeometry(.12,2.2,80,12,1,true);geo.translate(0,40,0);
+  const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.2,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false,toneMapped:false}));
+  m.position.set(x,0,z);partyG.add(m);BEAMS.push(m)});
+/* fuegos artificiales */
+const FW=[],FW_N=90;
 function newFW(){
-  const geo=new THREE.BufferGeometry(),pos=new Float32Array(FW_N*3),at=new THREE.BufferAttribute(pos,3);geo.setAttribute('position',at);
-  const mat=new THREE.PointsMaterial({size:1.7,color:0xffffff,transparent:true,opacity:0,depthWrite:false,fog:false});
-  const pts=new THREE.Points(geo,mat);pts.frustumCulled=false;pts.visible=false;scene.add(pts);
-  const rk=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,color:0xffd070,transparent:true,depthWrite:false,fog:false}));rk.scale.set(1.3,2.2,1);rk.visible=false;scene.add(rk);
-  return{pts,mat,pos,at,vel:new Float32Array(FW_N*3),rk,st:0,t:0,x:0,y:0,z:0,ty:0};
+  const geo=new THREE.BufferGeometry(),pos=new Float32Array(FW_N*3),col=new Float32Array(FW_N*3),at=new THREE.BufferAttribute(pos,3),ca=new THREE.BufferAttribute(col,3);geo.setAttribute('position',at);geo.setAttribute('color',ca);
+  const mat=new THREE.PointsMaterial({size:2.3,vertexColors:true,transparent:true,opacity:0,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending});
+  const pts=new THREE.Points(geo,mat);pts.frustumCulled=false;pts.visible=false;partyG.add(pts);
+  const rk=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,color:0xffd070,transparent:true,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending}));rk.scale.set(1.3,2.4,1);rk.visible=false;partyG.add(rk);
+  return{pts,mat,pos,col,at,ca,vel:new Float32Array(FW_N*3),rk,st:0,t:0,x:0,y:0,z:0,ty:0};
 }
-for(let i=0;i<4;i++)FW.push(newFW());
+for(let i=0;i<10;i++)FW.push(newFW());
 function updParty(dt,now){
+  const tgt=gtActive()?1:0;PARTY.k+=(tgt-PARTY.k)*Math.min(1,dt*1.8);if(Math.abs(PARTY.k-tgt)<.004)PARTY.k=tgt;
+  const k=PARTY.k;
+  R.toneMappingExposure=1-.62*k;
+  if(k<=0){if(partyG.visible){partyG.visible=false;nightSky.visible=false;flashSky.visible=false;$('gtFlash').style.opacity=0;scene.fog.color.copy(FOG_DAY);FW.forEach(f=>{f.st=0;f.pts.visible=false;f.rk.visible=false})}return}
   const px=player.position.x,pz=player.position.z;
+  partyG.visible=true;nightSky.visible=true;nightSky.material.opacity=k;nightTex.offset.x=(nightTex.offset.x+dt*.004)%1;
+  scene.fog.color.copy(FOG_DAY).lerp(FOG_NIGHT,k);
+  /* parpadeo de colores del cielo */
+  if(tgt){PARTY.fnext-=dt;if(PARTY.fnext<=0){PARTY.fnext=.3+Math.random()*.7;PARTY.fh=Math.random();PARTY.fa=1}}
+  PARTY.fa*=Math.exp(-dt*5);
+  flashSky.visible=PARTY.fa>.02;flashSky.material.color.setHSL(PARTY.fh,1,.55);flashSky.material.opacity=.6*PARTY.fa*k;
+  const fl=$('gtFlash');fl.style.background='hsl('+Math.round(PARTY.fh*360)+',100%,50%)';fl.style.opacity=(.13*PARTY.fa*k).toFixed(3);
+  /* reflectores */
+  BEAMS.forEach((m,i)=>{m.rotation.z=Math.sin(now/1100+i*1.7)*.55;m.rotation.x=Math.cos(now/1400+i*2.3)*.55;m.material.color.setHSL((now/5000+i/BEAMS.length)%1,1,.55)});
+  /* confeti y lluvia */
   for(let i=0;i<CONF_N;i++){
-    const k=i*3;confPos[k+1]-=confVel[i*2]*dt;
-    confPos[k]+=Math.sin(now/900+confVel[i*2+1])*1.4*dt;confPos[k+2]+=Math.cos(now/1100+confVel[i*2+1])*1.2*dt;
-    if(confPos[k+1]<0){confPos[k+1]=44+Math.random()*6;confPos[k]=px+(Math.random()-.5)*150;confPos[k+2]=pz+(Math.random()-.5)*150}
-    else{if(confPos[k]>px+80)confPos[k]-=160;else if(confPos[k]<px-80)confPos[k]+=160;if(confPos[k+2]>pz+80)confPos[k+2]-=160;else if(confPos[k+2]<pz-80)confPos[k+2]+=160}
+    const q=i*3;confPos[q+1]-=confVel[i*2]*dt;
+    confPos[q]+=Math.sin(now/900+confVel[i*2+1])*1.4*dt;confPos[q+2]+=Math.cos(now/1100+confVel[i*2+1])*1.2*dt;
+    if(confPos[q+1]<0){confPos[q+1]=44+Math.random()*6;confPos[q]=px+(Math.random()-.5)*150;confPos[q+2]=pz+(Math.random()-.5)*150}
+    else{if(confPos[q]>px+80)confPos[q]-=160;else if(confPos[q]<px-80)confPos[q]+=160;if(confPos[q+2]>pz+80)confPos[q+2]-=160;else if(confPos[q+2]<pz-80)confPos[q+2]+=160}
   }
   confAttr.needsUpdate=true;
-  fwNext-=dt;
-  if(fwNext<=0){const f=FW.find(q=>q.st===0);if(f){f.st=1;f.t=0;f.x=(Math.random()-.5)*260;f.z=-70+Math.random()*180;f.ty=32+Math.random()*20;f.rk.visible=true;fwNext=.8+Math.random()*1.5}else fwNext=.3}
+  for(let i=0;i<RAIN_N;i++){
+    const j=i*6,dy=rainSp[i]*dt;rainPos[j+1]-=dy;rainPos[j+4]-=dy;
+    if(rainPos[j+1]<0){const nx=px+(Math.random()-.5)*150,ny=48+Math.random()*8,nz=pz+(Math.random()-.5)*150;rainPos[j]=rainPos[j+3]=nx;rainPos[j+1]=ny;rainPos[j+4]=ny+2.4;rainPos[j+2]=rainPos[j+5]=nz}
+    else{let sx=0,sz=0;if(rainPos[j]>px+80)sx=-160;else if(rainPos[j]<px-80)sx=160;if(rainPos[j+2]>pz+80)sz=-160;else if(rainPos[j+2]<pz-80)sz=160;if(sx||sz){rainPos[j]+=sx;rainPos[j+3]+=sx;rainPos[j+2]+=sz;rainPos[j+5]+=sz}}
+  }
+  rainAttr.needsUpdate=true;
+  /* fuegos artificiales: muchos y de varios colores */
+  if(tgt){fwNext-=dt;if(fwNext<=0){const f=FW.find(q=>q.st===0);if(f){f.st=1;f.t=0;f.x=px+(Math.random()-.5)*240;f.z=pz+(Math.random()-.5)*200;f.ty=30+Math.random()*26;f.rk.visible=true;fwNext=.2+Math.random()*.45}else fwNext=.2}}
   FW.forEach(f=>{
-    if(f.st===1){f.t+=dt;const k=Math.min(1,f.t/.9),e=1-(1-k)*(1-k);f.y=1+(f.ty-1)*e;f.rk.position.set(f.x,f.y,f.z);
-      if(k>=1){f.st=2;f.t=0;f.rk.visible=false;f.mat.color.setHex(FW_COL[Math.floor(Math.random()*FW_COL.length)]);f.mat.opacity=1;f.mat.size=1.7;f.pts.visible=true;
-        for(let i=0;i<FW_N;i++){const u=Math.random()*2-1,th=Math.random()*6.283,r=Math.sqrt(1-u*u),sp=9+Math.random()*7;f.pos[i*3]=f.x;f.pos[i*3+1]=f.ty;f.pos[i*3+2]=f.z;f.vel[i*3]=r*Math.cos(th)*sp;f.vel[i*3+1]=u*sp;f.vel[i*3+2]=r*Math.sin(th)*sp}}}
+    if(f.st===1){f.t+=dt;const u=Math.min(1,f.t/.8),e=1-(1-u)*(1-u);f.y=1+(f.ty-1)*e;f.rk.position.set(f.x,f.y,f.z);
+      if(u>=1){f.st=2;f.t=0;f.rk.visible=false;f.mat.opacity=1;f.mat.size=2.3;f.pts.visible=true;
+        const h0=Math.random(),rb=Math.random()<.45;
+        for(let i=0;i<FW_N;i++){const uu=Math.random()*2-1,th=Math.random()*6.283,r=Math.sqrt(1-uu*uu),sp=9+Math.random()*8;
+          f.pos[i*3]=f.x;f.pos[i*3+1]=f.ty;f.pos[i*3+2]=f.z;f.vel[i*3]=r*Math.cos(th)*sp;f.vel[i*3+1]=uu*sp;f.vel[i*3+2]=r*Math.sin(th)*sp;
+          tmpC.setHSL(rb?(h0+i/FW_N)%1:(h0+Math.random()*.07)%1,1,.6);f.col[i*3]=tmpC.r;f.col[i*3+1]=tmpC.g;f.col[i*3+2]=tmpC.b}
+        f.ca.needsUpdate=true}}
     else if(f.st===2){f.t+=dt;
       for(let i=0;i<FW_N;i++){const j=i*3;f.pos[j]+=f.vel[j]*dt;f.pos[j+1]+=f.vel[j+1]*dt;f.pos[j+2]+=f.vel[j+2]*dt;const d=1-1.1*dt;f.vel[j]*=d;f.vel[j+1]=f.vel[j+1]*d-7*dt;f.vel[j+2]*=d}
-      f.at.needsUpdate=true;const k=f.t/1.9;f.mat.opacity=Math.max(0,1-k*k);f.mat.size=1.7*(1-.4*k);
+      f.at.needsUpdate=true;const u=f.t/1.9;f.mat.opacity=Math.max(0,1-u*u);f.mat.size=2.3*(1-.4*u);
       if(f.t>=1.9){f.st=0;f.pts.visible=false}}
   });
 }
+let fwNext=.5;
 /* ====== Papu legendario asegurado cada 10 minutos (hora del servidor, igual para todos) ====== */
 const LEG_MS=600000,LEG={slot:-1};let SRV_OFF=0,legLast=-1;
 const srvNow=()=>Date.now()+SRV_OFF;
-const legC=document.createElement('canvas');legC.width=768;legC.height=256;const legTex=new THREE.CanvasTexture(legC);
-const legSign=new THREE.Sprite(new THREE.SpriteMaterial({map:legTex,transparent:true,fog:false}));legSign.scale.set(24,8,1);legSign.position.set(-72,10.5,BELT_Z);scene.add(legSign);
+/* letrero fisico de madera clavado en el suelo, junto a donde salen los Papus */
+const legC=document.createElement('canvas');legC.width=512;legC.height=300;const legTex=new THREE.CanvasTexture(legC);legTex.magFilter=THREE.NearestFilter;
+const plankC=(()=>{const c=document.createElement('canvas');c.width=512;c.height=300;const x=c.getContext('2d'),base=[190,150,92];
+  for(let r=0;r<4;r++){for(let q=0;q<16;q++){const sh=(Math.random()-.5)*26;x.fillStyle='rgb('+Math.round(base[0]+sh)+','+Math.round(base[1]+sh)+','+Math.round(base[2]+sh*.7)+')';x.fillRect(q*32,r*75,32,75)}
+    x.fillStyle='#a47e3c';x.fillRect(0,r*75+73,512,3)}
+  x.lineWidth=14;x.strokeStyle='#6b4a22';x.strokeRect(7,7,498,286);return c})();
+const plankTex=new THREE.CanvasTexture(plankC);plankTex.magFilter=THREE.NearestFilter;
+const signG=new THREE.Group();signG.position.set(-80,0,BELT_Z+2.9);
+{const bm=new THREE.MeshBasicMaterial({map:legTex,toneMapped:false}),sm=new THREE.MeshBasicMaterial({map:plankTex,toneMapped:false});
+ const board=new THREE.Mesh(new THREE.BoxGeometry(3.2,1.9,.24),[sm,sm,sm,sm,bm,bm]);board.position.y=2.55;signG.add(board);
+ const post=new THREE.Mesh(new THREE.BoxGeometry(.3,1.9,.3),new THREE.MeshBasicMaterial({color:0x6f4e26,toneMapped:false}));post.position.y=.95;signG.add(post);
+ scene.add(signG)}
 function updLegSign(now){
   const sn=srvNow(),left=Math.max(0,Math.ceil(((Math.floor(sn/LEG_MS)+1)*LEG_MS-sn)/1000));
   if(left===legLast)return;legLast=left;
-  const x=legC.getContext('2d'),hot=left<=10,col=hot?'#ff5a2a':'#ffd23a',gl=hot?'#ff2a00':'#ffb400';
-  x.clearRect(0,0,768,256);x.shadowBlur=0;
-  x.fillStyle='rgba(20,10,0,.74)';rr(x,8,8,752,240,40);x.fill();
-  x.lineWidth=7;x.strokeStyle=col;x.shadowColor=gl;x.shadowBlur=26;rr(x,8,8,752,240,40);x.stroke();
-  x.textAlign='center';x.textBaseline='middle';
-  x.font='800 44px Orbitron,sans-serif';neon(x,'PAPU LEGENDARIO EN:',384,66,col,gl,22,'#fff7d6');
-  x.font='800 112px Orbitron,sans-serif';neon(x,Math.floor(left/60)+':'+String(left%60).padStart(2,'0'),384,171,col,gl,28,'#ffffff');
-  x.shadowBlur=0;legTex.needsUpdate=true;
+  const x=legC.getContext('2d'),hot=left<=10;
+  x.drawImage(plankC,0,0);x.textAlign='center';x.textBaseline='middle';x.fillStyle=hot?'#b3160a':'#2a1708';
+  x.font='800 40px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.fillText('PAPU LEGENDARIO',256,66);x.fillText('EN:',256,112);
+  x.font='800 128px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.fillText(Math.floor(left/60)+':'+String(left%60).padStart(2,'0'),256,210);
+  legTex.needsUpdate=true;
 }
 function spawnLegendary(){
-  const r=Math.random()*10,lvl=r<5?9:r<8?10:15,iid=++NET.iid;
+  const rr0=Math.random(),lvl=rr0<.5?7:rr0<.85?9:15,iid=++NET.iid;
   spawnItem(lvl,-BELT_L/2+2,iid);if(NET.on)bcast({t:'sp',lvl,iid,leg:1});
   toast('¡Apareció un Papu LEGENDARIO: '+NAMES[lvl]+'!');
 }
