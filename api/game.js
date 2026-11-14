@@ -10,6 +10,9 @@ const ADMIN_PASS = process.env.ADMIN_PASS || '';
 /* mismos valores que el juego: nivel -> ingreso por segundo y precio */
 const INC = [1, 5, 12, 25, 50, 10, 40, 5500, 22000, 40000, 160000, 700, 2800, 75, 300, 600000, 2500000];
 const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 24000, 500, 2000, 15000000, 100000000];
+/* evento en vivo: Papu Golden Time (el admin lo inicia; los jugadores lo reciben al sincronizar) */
+const EV_MS = 120000;
+async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 const START = 50, NSLOT = 10, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
@@ -139,17 +142,17 @@ const actions = {
     r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
-    return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r) };
+    return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r), ev: await evLeft() };
   },
   async resume(b) {
     const t = readTok(b.tok);
     if (t && t.adm) return { admin: true, tok: b.tok };
     const r = await userFromTok(b.tok);
     r.t = Date.now(); r.seen = r.t; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
-    return { tok: b.tok, st: view(r) };
+    return { tok: b.tok, st: view(r), ev: await evLeft() };
   },
   async sync(b) {
-    const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r); return { st: view(r) };
+    const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r); return { st: view(r), ev: await evLeft() };
   },
   /* comprar un Papu de la cinta: se cobra al agarrarlo (si lo pierdes, lo pierdes) */
   async buy(b) {
@@ -229,7 +232,7 @@ const actions = {
       out.push({ user: r.user, pass: decPass(r.pass), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
     }
     out.sort((a, b) => b.seen - a.seen);
-    return { users: out, now: Date.now() };
+    return { users: out, now: Date.now(), ev: await evLeft() };
   },
   async aset(b) {
     adminFromTok(b.tok);
@@ -241,6 +244,12 @@ const actions = {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
     r.slots = emptySlots(); await saveRec(r); return { ok: true };
+  },
+  /* eventos: iniciar o detener el Papu Golden Time */
+  async aev(b) {
+    adminFromTok(b.tok);
+    if (b.on) await db('SET', 'ev:gt', String(Date.now() + EV_MS), 'EX', 180); else await db('DEL', 'ev:gt');
+    return { ev: await evLeft() };
   },
   /* restablecer el catálogo de una cuenta (solo admin) */
   async acat(b) {
