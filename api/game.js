@@ -12,6 +12,13 @@ const INC = [1, 5, 12, 25, 50, 10, 40, 5500, 22000, 40000, 160000, 700, 2800, 75
 const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 24000, 500, 2000, 15000000, 100000000];
 /* evento en vivo: Papu Golden Time (el admin lo inicia; los jugadores lo reciben al sincronizar) */
 const EV_MS = 120000;
+/* estado de eventos para los jugadores: Golden Time, Papus invocados por el admin y la hora del servidor */
+async function evInfo() {
+  const [gt, sm] = (await db('MGET', 'ev:gt', 'ev:sm')) || [];
+  const now = Date.now(), left = gt ? +gt - now : 0;
+  let list = []; try { list = sm ? JSON.parse(sm) : []; } catch (e) { list = []; }
+  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now };
+}
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 const START = 50, NSLOT = 10, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
@@ -142,17 +149,17 @@ const actions = {
     r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
-    return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r), ev: await evLeft() };
+    return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r), ...(await evInfo()) };
   },
   async resume(b) {
     const t = readTok(b.tok);
     if (t && t.adm) return { admin: true, tok: b.tok };
     const r = await userFromTok(b.tok);
     r.t = Date.now(); r.seen = r.t; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
-    return { tok: b.tok, st: view(r), ev: await evLeft() };
+    return { tok: b.tok, st: view(r), ...(await evInfo()) };
   },
   async sync(b) {
-    const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r); return { st: view(r), ev: await evLeft() };
+    const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r); return { st: view(r), ...(await evInfo()) };
   },
   /* comprar un Papu de la cinta: se cobra al agarrarlo (si lo pierdes, lo pierdes) */
   async buy(b) {
@@ -250,6 +257,17 @@ const actions = {
     adminFromTok(b.tok);
     if (b.on) await db('SET', 'ev:gt', String(Date.now() + EV_MS), 'EX', 180); else await db('DEL', 'ev:gt');
     return { ev: await evLeft() };
+  },
+  /* invocar un Papu: aparece asegurado en la cinta para todos */
+  async asummon(b) {
+    adminFromTok(b.tok);
+    const lvl = b.lvl; if (!Number.isInteger(lvl) || lvl < 5 || lvl > 16) throw new Err('Papu no válido.');
+    const now = Date.now(); let list = [];
+    try { const v = await db('GET', 'ev:sm'); list = v ? JSON.parse(v) : []; } catch (e) { list = []; }
+    list = list.filter(m => now - m.ts < 30000).slice(-9);
+    const m = { id: crypto.randomBytes(5).toString('hex'), lvl, ts: now }; list.push(m);
+    await db('SET', 'ev:sm', JSON.stringify(list), 'EX', 60);
+    return { ok: true, id: m.id };
   },
   /* restablecer el catálogo de una cuenta (solo admin) */
   async acat(b) {
