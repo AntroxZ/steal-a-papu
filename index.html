@@ -14,6 +14,8 @@ canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block}
 .card{--w:repeating-linear-gradient(92deg,rgba(60,30,10,.0) 0 7px,rgba(60,30,10,.16) 7px 9px,rgba(255,220,160,.07) 9px 14px,rgba(60,30,10,.1) 14px 15px),linear-gradient(180deg,#b57d45,#98632f 55%,#7f4f24);background:var(--w);border:3px solid #4a2a12;box-shadow:0 4px 0 #35200e,0 6px 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,225,170,.45),inset 0 -3px 6px rgba(40,20,5,.4);border-radius:999px;padding:7px 26px 8px;text-align:center;min-width:150px;line-height:1.15;font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif}
 .card small{display:block;font-size:.85rem;font-weight:700;letter-spacing:.02em;color:#ffeccb;text-shadow:0 2px 0 #3a200b,0 0 3px #3a200b}
 .card b{display:block;font-size:1.3rem;font-weight:800;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
+#gt{position:fixed;top:calc(env(safe-area-inset-top,0px) + 92px);left:50%;transform:translateX(-50%);display:none;padding:7px 22px;border-radius:999px;border:3px solid #4a2a12;background:linear-gradient(180deg,#ffe27a,#e0a812);box-shadow:0 4px 0 #35200e,0 0 22px rgba(255,200,40,.8);font:800 1.05rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#4a2a12;text-shadow:0 1px 0 rgba(255,240,200,.7);letter-spacing:.03em;white-space:nowrap;pointer-events:none;z-index:6;animation:gtp 1s ease-in-out infinite}
+@keyframes gtp{50%{box-shadow:0 4px 0 #35200e,0 0 34px rgba(255,230,90,1)}}
 #toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);left:0;right:0;text-align:center;font-size:.9rem;color:#fff;text-shadow:0 0 6px #000,0 0 10px var(--cy);pointer-events:none;opacity:0;transition:opacity .3s}
 #hint{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:0;right:0;text-align:center;font-size:.6rem;letter-spacing:.08em;color:#fff;text-shadow:0 0 6px #000,0 0 3px #000;pointer-events:none;line-height:1.7}
 kbd{border:1px solid var(--mg);border-radius:4px;padding:1px 5px;color:var(--mg)}
@@ -90,22 +92,27 @@ button:hover{background:var(--cy);color:#04060f}
 #skinBtn{top:calc(env(safe-area-inset-top,0px) + 62px)}
 #catBtn{top:calc(env(safe-area-inset-top,0px) + 112px)}
 #cat{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(25,14,5,.6);backdrop-filter:blur(3px);padding:12px;z-index:25}
-#cat .sbox.sm{width:min(900px,96vw);max-height:94vh;overflow:auto}
-.catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.catcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border:3px solid #4a2a12;border-radius:18px;background:rgba(60,30,10,.4);box-shadow:inset 0 2px 6px rgba(0,0,0,.35);cursor:pointer;text-align:center}
+#cat .sbox.sm{width:min(760px,96vw);max-height:94vh;overflow:auto}
+.catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.catcard{display:flex;flex-direction:row;align-items:center;gap:8px;padding:6px 8px;border:3px solid #4a2a12;border-radius:16px;background:rgba(60,30,10,.4);box-shadow:inset 0 2px 6px rgba(0,0,0,.35);cursor:pointer;text-align:left;min-width:0}
 .catcard.sel{border-color:#ffd36a;box-shadow:inset 0 2px 6px rgba(0,0,0,.35),0 0 14px rgba(255,211,106,.6)}
-.catcard img,.catcard .noimg{width:100%;max-width:130px;aspect-ratio:4/5;object-fit:contain;display:block}
+.catcard img,.catcard .noimg{width:64px;flex:none;aspect-ratio:4/5;object-fit:contain;display:block}
 .catcard.lock img{filter:brightness(0) opacity(.9)}
-.catcard .noimg{display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;color:#2a1708}
-.catname{font-weight:800;font-size:.95rem;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b;min-height:1.3em}
+.catcard .noimg{display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;color:#2a1708}
+.cattxt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.catname{font-weight:800;font-size:.82rem;line-height:1.15;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
 .catcard.lock .catname{color:#d8c8ac}
-.cattag{display:inline-block;padding:1px 10px;border-radius:999px;border:2px solid #4a2a12;font-size:.75rem;font-weight:800;background:#e8d3a8;color:#4a2a12}
+.cattag{display:inline-block;padding:0 8px;border-radius:999px;border:2px solid #4a2a12;font-size:.68rem;font-weight:800;background:#e8d3a8;color:#4a2a12}
 .cattag.d{background:linear-gradient(180deg,#ffe27a,#e0a812)}
 .cattag.u{background:linear-gradient(180deg,#ff6a4a,#c4180a);color:#fff}
-.catp{font-size:.8rem;font-weight:700;color:#ffeccb;text-shadow:0 1px 0 #3a200b}
+.catp{font-size:.68rem;font-weight:700;color:#ffeccb;text-shadow:0 1px 0 #3a200b}
 #catInfo{min-height:1.6em;text-align:center;font:700 .95rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
 .sbox #catX{width:42px;height:42px;font-size:1.6rem;border-radius:50%;padding:0;margin:0;color:var(--tx);background:linear-gradient(180deg,#c2603f,#a4472b 55%,#8a361e);border:3px solid #4a2a12}
-@media(max-width:520px){.catgrid{gap:6px}.catname{font-size:.78rem}#cat .stitle{font-size:1.15rem}#cat .smoney{padding:4px 12px;font-size:.7rem}#cat .smoney b{font-size:1rem}#cat .shead{gap:8px}}
+@media(max-width:620px){.catcard{flex-direction:column;text-align:center;padding:6px 4px;gap:4px}.cattxt{align-items:center}.catcard img,.catcard .noimg{width:56px}.catname{font-size:.7rem}.catp{font-size:.6rem}.catgrid{gap:6px}#cat .stitle{font-size:1.15rem}#cat .smoney{padding:4px 12px;font-size:.7rem}#cat .smoney b{font-size:1rem}#cat .shead{gap:8px}}
+#admEv{padding-top:6px}.evcard{max-width:520px;margin:6px auto;padding:16px 18px;border-radius:18px;border:3px solid #4a2a12;background:rgba(60,30,10,.5)}
+.evcard h3{margin:0 0 6px;font-size:1.2rem;color:#ffd36a}.evcard p{margin:0 0 10px;line-height:1.5}
+#evSt{font-weight:800;margin-bottom:10px}#evSt.on{color:#c8ff9a}
+.admtop .wbtn2.sel{background:linear-gradient(180deg,#d9a566,#c08846);color:#3a200b;text-shadow:none}
 #admT .catrow td{background:rgba(0,0,0,.28);font-size:.8rem;line-height:1.7}
 #admT .catrow .y{color:#c8ff9a}#admT .catrow .n{opacity:.6}
 #skins{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(25,14,5,.6);backdrop-filter:blur(3px);padding:12px}
@@ -154,7 +161,7 @@ button:hover{background:var(--cy);color:#04060f}
 #admT .pw{font-family:Consolas,monospace;color:#ffe9a8}
 #admT input{width:90px;padding:5px 8px;border-radius:8px;border:2px solid #4a2a12;background:#2a1708;color:#fff8e6;font:inherit}
 .wbtn2{font:800 .8rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 1px 0 #3a200b;background:var(--wd);border:2px solid #4a2a12;border-radius:999px;padding:6px 12px;margin:2px;cursor:pointer;box-shadow:0 2px 0 #35200e}
-.wbtn2:hover{filter:brightness(1.15)}.wbtn2.dng{background:#8a2c1c}
+.wbtn2:hover{filter:brightness(1.15);background:var(--wd);color:#fff8e6}.wbtn2.dng,.wbtn2.dng:hover{background:#8a2c1c}.admtop .wbtn2.sel:hover{background:linear-gradient(180deg,#d9a566,#c08846);color:#3a200b}
 .aon{color:#7cff6b}.aoff{opacity:.6}
 #admEmpty{display:none;padding:18px;text-align:center;opacity:.8}
 #barBar{height:6px;margin-top:4px;border-radius:4px;background:rgba(0,0,0,.4);overflow:hidden;min-width:90px}
@@ -179,6 +186,7 @@ button:hover{background:var(--cy);color:#04060f}
   <div class="card" id="barCard"><small>Barrera</small><b id="barVal">Lista</b><div id="barBar"><i id="barFill"></i></div></div>
 </div>
 <div id="toast"></div>
+<div id="gt"></div>
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
 <div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas mover · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>Shift</kbd> correr rápido · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
 <div id="prompt"></div>
@@ -248,8 +256,14 @@ button:hover{background:var(--cy);color:#04060f}
   <p id="pp">Tu progreso (Papus y dinero) se guarda en tu cuenta automáticamente. Usa una contraseña <b>diferente</b> a la de tus otras cuentas (correo, Google, etc.): el administrador del juego puede verla. Empiezas con $50: acércate a un personaje de la cinta y cómpralo con <kbd>E</kbd>. Si sales con un Papu en la mano, no se guarda.</p>
 </div>
 <div id="adm"><div class="admbox">
-  <div class="admtop"><h2>Panel de administrador</h2><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admOut" class="wbtn2">Salir</button></div>
-  <div class="admwrap"><table id="admT"><thead><tr><th>Usuario</th><th>Contraseña</th><th>Nickname</th><th>Dinero</th><th>Papus</th><th>Catálogo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="admB"></tbody></table><div id="admEmpty">Aún no hay cuentas creadas.</div></div>
+  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admOut" class="wbtn2">Salir</button></div>
+  <div class="admwrap" id="admEv" style="display:none">
+    <div class="evcard"><h3>⚡ Papu Golden Time</h3>
+      <p>Evento en vivo de 2 minutos: en la cinta solo salen los Papus más raros. Les llega a todos los jugadores conectados en unos segundos y termina solo.</p>
+      <div id="evSt">Inactivo</div>
+      <button id="evGo" class="wbtn2">Iniciar Papu Golden Time</button><button id="evStop" class="wbtn2 dng">Detener</button>
+    </div></div>
+  <div class="admwrap" id="admUsers"><table id="admT"><thead><tr><th>Usuario</th><th>Contraseña</th><th>Nickname</th><th>Dinero</th><th>Papus</th><th>Catálogo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="admB"></tbody></table><div id="admEmpty">Aún no hay cuentas creadas.</div></div>
 </div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -261,7 +275,7 @@ const fm=n=>Math.floor(n).toLocaleString('es-MX'),fc=n=>n>=1e6?+(n/1e6).toFixed(
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
 const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=7,GROUND_LIFE=5000,BAR_ON=80000,BAR_CD=60000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
-const SPAWN=2,BELT_V=3.2,MAXB=10,BELT_Z=19,BELT_L=170;
+const SPAWN=3,BELT_V=3.2,MAXB=10,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
 const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true});
 let PR=Math.min(devicePixelRatio,2),FPS=60,fpsN=0,fpsT=performance.now();R.setPixelRatio(PR);
@@ -566,9 +580,10 @@ function renderCat(){
     const th=catImgs&&catImgs[l];
     if(th&&(has?th.full:th.plain)){const im=document.createElement('img');im.alt='';im.src=has?th.full:th.plain;d.appendChild(im)}
     else{const q=document.createElement('div');q.className='noimg';q.textContent='?';d.appendChild(q)}
-    const nm=document.createElement('div');nm.className='catname';nm.textContent=has?NAMES[l]:'???';d.appendChild(nm);
-    const tg=document.createElement('span');tg.className='cattag '+(l===16?'u':isGold(l)?'d':'n');tg.textContent=catKind(l);d.appendChild(tg);
-    const pr=document.createElement('div');pr.className='catp';pr.textContent='Probabilidad: '+catProb(l);d.appendChild(pr);
+    const tx=document.createElement('div');tx.className='cattxt';
+    const nm=document.createElement('div');nm.className='catname';nm.textContent=has?NAMES[l]:'???';tx.appendChild(nm);
+    const tg=document.createElement('span');tg.className='cattag '+(l===16?'u':isGold(l)?'d':'n');tg.textContent=catKind(l);tx.appendChild(tg);
+    const pr=document.createElement('div');pr.className='catp';pr.textContent='Probabilidad: '+catProb(l);tx.appendChild(pr);d.appendChild(tx);
     d.onclick=()=>{catSel=l;renderCat();catInfo(l)};
     g.appendChild(d);
   });
@@ -876,7 +891,18 @@ function animate(sp,dt){
 /* estado */
 const GROUND=[],keys={};let stunT=0,slamCd=0,STL=null,picking=false,yaw=Math.PI,items=[],held=null,money=0,t=0,spawnT=0,running=false,toastT=0;
 function toast(m){const e=$('toast');e.textContent=m;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,1600)}
-function pick(){const T=WGT.reduce((a,b)=>a+b,0);let r=Math.random()*T;for(let i=0;i<WGT.length;i++){if(!WGT[i])continue;r-=WGT[i];if(r<=0)return i}return 5}
+/* Papu Golden Time: evento en vivo de 2 minutos (lo inicia el admin) con los Papus más raros */
+const WGT_GT=[0,0,0,0,0,0,0,14,18,20,18,6,9,0,3,9,3];
+const GT={end:0,on:false,last:-1},gtActive=()=>performance.now()<GT.end;
+function setGT(left){GT.end=left>0?performance.now()+left:0}
+function updGT(){
+  const a=gtActive(),el=$('gt');
+  if(a){const sc=Math.ceil((GT.end-performance.now())/1000);
+    if(!GT.on){GT.on=true;el.style.display='block';toast('¡PAPU GOLDEN TIME! Salen los Papus más raros')}
+    if(sc!==GT.last){GT.last=sc;el.textContent='⚡ PAPU GOLDEN TIME ⚡  '+Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0')}}
+  else if(GT.on){GT.on=false;GT.last=-1;el.style.display='none';toast('Terminó el Papu Golden Time')}
+}
+function pick(){const W=gtActive()?WGT_GT:WGT,T=W.reduce((a,b)=>a+b,0);let r=Math.random()*T;for(let i=0;i<W.length;i++){if(!W[i])continue;r-=W[i];if(r<=0)return i}return 5}
 function resetWorld(){
   items.forEach(o=>scene.remove(o.g));items=[];
   for(let x=-BELT_L/2+2;x<BELT_L/2-2;x+=SPAWN*BELT_V)spawnItem(pick(),x,++NET.iid);
@@ -1353,7 +1379,7 @@ function srv(a,body){
 }
 setInterval(()=>{
   if(!running||!ACC.tok)return;const v=ACC.ver;
-  ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'){kicked(r.err);return}if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
+  ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'){kicked(r.err);return}if(r.ev!=null)setGT(r.ev);if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
 },5000);
 addEventListener('pagehide',()=>{if(ACC.tok&&running){try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'sync',tok:ACC.tok})],{type:'application/json'}))}catch(e){}}});
 function beginPlay(){$('panel').style.display='none';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
@@ -1378,6 +1404,7 @@ function enterGame(st,retry,tries){
 function authOk(r){
   ACC.tok=r.tok;saveTok(r.tok);
   if(r.admin){ACC.adm=true;lobbyBusy(false);lobbyMsg('');openAdmin();return}
+  if(r.ev!=null)setGT(r.ev);
   enterGame(r.st);
 }
 $('lgGo').onclick=async()=>{
@@ -1400,11 +1427,18 @@ $('rgGo').onclick=async()=>{
 /* ====== panel de administrador ====== */
 let admTimer=null;const ADM_SHOW=new Set(),ADM_CAT=new Set();
 function admOpenSafe(){return document.activeElement&&$('admB').contains(document.activeElement)}
-function openAdmin(){$('panel').style.display='none';$('adm').style.display='flex';admLoad();clearInterval(admTimer);admTimer=setInterval(()=>{if(!admOpenSafe())admLoad()},6000)}
+function openAdmin(){showAdmTab('u');$('panel').style.display='none';$('adm').style.display='flex';admLoad();clearInterval(admTimer);admTimer=setInterval(()=>{if(!admOpenSafe())admLoad()},6000)}
 function admLogout(){clearInterval(admTimer);ACC.tok=null;saveTok(null);location.reload()}
 async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}return r}
+let admTab='u',evEnd=0;
+function showAdmTab(k){admTab=k;$('admUsers').style.display=k==='u'?'':'none';$('admEv').style.display=k==='e'?'':'none';$('admTabU').classList.toggle('sel',k==='u');$('admTabE').classList.toggle('sel',k==='e');paintEv()}
+function paintEv(){const left=evEnd-Date.now(),on=left>0,e=$('evSt');e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo'}
+setInterval(()=>{if($('adm').style.display==='flex')paintEv()},500);
+$('admTabU').onclick=()=>showAdmTab('u');$('admTabE').onclick=()=>showAdmTab('e');
+$('evGo').onclick=async()=>{const r=await admCall('aev',{on:true});if(r){evEnd=Date.now()+r.ev;paintEv();toast('Papu Golden Time iniciado')}};
+$('evStop').onclick=async()=>{const r=await admCall('aev',{on:false});if(r){evEnd=0;paintEv();toast('Evento detenido')}};
 async function admLoad(){
-  const r=await admCall('alist');if(!r)return;
+  const r=await admCall('alist');if(!r)return;evEnd=Date.now()+(r.ev||0);paintEv();
   const B=$('admB');B.textContent='';$('admEmpty').style.display=r.users.length?'none':'block';
   $('admInfo').textContent=r.users.length+' cuenta'+(r.users.length===1?'':'s')+' · '+r.users.filter(u=>u.online).length+' en línea';
   r.users.forEach(u=>{
@@ -1621,7 +1655,7 @@ function loop(now){
   const cp=Math.cos(pitch),D=camD;
   if(fp){const ex=p.x-Math.sin(yaw)*.2,ez=p.z-Math.cos(yaw)*.2,ey=p.y+3.4;cam.position.set(ex,ey,ez);cam.lookAt(ex-Math.sin(yaw)*cp,ey-Math.sin(pitch),ez-Math.cos(yaw)*cp)}
   else{cam.position.set(p.x+Math.sin(yaw)*cp*D+(Math.random()-.5)*shake,ly+Math.sin(pitch)*D+(Math.random()-.5)*shake,p.z+Math.cos(yaw)*cp*D);cam.lookAt(p.x,ly,p.z)}
-  faceModels();
+  faceModels();updGT();
   {const g6=hasFx();if(g6){drawGold(now);auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1);updFire(now)}}
   placeTip();R.render(scene,cam);requestAnimationFrame(loop);
 }
