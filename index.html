@@ -158,7 +158,7 @@ button:hover{background:var(--cy);color:#04060f}
 #adm{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(2,4,12,.9);padding:12px}
 .admbox{width:min(1100px,100%);max-height:100%;display:flex;flex-direction:column;border-radius:22px;background:rgba(40,22,8,.92);border:3px solid #4a2a12;box-shadow:0 8px 30px rgba(0,0,0,.6);color:#fff8e6;font:600 .9rem "Trebuchet MS","Segoe UI",Verdana,sans-serif}
 .admtop{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}.admtop h2{margin:0;font-size:1.2rem;color:#ffd36a}.admtop .sp{flex:1}
-.admwrap{overflow:auto;padding:0 12px 14px}
+.admwrap{overflow:auto;padding:0 12px 14px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}#adm,#cat{touch-action:pan-y}
 #admT{width:100%;border-collapse:collapse}#admT th{position:sticky;top:0;background:#3a200b;text-align:left;padding:8px;font-size:.78rem;color:#ffd36a;letter-spacing:.04em}
 #admT td{padding:6px 8px;border-top:1px solid rgba(255,225,170,.15);vertical-align:middle}
 #admT .pw{font-family:Consolas,monospace;color:#ffe9a8}
@@ -192,7 +192,7 @@ button:hover{background:var(--cy);color:#04060f}
 <div id="gtFlash"></div>
 <div id="gt"></div>
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
-<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas mover · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>Shift</kbd> correr rápido · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
+<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas mover · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
 <div id="prompt"></div>
 <div id="shop"><div class="sbox">
   <div class="shead"><div class="stitle">TIENDA</div><div class="smoney">Dinero<b id="shopMoney">$0</b></div><button id="shopX" aria-label="Cerrar">&times;</button></div>
@@ -326,8 +326,27 @@ const cc=document.createElement('canvas');cc.width=128;cc.height=64;
 const beltTex=new THREE.CanvasTexture(cc);beltTex.wrapS=beltTex.wrapT=THREE.RepeatWrapping;beltTex.repeat.set(BELT_L/7.2,1);
 const belt=add(new THREE.Mesh(new THREE.PlaneGeometry(BELT_L,3.6),B(0xffffff,{map:beltTex})),0,.05,BELT_Z);belt.rotation.x=-Math.PI/2;
 [-1.9,1.9].forEach(z=>add(new THREE.Mesh(new THREE.BoxGeometry(BELT_L,.25,.2),B(0xff2bd6)),0,.15,BELT_Z+z));
-for(let x=-84;x<=84;x+=12){add(new THREE.Mesh(new THREE.BoxGeometry(.3,5,5),B(0x00f0ff,{transparent:true,opacity:.14,blending:THREE.AdditiveBlending,depthWrite:false})),x,2.5,BELT_Z);
+for(let x=-72;x<=84;x+=12){add(new THREE.Mesh(new THREE.BoxGeometry(.3,5,5),B(0x00f0ff,{transparent:true,opacity:.14,blending:THREE.AdditiveBlending,depthWrite:false})),x,2.5,BELT_Z);
   add(new THREE.Mesh(new THREE.BoxGeometry(.4,.4,5),B(0x00f0ff)),x,5,BELT_Z)}
+
+/* ARCO de entrada: aqui salen los Papus */
+{const AX=-81.6,AZ=BELT_Z,W=2.45,PH=4,stone=0xe4e4ea,shade=0xb4b4bf,blk=0x050508;
+ const bm=()=>new THREE.MeshBasicMaterial({color:blk,side:THREE.DoubleSide});
+ const g=new THREE.Group();g.position.set(AX,0,AZ);ROOT.add(g);
+ const M=(geo,c,x,y,z)=>{const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:c}));m.position.set(x,y,z);g.add(m);return m};
+ [-1,1].forEach(sd=>{M(new THREE.BoxGeometry(1.5,PH+.3,1.0),stone,0,(PH+.3)/2,sd*(W+.45));M(new THREE.BoxGeometry(1.7,.35,1.2),shade,0,PH+.15,sd*(W+.45));M(new THREE.BoxGeometry(1.7,.4,1.2),shade,0,.2,sd*(W+.45));M(new THREE.BoxGeometry(.1,PH-.5,.6),shade,.76,(PH-.5)/2+.3,sd*(W+.45))});
+ const t1=new THREE.Mesh(new THREE.TorusGeometry(W+.45,.55,8,28,Math.PI),new THREE.MeshBasicMaterial({color:stone}));t1.rotation.y=Math.PI/2;t1.position.y=PH+.3;g.add(t1);
+ const t2=new THREE.Mesh(new THREE.TorusGeometry(W+.45,.3,8,28,Math.PI),new THREE.MeshBasicMaterial({color:shade}));t2.rotation.y=Math.PI/2;t2.position.set(.35,PH+.3,0);g.add(t2);
+ /* tunel negro detras del arco */
+ const D=3.2;
+ const back=new THREE.Mesh(new THREE.PlaneGeometry(W*2,PH+.3),bm());back.rotation.y=Math.PI/2;back.position.set(-D,(PH+.3)/2,0);g.add(back);
+ const bh=new THREE.Mesh(new THREE.CircleGeometry(W,20,0,Math.PI),bm());bh.rotation.y=Math.PI/2;bh.position.set(-D,PH+.3,0);g.add(bh);
+ const bh2=new THREE.Mesh(new THREE.CircleGeometry(W,20,0,Math.PI),bm());bh2.rotation.y=Math.PI/2;bh2.position.set(.2,PH+.3,0);g.add(bh2);
+ const front=new THREE.Mesh(new THREE.PlaneGeometry(W*2,PH+.3),bm());front.rotation.y=Math.PI/2;front.position.set(.2,(PH+.3)/2,0);front.visible=false;g.add(front);
+ [-1,1].forEach(sd=>{const w=new THREE.Mesh(new THREE.PlaneGeometry(D,PH+.3),bm());w.position.set(-D/2,(PH+.3)/2,sd*W);g.add(w)});
+ const roof=new THREE.Mesh(new THREE.CylinderGeometry(W,W,D,20,1,true,0,Math.PI),bm());roof.rotation.z=Math.PI/2;roof.position.set(-D/2,PH+.3,0);g.add(roof);
+ const fl=new THREE.Mesh(new THREE.PlaneGeometry(D,W*2),new THREE.MeshBasicMaterial({color:blk}));fl.rotation.x=-Math.PI/2;fl.position.set(-D/2,.07,0);g.add(fl);
+}
 for(let i=0;i<10;i++){const a=i/10*Math.PI*2,p=add(new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,16,16,1,true),B(i%2?0xff2bd6:0x00f0ff,{transparent:true,opacity:.18,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})),Math.cos(a)*170,8,Math.sin(a)*170)}
 /* base ampliada: entrada hacia la cinta, 10 puntos de colocacion, paredes, pilares, techo y letrero */
 const BW=28,BD=33,BZ0=-6,BZc=BZ0-BD/2,BH=.8,WH=3,PH=9.4,RH=BH+PH;
@@ -469,7 +488,7 @@ function freeBaseObj(b){b.slots.forEach(s=>{if(s.item){scene.remove(s.item);s.it
 /* estado de zoom / camara */
 let camT=17.5,camD=17.5,wasFP=false,shopOpen=false,setOpen=false;
 addEventListener('wheel',e=>{
-  if(shopOpen||setOpen)return;e.preventDefault();
+  if(shopOpen||setOpen)return;if(e.target&&e.target.closest&&e.target.closest('#adm,#cat'))return;e.preventDefault();
   const dy=Math.max(-100,Math.min(100,e.deltaY));
   if(dy>0&&camT<1)camT=2.6;
   else if(dy>0)camT=Math.min(80,camT*Math.exp(dy*.0016));
@@ -1731,24 +1750,25 @@ let fwNext=.5;
 const LEG_MS=600000,LEG={slot:-1};let SRV_OFF=0,legLast=-1;
 const srvNow=()=>Date.now()+SRV_OFF;
 /* letrero fisico de madera clavado en el suelo, junto a donde salen los Papus */
-const legC=document.createElement('canvas');legC.width=512;legC.height=300;const legTex=new THREE.CanvasTexture(legC);legTex.magFilter=THREE.NearestFilter;
-const plankC=(()=>{const c=document.createElement('canvas');c.width=512;c.height=300;const x=c.getContext('2d'),base=[190,150,92];
-  for(let r=0;r<4;r++){for(let q=0;q<16;q++){const sh=(Math.random()-.5)*26;x.fillStyle='rgb('+Math.round(base[0]+sh)+','+Math.round(base[1]+sh)+','+Math.round(base[2]+sh*.7)+')';x.fillRect(q*32,r*75,32,75)}
-    x.fillStyle='#a47e3c';x.fillRect(0,r*75+73,512,3)}
-  x.lineWidth=14;x.strokeStyle='#6b4a22';x.strokeRect(7,7,498,286);return c})();
+const LW=640,LH=360;
+const legC=document.createElement('canvas');legC.width=LW;legC.height=LH;const legTex=new THREE.CanvasTexture(legC);legTex.magFilter=THREE.NearestFilter;
+const plankC=(()=>{const c=document.createElement('canvas');c.width=LW;c.height=LH;const x=c.getContext('2d'),base=[190,150,92],rh=LH/4;
+  for(let r=0;r<4;r++){for(let q=0;q<20;q++){const sh=(Math.random()-.5)*26;x.fillStyle='rgb('+Math.round(base[0]+sh)+','+Math.round(base[1]+sh)+','+Math.round(base[2]+sh*.7)+')';x.fillRect(q*32,r*rh,32,rh)}
+    x.fillStyle='#a47e3c';x.fillRect(0,r*rh+rh-3,LW,3)}
+  x.lineWidth=16;x.strokeStyle='#6b4a22';x.strokeRect(8,8,LW-16,LH-16);return c})();
 const plankTex=new THREE.CanvasTexture(plankC);plankTex.magFilter=THREE.NearestFilter;
-const signG=new THREE.Group();signG.position.set(-80,0,BELT_Z+2.9);
+const signG=new THREE.Group();signG.position.set(-81.6,0,BELT_Z);
 {const bm=new THREE.MeshBasicMaterial({map:legTex,toneMapped:false}),sm=new THREE.MeshBasicMaterial({map:plankTex,toneMapped:false});
- const board=new THREE.Mesh(new THREE.BoxGeometry(3.2,1.9,.24),[sm,sm,sm,sm,bm,bm]);board.position.y=2.55;signG.add(board);
- const post=new THREE.Mesh(new THREE.BoxGeometry(.3,1.9,.3),new THREE.MeshBasicMaterial({color:0x6f4e26,toneMapped:false}));post.position.y=.95;signG.add(post);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(8.4,4.7,.35),[sm,sm,sm,sm,bm,bm]);board.position.y=10.0;signG.add(board);
+ {const post=new THREE.Mesh(new THREE.BoxGeometry(.9,1.3,.6),new THREE.MeshBasicMaterial({color:0x6f4e26,toneMapped:false}));post.position.set(0,7.4,0);signG.add(post)}
  scene.add(signG)}
 function updLegSign(now){
   const sn=srvNow(),left=Math.max(0,Math.ceil(((Math.floor(sn/LEG_MS)+1)*LEG_MS-sn)/1000));
   if(left===legLast)return;legLast=left;
   const x=legC.getContext('2d'),hot=left<=10;
   x.drawImage(plankC,0,0);x.textAlign='center';x.textBaseline='middle';x.fillStyle=hot?'#b3160a':'#2a1708';
-  x.font='800 40px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.fillText('PAPU LEGENDARIO',256,66);x.fillText('EN:',256,112);
-  x.font='800 128px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.fillText(Math.floor(left/60)+':'+String(left%60).padStart(2,'0'),256,210);
+  x.font='800 58px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.fillText('PAPU LEGENDARIO',320,70);x.font='800 50px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.fillText('EN:',320,128);
+  x.font='800 168px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.fillText(Math.floor(left/60)+':'+String(left%60).padStart(2,'0'),320,244);
   legTex.needsUpdate=true;
 }
 function spawnLegendary(){
@@ -1794,7 +1814,7 @@ function loop(now){
       dx/=L;dz/=L;
       let da=Math.atan2(dx,dz)-heading;da=Math.atan2(Math.sin(da),Math.cos(da));
       heading+=da*Math.min(1,dt*(speed>7?8:12)*ac);
-      const tgt=(keys.Shift?SPR:RUN)*Math.max(.35,Math.cos(Math.min(Math.abs(da),1.4)));
+      const tgt=(keys.Shift&&!held?SPR:RUN)*Math.max(.35,Math.cos(Math.min(Math.abs(da),1.4)));
       speed+=(tgt-speed)*Math.min(1,dt*(tgt>speed?5:8)*ac);
     }else{speed+=(0-speed)*Math.min(1,dt*9*ac);if(speed<.05)speed=0}
     {const nx=Math.max(-135,Math.min(135,pp.x+Math.sin(heading)*speed*dt)),nz=Math.max(-80,Math.min(120,pp.z+Math.cos(heading)*speed*dt));
