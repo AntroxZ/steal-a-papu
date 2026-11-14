@@ -8,8 +8,8 @@ const ADMIN_USER = process.env.ADMIN_USER || '';
 const ADMIN_PASS = process.env.ADMIN_PASS || '';
 
 /* mismos valores que el juego: nivel -> ingreso por segundo y precio */
-const INC = [1, 5, 12, 25, 50, 10, 40, 25, 100, 60, 240, 150, 600, 375, 1500, 900, 3600];
-const PRICE = [0, 0, 0, 0, 0, 50, 200, 150, 600, 400, 1600, 1000, 4000, 2500, 10000, 6000, 24000];
+const INC = [1, 5, 12, 25, 50, 10, 40, 5500, 22000, 40000, 160000, 700, 2800, 75, 300, 600000, 2500000];
+const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 24000, 500, 2000, 15000000, 100000000];
 const START = 50, NSLOT = 10, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
@@ -61,7 +61,12 @@ function accrue(r, now) {
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
   r.money += inc * dt; r.t = now; r.seen = now;
 }
-const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held });
+const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {} });
+/* catálogo (bitácora): primera vez que colocaste cada Papu en tu base. Los Papus que ya tenías puestos antes del catálogo se anotan una sola vez */
+function touchCat(r) {
+  if (!r.cat) r.cat = {};
+  if (!r.catv) { r.catv = 1; const n = Date.now(); r.slots.forEach(l => { if (l >= 5 && !r.cat[l]) r.cat[l] = n; }); }
+}
 /* id público de cuenta (para robar): no revela el usuario ni la contraseña */
 async function ensureAid(r) {
   if (!r.aid) { r.aid = crypto.randomBytes(6).toString('base64url'); }
@@ -132,7 +137,7 @@ const actions = {
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
     r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; /* sin ingresos mientras estuviste fuera */
-    settleHeld(r); await ensureAid(r);
+    settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
     return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r) };
   },
@@ -140,7 +145,7 @@ const actions = {
     const t = readTok(b.tok);
     if (t && t.adm) return { admin: true, tok: b.tok };
     const r = await userFromTok(b.tok);
-    r.t = Date.now(); r.seen = r.t; settleHeld(r); await ensureAid(r); await saveRec(r);
+    r.t = Date.now(); r.seen = r.t; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
     return { tok: b.tok, st: view(r) };
   },
   async sync(b) {
@@ -165,6 +170,7 @@ const actions = {
     const cur = r.slots[slot];
     if (cur >= 0 && INC[lvl] <= INC[cur]) { await saveRec(r); throw Object.assign(new Err('Ese lugar ya tiene uno igual o mejor.', 'bad'), { st: view(r) }); }
     r.slots[slot] = lvl; r.held = -1; r.hpaid = 0;
+    touchCat(r); if (!r.cat[lvl]) r.cat[lvl] = Date.now();
     await saveRec(r); return { st: view(r) };
   },
   /* el Papu cae al suelo (aturdido): se puede recoger durante unos segundos */
@@ -220,7 +226,7 @@ const actions = {
     for (const n of names) {
       const r = await loadRec(n);
       if (!r) { await db('SREM', 'users', n); continue; }
-      out.push({ user: r.user, pass: decPass(r.pass), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, slots: r.slots, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
+      out.push({ user: r.user, pass: decPass(r.pass), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
     }
     out.sort((a, b) => b.seen - a.seen);
     return { users: out, now: Date.now() };
@@ -235,6 +241,12 @@ const actions = {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
     r.slots = emptySlots(); await saveRec(r); return { ok: true };
+  },
+  /* restablecer el catálogo de una cuenta (solo admin) */
+  async acat(b) {
+    adminFromTok(b.tok);
+    const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
+    r.cat = {}; r.catv = 1; await saveRec(r); return { ok: true };
   },
   async adel(b) {
     adminFromTok(b.tok);
