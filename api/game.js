@@ -75,7 +75,7 @@ function accrue(r, now) {
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
   r.money = Math.min(MAXM, r.money + inc * dt); r.t = now; r.seen = now;
 }
-const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r), inv: Array.isArray(r.inv) ? r.inv : [], vol: r.vol || null });
+const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r), inv: Array.isArray(r.inv) ? r.inv : [], vol: r.vol || null, cmd: (r.cmd && Date.now() - r.cmd.ts < 90000) ? { id: r.cmd.id, on: r.cmd.on, age: Date.now() - r.cmd.ts } : null });
 function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0, n: r.fl || 1 }; }
 /* catálogo (bitácora): primera vez que colocaste cada Papu en tu base. Los Papus que ya tenías puestos antes del catálogo se anotan una sola vez */
 function touchCat(r) {
@@ -311,7 +311,7 @@ const actions = {
     await saveRec(r); return { st: view(r) };
   },
   async clear(b) { const r = await userFromTok(b.tok); accrue(r, Date.now()); r.slots = emptySlots(); await saveRec(r); return { st: view(r) }; },
-  async reset(b) { const r = await userFromTok(b.tok); r.fl = 1; r.inv = []; r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
+  async reset(b) { const r = await userFromTok(b.tok); r.fl = 1; r.inv = []; r.dco = { o: [], c: 0, f: 0 }; r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
   async nick(b) {
     const r = await userFromTok(b.tok), n = cleanNick(b.nick);
     if (!n) throw new Err('Escribe un nickname.');
@@ -340,6 +340,12 @@ const actions = {
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
     const m = Number(b.money); if (!isFinite(m) || m < 0 || m > MAXM) throw new Err('Cantidad no válida.');
     r.money = Math.floor(m); r.t = Date.now(); await saveRec(r); return { ok: true };
+  },
+  /* el admin activa o desactiva la barrera de un jugador en línea (sin enfriamiento para el admin) */
+  async abar(b) {
+    adminFromTok(b.tok);
+    const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
+    r.cmd = { id: crypto.randomBytes(5).toString('base64url'), on: !!b.on, ts: Date.now() }; await saveRec(r); return { ok: true };
   },
   async aclear(b) {
     adminFromTok(b.tok);
