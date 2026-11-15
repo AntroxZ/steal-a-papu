@@ -311,7 +311,7 @@ const actions = {
     for (const n of names) {
       const r = await loadRec(n);
       if (!r) { await db('SREM', 'users', n); continue; }
-      out.push({ user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
+      out.push({ aid: r.aid || null, user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
     }
     out.sort((a, b) => b.seen - a.seen);
     return { users: out, now: Date.now(), ev: await evLeft() };
