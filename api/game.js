@@ -73,7 +73,7 @@ class Err extends Error { constructor(msg, code) { super(msg); this.code = code 
 function accrue(r, now) {
   const dt = Math.min(Math.max(now - (r.t || now), 0), MAX_DT) / 1000;
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
-  r.money = Math.min(MAXM, r.money + inc * dt); r.t = now; r.seen = now;
+  r.money = Math.min(MAXM, r.money + inc * dt); r.t = now; r.seen = now; r.off = 0;
 }
 const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r), inv: Array.isArray(r.inv) ? r.inv : [], vol: r.vol || null, cmd: (r.cmd && Date.now() - r.cmd.ts < 90000) ? { id: r.cmd.id, on: r.cmd.on, age: Date.now() - r.cmd.ts } : null });
 function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0, n: r.fl || 1 }; }
@@ -166,7 +166,7 @@ const actions = {
     if (ADMIN_USER && ADMIN_PASS && safeEq(user.toLowerCase(), ADMIN_USER.toLowerCase())) {
       if (!safeEq(pass, ADMIN_PASS)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
       const r = await adminRec();
-      r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.lin = r.t;
+      r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t;
       settleHeld(r); touchCat(r); await ensureAid(r);
       await db('SADD', 'users', ADMIN_USER.toLowerCase());
       await saveRec(r);
@@ -175,7 +175,7 @@ const actions = {
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
     if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
-    r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
+    r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
     return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r), ...(await evInfo()) };
@@ -185,8 +185,12 @@ const actions = {
     if (t && t.adm && t.u === '*admin') throw new Err('Inicia sesión de nuevo.', 'auth');
     if (!(t && t.adm) && await isClosed()) throw new Err(CLOSED_MSG, 'closed');
     const r = await userFromTok(b.tok);
-    r.t = Date.now(); r.seen = r.t; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
+    r.t = Date.now(); r.seen = r.t; r.off = 0; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
     return { tok: b.tok, st: view(r), ...(t && t.adm ? { admin: true } : {}), ...(await evInfo()) };
+  },
+  /* la pestaña se cerro o el navegador paso al fondo: se guarda el progreso y se marca fuera de linea al instante (una sola peticion, solo al salir) */
+  async away(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now()); r.off = 1; await saveRec(r); return { ok: true };
   },
   async sync(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r);   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
@@ -338,7 +342,7 @@ const actions = {
     for (const n of names) {
       const r = await loadRec(n);
       if (!r) { await db('SREM', 'users', n); continue; }
-      out.push({ lin: r.lin || r.created || 0, aid: r.aid || null, user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
+      out.push({ lin: r.lin || r.created || 0, aid: r.aid || null, user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: !r.off && Date.now() - r.seen < 12000 });
     }
     /* en línea arriba por orden de entrada (el que entró primero, primero); fuera de línea abajo: el que entró más recientemente arriba y el que lleva más tiempo sin entrar hasta abajo */
     out.sort((a, b) => (b.online - a.online) || (a.online ? (a.lin - b.lin) : (b.seen - a.seen)));
