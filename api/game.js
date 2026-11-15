@@ -87,6 +87,18 @@ function settleHeld(r) {
   if (r.held != null && r.held >= 0) { r.money += r.hpaid || 0; }
   r.held = -1; r.hpaid = 0;
 }
+const isAdminUser = u => !!ADMIN_USER && String(u).toLowerCase() === ADMIN_USER.toLowerCase();
+/* el admin tambien juega: tiene su propio registro de jugador (la contraseña real nunca se guarda ahi) */
+async function adminRec() {
+  let r = await loadRec(ADMIN_USER);
+  if (r) return r;
+  const now = Date.now();
+  r = { user: ADMIN_USER, pass: encPass(crypto.randomBytes(12).toString('base64url')), nick: cleanNick('Admin'), skin: 0, money: START, slots: emptySlots(), held: -1, hpaid: 0, t: now, seen: now, created: now, sid: crypto.randomBytes(9).toString('base64url') };
+  r.aid = crypto.randomBytes(6).toString('base64url');
+  await db('SET', ukey(ADMIN_USER), JSON.stringify(r), 'NX');
+  await db('SADD', 'users', ADMIN_USER.toLowerCase());
+  return (await loadRec(ADMIN_USER)) || r;
+}
 async function loadRec(user) {
   const s = await db('GET', ukey(user));
   return s ? JSON.parse(s) : null;
@@ -95,7 +107,7 @@ const saveRec = r => db('SET', ukey(r.user), JSON.stringify(r));
 
 async function userFromTok(tok) {
   const t = readTok(tok);
-  if (!t || t.adm) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
+  if (!t || t.u === '*admin') throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
   const r = await loadRec(t.u);
   if (!r) throw new Err('Esta cuenta ya no existe.', 'auth');
   if (r.sid !== t.sid) throw new Err('Tu cuenta se abrió en otro lugar.', 'auth');
@@ -142,7 +154,12 @@ const actions = {
     await guard(user);
     if (ADMIN_USER && ADMIN_PASS && safeEq(user.toLowerCase(), ADMIN_USER.toLowerCase())) {
       if (!safeEq(pass, ADMIN_PASS)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
-      return { admin: true, tok: signTok({ u: '*admin', adm: 1, exp: Date.now() + 864e5 }) };
+      const r = await adminRec();
+      r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t;
+      settleHeld(r); touchCat(r); await ensureAid(r);
+      await db('SADD', 'users', ADMIN_USER.toLowerCase());
+      await saveRec(r);
+      return { admin: true, tok: signTok({ u: r.user, sid: r.sid, adm: 1, exp: Date.now() + 7 * 864e5 }), st: view(r), ...(await evInfo()) };
     }
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
@@ -153,10 +170,10 @@ const actions = {
   },
   async resume(b) {
     const t = readTok(b.tok);
-    if (t && t.adm) return { admin: true, tok: b.tok };
+    if (t && t.adm && t.u === '*admin') throw new Err('Inicia sesión de nuevo.', 'auth');
     const r = await userFromTok(b.tok);
     r.t = Date.now(); r.seen = r.t; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
-    return { tok: b.tok, st: view(r), ...(await evInfo()) };
+    return { tok: b.tok, st: view(r), ...(t && t.adm ? { admin: true } : {}), ...(await evInfo()) };
   },
   async sync(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r); return { st: view(r), ...(await evInfo()) };
@@ -255,7 +272,7 @@ const actions = {
     for (const n of names) {
       const r = await loadRec(n);
       if (!r) { await db('SREM', 'users', n); continue; }
-      out.push({ user: r.user, pass: decPass(r.pass), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
+      out.push({ user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
     }
     out.sort((a, b) => b.seen - a.seen);
     return { users: out, now: Date.now(), ev: await evLeft() };
@@ -296,7 +313,7 @@ const actions = {
   },
   async adel(b) {
     adminFromTok(b.tok);
-    const u = String(b.user || ''); await db('DEL', ukey(u)); await db('SREM', 'users', u.toLowerCase()); return { ok: true };
+    const u = String(b.user || ''); if (isAdminUser(u)) throw new Err('La cuenta de administrador no se puede borrar.'); await db('DEL', ukey(u)); await db('SREM', 'users', u.toLowerCase()); return { ok: true };
   }
 };
 
