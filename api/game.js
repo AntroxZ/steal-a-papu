@@ -22,7 +22,9 @@ async function evInfo() {
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
 const DPRICE = [0, 5000, 20000, 80000, 300000, 1200000, 5000000, 800000000, 20000000, 75000000, 250000000, 2500000000];
-const START = 50, NSLOT = 10, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
+/* pisos de la base: se empieza con 1 (10 espacios) y se pueden comprar hasta 5; precio del piso numero n */
+const FPRICE = [0, 0, 5000000, 60000000, 600000000, 6000000000], MAXF = 5, SLOTF = 10;
+const START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -74,7 +76,7 @@ function accrue(r, now) {
   r.money += inc * dt; r.t = now; r.seen = now;
 }
 const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r) });
-function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0 }; }
+function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0, n: r.fl || 1 }; }
 /* catálogo (bitácora): primera vez que colocaste cada Papu en tu base. Los Papus que ya tenías puestos antes del catálogo se anotan una sola vez */
 function touchCat(r) {
   if (!r.cat) r.cat = {};
@@ -104,7 +106,10 @@ async function adminRec() {
 }
 async function loadRec(user) {
   const s = await db('GET', ukey(user));
-  return s ? JSON.parse(s) : null;
+  if (!s) return null;
+  const r = JSON.parse(s);
+  while (r.slots.length < NSLOT) r.slots.push(-1);   /* cuentas viejas tenian 10 espacios */
+  return r;
 }
 const saveRec = r => db('SET', ukey(r.user), JSON.stringify(r));
 
@@ -195,7 +200,7 @@ const actions = {
   async place(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const slot = b.slot, lvl = r.held;
-    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT) throw new Err('Jugada no válida.', 'bad');
+    if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT || slot >= SLOTF * (r.fl || 1)) throw new Err('Jugada no válida.', 'bad');
     if (lvl == null || lvl < 0) { await saveRec(r); throw Object.assign(new Err('No llevas ningún Papu.', 'bad'), { st: view(r) }); }
     const cur = r.slots[slot];
     if (cur >= 0 && INC[lvl] <= INC[cur]) { await saveRec(r); throw Object.assign(new Err('Ese lugar ya tiene uno igual o mejor.', 'bad'), { st: view(r) }); }
@@ -276,8 +281,18 @@ const actions = {
     if (id === 11) d.f = d.f ? 0 : 1; else d.c = d.c === id ? 0 : id;
     await saveRec(r); return { st: view(r) };
   },
+  /* comprar el siguiente piso de la base (permanente, hasta 5 pisos) */
+  async fbuy(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const n = r.fl || 1;
+    if (n >= MAXF) { await saveRec(r); throw Object.assign(new Err('Tu base ya tiene todos los pisos.', 'bad'), { st: view(r) }); }
+    if (Number.isInteger(b.n) && b.n !== n + 1) { await saveRec(r); throw Object.assign(new Err('Compra los pisos en orden.', 'bad'), { st: view(r) }); }
+    if (r.money < FPRICE[n + 1]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
+    r.money -= FPRICE[n + 1]; r.fl = n + 1;
+    await saveRec(r); return { st: view(r) };
+  },
   async clear(b) { const r = await userFromTok(b.tok); accrue(r, Date.now()); r.slots = emptySlots(); await saveRec(r); return { st: view(r) }; },
-  async reset(b) { const r = await userFromTok(b.tok); r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
+  async reset(b) { const r = await userFromTok(b.tok); r.fl = 1; r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
   async nick(b) {
     const r = await userFromTok(b.tok), n = cleanNick(b.nick);
     if (!n) throw new Err('Escribe un nickname.');
@@ -296,7 +311,7 @@ const actions = {
     for (const n of names) {
       const r = await loadRec(n);
       if (!r) { await db('SREM', 'users', n); continue; }
-      out.push({ user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
+      out.push({ user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
     }
     out.sort((a, b) => b.seen - a.seen);
     return { users: out, now: Date.now(), ev: await evLeft() };
@@ -310,7 +325,7 @@ const actions = {
   async aclear(b) {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
-    r.slots = emptySlots(); await saveRec(r); return { ok: true };
+    r.slots = emptySlots(); r.fl = 1; await saveRec(r); return { ok: true };
   },
   /* eventos: iniciar o detener el Papu Golden Time */
   async aev(b) {
