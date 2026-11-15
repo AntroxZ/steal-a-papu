@@ -14,10 +14,10 @@ const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 240
 const EV_MS = 120000;
 /* estado de eventos para los jugadores: Golden Time, Papus invocados por el admin y la hora del servidor */
 async function evInfo() {
-  const [gt, sm] = (await db('MGET', 'ev:gt', 'ev:sm')) || [];
+  const [gt, sm, cl] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed')) || [];
   const now = Date.now(), left = gt ? +gt - now : 0;
   let list = []; try { list = sm ? JSON.parse(sm) : []; } catch (e) { list = []; }
-  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now };
+  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl };
 }
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
@@ -137,11 +137,14 @@ async function fail(user) {
   await db('INCR', k); await db('EXPIRE', k, 600);
 }
 
+const CLOSED_MSG = 'El servidor está cerrado por el administrador. Intenta más tarde.';
+const isClosed = async () => !!(await db('GET', 'srv:closed'));
 const checkUser = u => /^[A-Za-z0-9_]{3,16}$/.test(u);
 const cleanNick = n => String(n || '').trim().replace(/\s+/g, ' ').slice(0, 14);
 
 const actions = {
   async register(b) {
+    if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
     const user = String(b.user || '').trim(), pass = String(b.pass || ''), nick = cleanNick(b.nick);
     if (!checkUser(user)) throw new Err('Usuario: de 3 a 16 letras, números o _ (sin espacios).');
     if (pass.length < 4 || pass.length > 32) throw new Err('La contraseña debe tener de 4 a 32 caracteres.');
@@ -171,6 +174,7 @@ const actions = {
     }
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
+    if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
     r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
@@ -179,12 +183,16 @@ const actions = {
   async resume(b) {
     const t = readTok(b.tok);
     if (t && t.adm && t.u === '*admin') throw new Err('Inicia sesión de nuevo.', 'auth');
+    if (!(t && t.adm) && await isClosed()) throw new Err(CLOSED_MSG, 'closed');
     const r = await userFromTok(b.tok);
     r.t = Date.now(); r.seen = r.t; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
     return { tok: b.tok, st: view(r), ...(t && t.adm ? { admin: true } : {}), ...(await evInfo()) };
   },
   async sync(b) {
-    const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r); return { st: view(r), ...(await evInfo()) };
+    const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r);   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
+    const info = await evInfo(), t = readTok(b.tok);
+    if (info.closed && !(t && t.adm)) throw new Err('El servidor se cerró. Tu progreso se guardó.', 'closed');
+    return { st: view(r), ...info };
   },
   /* comprar un Papu de la cinta: se cobra al agarrarlo (si lo pierdes, lo pierdes) */
   async buy(b) {
@@ -334,7 +342,7 @@ const actions = {
     }
     /* en línea arriba por orden de entrada (el que entró primero, primero); fuera de línea abajo: el que entró más recientemente arriba y el que lleva más tiempo sin entrar hasta abajo */
     out.sort((a, b) => (b.online - a.online) || (a.online ? (a.lin - b.lin) : (b.seen - a.seen)));
-    return { users: out, now: Date.now(), ev: await evLeft() };
+    return { users: out, now: Date.now(), ev: await evLeft(), closed: await isClosed() };
   },
   async aset(b) {
     adminFromTok(b.tok);
@@ -358,6 +366,12 @@ const actions = {
     adminFromTok(b.tok);
     if (b.on) await db('SET', 'ev:gt', String(Date.now() + EV_MS), 'EX', 180); else await db('DEL', 'ev:gt');
     return { ev: await evLeft() };
+  },
+  /* cerrar / abrir el servidor: cerrado, solo entra el admin (para pruebas); los jugadores en linea son sacados al sincronizar */
+  async aclose(b) {
+    adminFromTok(b.tok);
+    if (b.on) await db('SET', 'srv:closed', '1'); else await db('DEL', 'srv:closed');
+    return { closed: await isClosed() };
   },
   /* invocar un Papu: aparece asegurado en la cinta para todos */
   async asummon(b) {
