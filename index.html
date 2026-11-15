@@ -346,6 +346,12 @@ body.mob .dcard.poor::after{font-size:.62rem}
 ::-webkit-scrollbar-corner{background:transparent}
 @supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#fff8e6 rgba(40,20,5,.35)}}
 body.mob ::-webkit-scrollbar{width:7px;height:7px}
+
+#tip.sm{flex-direction:row;align-items:center;gap:5px;padding:2px 8px;transform:translate(-50%,-100%);border-radius:10px}
+#tip.sm .k{min-width:0;padding:0 6px;margin:0;font-size:.68rem;box-shadow:0 1px 0 #35200e}
+#tip.sm b{font-size:.7rem}
+#mbSync{width:50px!important;height:50px!important}
+#mbSync span{font-size:1.15rem}#mbSync b{font-size:.5rem}
 </style>
 </head>
 <body>
@@ -356,7 +362,6 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
   <div class="card"><small>Base</small><b id="cnt">0/10</b></div>
 </div>
 <div id="plat"><h1>PAPULANDIA</h1><p>¿En qué estás jugando?</p><div class="prow"><button id="platPC"><span>🖥️</span>PC<small>Teclado y mouse</small></button><button id="platMob"><span>📱</span>Móvil<small>Pantalla táctil</small></button></div></div>
-<div id="rot"><span>📱 Mejor con el celular en horizontal</span></div>
 <div id="joyB"><i id="joyK"></i></div>
 <div id="mob">
 <button class="mb" id="mbJump"><b>Saltar</b></button>
@@ -1022,7 +1027,7 @@ function updPrompt(){
         tipHtml=key+'<b>Comprar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="'+(ok?'ok':'no')+'">$'+fm(PRICE[l])+(ok?'':' · te faltan $'+fm(Math.ceil(PRICE[l]-money)))+'</i>'}
       else if(nr&&nr.k==='ground'){const o=nr.o;tipPos=[o.g.position.x,o.g.position.y+2.1,o.g.position.z];tipHtml=key+'<b>Agarrar '+NAMES[o.lvl]+'</b>'+rarTag(o.lvl)+'<i class="ok">¡del suelo!</i>'}
       else if(nr&&nr.k==='steal'&&!STL){const q=nr.o,l=q.s.item.userData.lvl;tipPos=[q.s.x,(q.s.y||BH)+2.2,q.s.z];tipHtml=key+'<b>Mantén E para robar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="ok">'+STEAL_T+' s</i>'}
-      if(!tipHtml){const nd=nearDancer();if(nd){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+5.4,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
+      if(!tipHtml&&!MOB){const nd=nearDancer();if(nd){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+6.6,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
       if(!tipHtml){const on=ownSlotNear();if(on){tipPos=[on.s.x,(on.s.y||BH)+2.2,on.s.z];tipHtml='<span class="k">F</span><b>Mover</b> &nbsp;<span class="k">H</span><b>Eliminar</b>'}}
     }else{
       let bd=5,bs=null;slots.forEach(s=>{if(!lvOk(s,p))return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;bs=s}});
@@ -1036,7 +1041,7 @@ function placeTip(){
   cam.updateMatrixWorld();tipV.set(tipPos[0],tipPos[1],tipPos[2]).project(cam);
   if(tipV.z>1||tipV.z<-1){tipEl.style.display='none';tipShown='';return}
   if(tipHtml!==tipShown){tipEl.innerHTML=MOB?tipHtml.replace(/<span class="k">E<\/span>/g,'<span class="k">Acción</span>').replace(/<span class="k">[FHT]<\/span>/g,'').replace('Mantén E','Mantén Acción'):tipHtml;tipShown=tipHtml}
-  tipEl.style.display='flex';
+  tipEl.style.display='flex';tipEl.classList.toggle('sm',tipHtml.indexOf('Sincronizar baile')>=0);
   tipEl.style.left=((tipV.x*.5+.5)*innerWidth)+'px';tipEl.style.top=((-tipV.y*.5+.5)*innerHeight)+'px';
 }
 /* ajustes: reiniciar todo / limpiar base, con confirmacion */
@@ -1840,7 +1845,11 @@ function updRemotes(dt){
     if(!a.init){g.position.set(t.x,t.y,t.z);g.rotation.y=t.h;a.init=true;g.visible=true}
     g.position.x+=(t.x-g.position.x)*k;g.position.y+=(t.y-g.position.y)*k;g.position.z+=(t.z-g.position.z)*k;
     let dh=t.h-g.rotation.y;dh=Math.atan2(Math.sin(dh),Math.cos(dh));g.rotation.y+=dh*k;
-    a.fg.rotation.x=t.fa;a.mode=t.m;a.dT=t.dt;a.vy=t.vy;a.speed+=(t.sp-a.speed)*k;
+    a.fg.rotation.x=t.fa;a.dT=t.dt;
+    {const nn=performance.now();
+      if(t.m==='dance'){if(t.dt!==a.dTl){a.dTl=t.dt;a.dTc=nn}}else{a.dTl=null;a.dTc=0}
+      /* si el que baila dejo de mandar datos (pestaña congelada, mala conexion) su baile se detiene en vez de repetirse roto */
+      a.mode=(t.m==='dance'&&((a.dTc&&nn-a.dTc>2500)||(a.dS&&(nn-a.dS)/1000>31)))?'ground':t.m}a.vy=t.vy;a.speed+=(t.sp-a.speed)*k;
     if(a.mode==='land')a.landT+=dt;else a.landT=0;
     if(t.hl!==a.hl){
       if(a.heldG){g.remove(a.heldG);a.heldG=null}
@@ -1927,6 +1936,7 @@ function hostMsg(conn,m){
   const pid=conn._pid;
   if(m.t==='hello'){
     const ex=(m.rc!=null&&m.rc!==NET.pid)?NET.players[m.rc]:null;
+    if(m.aid)for(const id in NET.players){const o=NET.players[id];if(o.aid===m.aid&&+id!==m.rc){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(+id)}}   /* reconexion: se quita el "fantasma" de la conexion anterior */
     let np,base;
     if(ex&&!(NET.conns[m.rc]&&NET.conns[m.rc].open)){np=m.rc;base=ex.base}   /* un jugador que vuelve tras un cambio de anfitrión conserva su base */
     else{
@@ -1944,7 +1954,7 @@ function hostMsg(conn,m){
   {const pl=NET.players[pid];if(pl)pl.seen=performance.now()}
   if(m.t==='ping'){if(m.ts!=null)conn.send({t:'pong',ts:m.ts});return}
   if(m.t==='bye'){dropPlayer(pid);try{conn.close()}catch(e){}return}
-  if(m.t==='st'){const p=NET.players[pid];if(p&&m.a)setTgt(p,m.a)}
+  if(m.t==='st'){const p=NET.players[pid];if(p&&m.a){setTgt(p,m.a);relayHidden()}}
   else if(m.t==='buy'){
     const k=items.findIndex(o=>o.iid===m.iid);
     if(k<0){conn.send({t:'buyres',iid:m.iid,ok:false});return}
@@ -1956,7 +1966,7 @@ function onGuest(conn){
   if(conn.label==='u'){
     conn.on('data',m=>{
       const pid=NET.byPeer[conn.peer];if(pid==null||!m||m.t!=='st')return;
-      NET.uc[pid]=conn;const p=NET.players[pid];if(p&&m.a){setTgt(p,m.a);p.seen=performance.now()}
+      NET.uc[pid]=conn;const p=NET.players[pid];if(p&&m.a){setTgt(p,m.a);p.seen=performance.now();relayHidden()}
     });
     return;
   }
@@ -2114,6 +2124,7 @@ function leaveNow(){
 addEventListener('pagehide',leaveNow);addEventListener('beforeunload',leaveNow);
 setInterval(()=>{
   if(!NET.on)return;const now=performance.now();
+  {const me=myAid();if(me)for(const id in NET.players){if(+id!==NET.pid&&NET.players[id].aid===me)dropPlayer(+id)}}   /* nunca verte a ti mismo como otro jugador */
   if(NET.host){
     bcast({t:'ping'});
     for(const id in NET.players){const p=NET.players[id];if(p.seen==null)p.seen=now;if(now-p.seen>9000){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
@@ -2124,6 +2135,15 @@ setInterval(()=>{
   }
 },2000);
 function cleanupNet(){try{NET.peer&&NET.peer.destroy()}catch(e){}NET.peer=null;NET.ucon=null;NET.uc={};NET.byPeer={};NET.on=false;NET.host=true;NET.hostConn=null;NET.pid=0;NET.code='';updRoom()}
+/* pestaña oculta: el navegador congela el juego, asi que se avisa a todos de inmediato (sin baile, quieto) y se sigue retransmitiendo con poco trafico */
+function hideState(){
+  if(!running)return;
+  try{if(DNL.on)stopDance();speed=0;Object.keys(keys).forEach(k=>keys[k]=false);if(typeof joyEnd==='function')joyEnd();if(typeof CT!=='undefined')CT.clear();
+    if(NET.on){NET.stT=1;netTick(0,performance.now())}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hideState()});
+setInterval(()=>{if(document.hidden&&running&&NET.on){NET.stT=1;netTick(0,performance.now())}},700);
+let relT=0;
+function relayHidden(){if(!document.hidden||!NET.host)return;const n=performance.now();if(n-relT<50)return;relT=n;NET.stT=1;netTick(0,n)}
 function netTick(dt,now){
   if(NET.pend&&now-NET.pend.t>2500)NET.pend=null;
   NET.stT+=dt;if(NET.stT<.04)return;NET.stT=0;
