@@ -180,6 +180,24 @@ button:hover{background:var(--cy);color:#04060f}
 #admT .eye{padding:3px 8px;margin-left:6px;vertical-align:middle}#admT .eye svg{width:18px;height:18px;display:block;stroke:#fff8e6;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #netMsg{min-height:1.4em;margin-top:12px;max-width:380px;font:700 .95rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
 #room{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);display:none;align-items:center;padding:9px 18px;font:800 .9rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b;background:var(--wd);border:3px solid #4a2a12;border-radius:999px;box-shadow:0 4px 0 #35200e,0 6px 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,225,170,.45);cursor:pointer;z-index:5}
+
+#tpRow{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);display:none;gap:8px;z-index:5}
+#tpRow button{margin:0;padding:6px 15px;font-size:.78rem;text-transform:none;letter-spacing:.02em;background:linear-gradient(180deg,#b57d45,#98632f 55%,#7f4f24);border:3px solid #4a2a12;border-radius:999px;color:#fff8e6;font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;font-weight:800;text-shadow:0 2px 0 #3a200b;box-shadow:0 4px 0 #35200e,0 6px 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,225,170,.45);cursor:pointer}
+#tpRow button:hover{filter:brightness(1.12);background:linear-gradient(180deg,#b57d45,#98632f 55%,#7f4f24);color:#fff8e6}
+#tpRow button:active{transform:translateY(3px);box-shadow:0 1px 0 #35200e,inset 0 2px 0 rgba(255,225,170,.45)}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 9px 11px;border:3px solid #4a2a12;border-radius:16px;background:rgba(60,30,10,.4);box-shadow:inset 0 2px 6px rgba(0,0,0,.35);min-width:0}
+.dcard.own{cursor:pointer}
+.dcard.eq{border-color:#ffe08a;box-shadow:0 0 0 2px #ffe08a,inset 0 2px 6px rgba(0,0,0,.35)}
+.dsw{width:100%;max-width:130px;aspect-ratio:1;border:3px solid #4a2a12;border-radius:12px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.28),inset 0 -8px 12px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:2.8rem;line-height:1}
+.dn{font-weight:800;font-size:.9rem;text-align:center;line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center;color:var(--tx);text-shadow:var(--ol)}
+.dp{font-weight:800;font-size:.92rem;color:#ffe9a8;text-shadow:var(--ol)}
+.dcard.own .dp{color:#c8ff9a}
+.dcard button{width:100%;padding:7px 4px;font-size:.85rem;margin:0}
+.dcard.eq button{background:linear-gradient(180deg,#5fbf5a,#3f9a3c 55%,#2f7d2f)}
+.dchk{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:#3fae4b;border:3px solid #1f5a26;color:#fff;font-weight:800;font-size:1rem;display:none;align-items:center;justify-content:center;box-shadow:0 2px 0 #1f3f1f;z-index:1}
+.dcard.eq .dchk{display:flex}
+@media(max-width:520px){.dn,.dp,.dcard button{font-size:.72rem}.dgrid{gap:8px}.dsw{font-size:2rem}}
 </style>
 </head>
 <body>
@@ -197,13 +215,14 @@ button:hover{background:var(--cy);color:#04060f}
 <div id="prompt"></div>
 <div id="shop"><div class="sbox">
   <div class="shead"><div class="stitle">TIENDA</div><div class="smoney">Dinero<b id="shopMoney">$0</b></div><button id="shopX" aria-label="Cerrar">&times;</button></div>
-  <div class="stabs"><span class="on">Papus</span><span>Mejoras</span><span>Skins</span><span>Especiales</span></div>
-  <div class="sbody"><div class="sgrid"><div class="scard">—</div><div class="scard">—</div><div class="scard">—</div><div class="scard">—</div><div class="scard">—</div><div class="scard">—</div><div class="scard">—</div><div class="scard">—</div></div><div class="sempty">Aún no hay artículos</div></div>
-  <div class="sfoot">Pulsa <kbd>E</kbd> o <kbd>Esc</kbd> para cerrar</div>
+  <div class="stabs"><span class="on">Decoración</span></div>
+  <div class="sbody"><div class="dgrid" id="dGrid"></div></div>
+  <div class="sfoot">Compra una vez y úsalo cuando quieras: toca un artículo comprado para equiparlo o quitarlo · <kbd>E</kbd> o <kbd>Esc</kbd> para cerrar</div>
 </div></div>
 <button id="gear" aria-label="Ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>Ajustes</button>
 <button id="skinBtn" aria-label="Skins"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Skins</button>
 <button id="admBtn" aria-label="Panel de administrador"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Panel de administrador</button>
+<div id="tpRow"><button id="tpShop" aria-label="Ir a la tienda">Tienda</button><button id="tpBase" aria-label="Ir a mi base">Base</button></div>
 <button id="catBtn" aria-label="Catálogo"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 7h6"/></svg>Catálogo</button>
 <div id="cat"><div class="sbox sm">
   <div class="shead"><div class="stitle">CATÁLOGO</div><div class="smoney">Descubiertos<b id="catCount">0/12</b></div><button id="catX" aria-label="Cerrar">&times;</button></div>
@@ -374,10 +393,51 @@ function hitSolid(x,z){
   for(const b of BASES)if(b.barrierOn&&b!==myBase&&hit([b.cx-BW/2,b.z0-.45,b.cx+BW/2,b.z0+.45]))return true;
   return false;
 }
+/* ===== decoracion de bases: colores de la estructura (de barato a caro) + efecto Papu Fuego ===== */
+/* g = piezas doradas (1 paredes, 2 columnas, 4 techo); sw = colores del cuadrito de la tienda */
+const DECO=[null,
+ {id:1,n:'Verde',pr:5000,w:'#2fae4e',p:'#1e7d36',r:'#46c866',g:0,sw:['#2fae4e']},
+ {id:2,n:'Azul',pr:20000,w:'#2f66e0',p:'#1f45a8',r:'#4a82f0',g:0,sw:['#2f66e0']},
+ {id:3,n:'Celeste',pr:80000,w:'#55c8f2',p:'#2f9fcb',r:'#7adaf8',g:0,sw:['#55c8f2']},
+ {id:4,n:'Rojo',pr:300000,w:'#d42b2b',p:'#9a1c1c',r:'#ee4444',g:0,sw:['#d42b2b']},
+ {id:5,n:'Negro',pr:1200000,w:'#2a2a31',p:'#111115',r:'#383840',g:0,sw:['#1c1c21']},
+ {id:6,n:'Blanco',pr:5000000,w:'#f4f4f6',p:'#cfd2d8',r:'#ffffff',g:0,sw:['#f4f4f6']},
+ {id:7,n:'Dorado',pr:20000000,w:'#f2c230',p:'#d9a81c',r:'#ffd54a',g:7,sw:['#f2c230'],gold:1},
+ {id:8,n:'Dorado + Blanco',pr:75000000,w:'#f6f6f8',p:'#e8b923',r:'#f2c230',g:6,sw:['#f6f6f8','#e8b923']},
+ {id:9,n:'Dorado + Blanco + Rojo',pr:250000000,w:'#f6f6f8',p:'#e8b923',r:'#d42b2b',g:2,sw:['#f6f6f8','#e8b923','#d42b2b']},
+ {id:10,n:'Dorado + Negro + Morado',pr:800000000,w:'#1a1a20',p:'#e8b923',r:'#7b2fd0',g:2,sw:['#1a1a20','#e8b923','#7b2fd0']},
+ {id:11,n:'Papu Fuego',pr:2500000000,fire:1}];
+const _sh=(h,k)=>{const c=new THREE.Color(h);c.multiplyScalar(k);c.r=Math.min(1,c.r);c.g=Math.min(1,c.g);c.b=Math.min(1,c.b);return '#'+c.getHexString()};
+function decoCanvas(hex,gold,mode){
+  const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  if(gold){const g=x.createLinearGradient(0,0,128,128);g.addColorStop(0,_sh(hex,1.2));g.addColorStop(.35,hex);g.addColorStop(.5,_sh(hex,1.32));g.addColorStop(.72,hex);g.addColorStop(1,_sh(hex,.8));x.fillStyle=g}else x.fillStyle=hex;
+  x.fillRect(0,0,128,128);const dk=_sh(hex,.62);
+  if(mode==='panel'){x.strokeStyle=dk;x.lineWidth=4;x.strokeRect(3,3,122,122);x.lineWidth=2;x.strokeRect(16,16,96,96);x.fillStyle=dk;[[9,9],[119,9],[9,119],[119,119]].forEach(([a,b])=>x.fillRect(a-2,b-2,4,4))}
+  else if(mode==='roof'){x.strokeStyle=dk;x.globalAlpha=.4;x.lineWidth=2;for(let i=0;i<6;i++)x.strokeRect(i*21+1,1,21,126);x.globalAlpha=1}
+  if(gold){x.fillStyle='rgba(255,255,255,.6)';[[30,24],[90,70],[52,104],[104,18],[14,80]].forEach(([a,b])=>x.fillRect(a,b,3,3))}
+  return c}
+const _dtc={};
+function decoTex(hex,gold,mode,rx,ry){const key=hex+'|'+(gold?1:0)+'|'+mode+'|'+rx+'|'+ry;
+  return _dtc[key]||(_dtc[key]=(()=>{const t=new THREE.CanvasTexture(decoCanvas(hex,gold,mode));t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rx,ry);return t})())}
+/* pinta (o restaura con c=0) paredes, columnas y techo de una base */
+function paintDeco(DP,c){const D=c?DECO[c]:null,K=[.8,.8,1.1,.5,1,.7],mlist=m=>Array.isArray(m.material)?m.material:[m.material];
+  const set=(m,hex,gold,mode,k)=>mlist(m).forEach((mt,i)=>{
+    if(!mt.userData.o)mt.userData.o={map:mt.map,color:mt.color.clone()};
+    if(!D){mt.map=mt.userData.o.map;mt.color.copy(mt.userData.o.color)}
+    else if(mode==='plain'&&!gold){mt.map=null;mt.color.set(hex).multiplyScalar((k||1)*K[i%6])}
+    else{const o=mt.userData.o,rp=(o.map&&o.map.repeat)?o.map.repeat:{x:1,y:1};
+      mt.map=decoTex(hex,gold,mode,rp.x,rp.y);mt.color.set(0xffffff).multiplyScalar((k||1)*K[i%6])}
+    mt.needsUpdate=true});
+  DP.w.forEach(m=>set(m,D&&D.w,D&&(D.g&1),'panel'));
+  DP.p.forEach(([m,k])=>set(m,D&&D.p,D&&(D.g&2),'plain',k));
+  DP.r.forEach(m=>set(m,D&&D.r,D&&(D.g&4),'roof'))}
+function fireTex(){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
+  x.save();x.translate(32,38);x.scale(.62,1);const g=x.createRadialGradient(0,4,1,0,0,30);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,'rgba(255,255,255,.7)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.arc(0,0,30,0,7);x.fill();x.restore();
+  return new THREE.CanvasTexture(c)}
 function buildBase(idx,cx,z0,dir){
   const gx=cx,gz=dir>0?z0+6:z0-6,G=new THREE.Group();G.position.set(gx,0,gz);G.rotation.y=dir>0?0:Math.PI;scene.add(G);
   const b={idx,cx,z0,dir,G,owner:null,name:'',slots:[],barrierOn:false,barrierT:0,btnPress:0,W:(lx,lz)=>dir>0?[gx+lx,gz+lz]:[gx-lx,gz-lz]};
-  ROOT=G;
+  ROOT=G;const DP={w:[],p:[],r:[]};
   /* suelo de granito */
   add(new THREE.Mesh(new THREE.BoxGeometry(BW,BH,BD),B(0xffffff,{map:noiseTex('#8c8f94',['#6d7075','#a9acb1','#5a5d62','#c4a9a4','#d6d8dc','#7b6f6f'],6,7)})),0,BH/2,BZc);
   add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BW,BH,BD)),new THREE.LineBasicMaterial({color:0x00f0ff})),0,BH/2,BZc);
@@ -389,15 +449,15 @@ function buildBase(idx,cx,z0,dir){
    const w=add(new THREE.Mesh(new THREE.PlaneGeometry(17.6,28.2),B(0xffffff,{map:t})),0,BH+.02,BZ0-14.1);w.rotation.x=-Math.PI/2;
    [-8.8,8.8].forEach(x=>add(new THREE.Mesh(new THREE.BoxGeometry(.14,.06,28.2),B(0x00f0ff)),x,BH+.05,BZ0-14.1))}
   /* paredes */
-  [[-BW/2,BZc,.7,WH,BD,BD/3],[BW/2,BZc,.7,WH,BD,BD/3],[0,BZ0-BD,BW,WH,.7,BW/3]].forEach(([x,z,w,h,d,rx])=>add(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),boxMats(panelTex(rx,1),0xffffff)),x,BH+h/2,z));
+  [[-BW/2,BZc,.7,WH,BD,BD/3],[BW/2,BZc,.7,WH,BD,BD/3],[0,BZ0-BD,BW,WH,.7,BW/3]].forEach(([x,z,w,h,d,rx])=>DP.w.push(add(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),boxMats(panelTex(rx,1),0xffffff)),x,BH+h/2,z)));
   /* pilares */
   [-BW/2,BW/2].forEach(px=>[0,1,2,3].forEach(k=>{const z=BZ0-k*BD/3;
-    add(new THREE.Mesh(new THREE.BoxGeometry(1.3,PH,1.3),boxMats(null,0x626c78)),px,BH+PH/2,z);
-    add(new THREE.Mesh(new THREE.BoxGeometry(1.8,.5,1.8),boxMats(null,0x3e4650)),px,BH+.25,z);
-    add(new THREE.Mesh(new THREE.BoxGeometry(1.6,.45,1.6),boxMats(null,0x9aa3ad)),px,BH+PH-.25,z)}));
+    DP.p.push([add(new THREE.Mesh(new THREE.BoxGeometry(1.3,PH,1.3),boxMats(null,0x626c78)),px,BH+PH/2,z),1]);
+    DP.p.push([add(new THREE.Mesh(new THREE.BoxGeometry(1.8,.5,1.8),boxMats(null,0x3e4650)),px,BH+.25,z),.6]);
+    DP.p.push([add(new THREE.Mesh(new THREE.BoxGeometry(1.6,.45,1.6),boxMats(null,0x9aa3ad)),px,BH+PH-.25,z),1.3])}));
   /* techo */
   const roofMats=boxMats(noiseTex('#a7acb3',['#959aa2','#b6bbc1','#8a8f96'],8,9),0xffffff,true);roofMats[3]=boxMats(null,0xb9bec5,true)[3];
-  add(new THREE.Mesh(new THREE.BoxGeometry(BW+1.6,1.1,BD+1.6),roofMats),0,RH+.55,BZc);
+  DP.r.push(add(new THREE.Mesh(new THREE.BoxGeometry(BW+1.6,1.1,BD+1.6),roofMats),0,RH+.55,BZc));
   /* letrero de madera: dice el dueño o LIBRE */
   {const bg=document.createElement('canvas');bg.width=512;bg.height=128;const q=bg.getContext('2d');
    q.fillStyle='#b0703c';q.fillRect(0,0,512,128);
@@ -411,6 +471,27 @@ function buildBase(idx,cx,z0,dir){
    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(e),transparent:true,fog:false}));sp.scale.set(5,1.25,1);sp.position.set(0,RH-3.5,BZ0+1);G.add(sp);
    b.drawSign();
    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{y.clearRect(0,0,512,128);y.fillText('ENTRADA',256,66);sp.material.map.needsUpdate=true;b.drawSign()})}
+  /* decoracion: color de la estructura + Papu Fuego (lo ven todos) */
+  b.deco={c:0,f:0};b.DP=DP;
+  {const paint=c=>paintDeco(DP,c);
+   /* fuego rojo alrededor de la base */
+   const NF=90,fp=new Float32Array(NF*3),fc=new Float32Array(NF*3),fx=[],fz=[],fph=[],fsp=[],fh=[];
+   {const X=BW/2+.5,Z1=BZ0+.4,Z2=BZ0-BD-.5,seg=[[-X,Z1,-X,Z2],[X,Z1,X,Z2],[-X,Z2,X,Z2],[-X,Z1,-5,Z1],[5,Z1,X,Z1]];
+    const len=seg.map(q=>Math.hypot(q[2]-q[0],q[3]-q[1])),tot=len.reduce((u,v)=>u+v,0);
+    for(let i=0;i<NF;i++){let d=(i+.5)/NF*tot,k=0;while(k<seg.length-1&&d>len[k]){d-=len[k];k++}
+      const q=seg[k],u=len[k]?d/len[k]:0;fx.push(q[0]+(q[2]-q[0])*u);fz.push(q[1]+(q[3]-q[1])*u);
+      fph.push((i*.6180339)%1);fsp.push(.55+((i*7)%5)*.09);fh.push(4.2+((i*3)%4)*.7)}}
+   const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.BufferAttribute(fp,3));fg.setAttribute('color',new THREE.BufferAttribute(fc,3));
+   const fire=new THREE.Points(fg,new THREE.PointsMaterial({size:3.6,map:fireTex(),vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,fog:false}));
+   fire.frustumCulled=false;fire.visible=false;G.add(fire);
+   b.fireUpd=(now)=>{if(!b.deco.f)return;const t=now/1000;
+     for(let i=0;i<NF;i++){const ph=(t*fsp[i]+fph[i])%1,fade=Math.pow(1-ph,1.25)*Math.min(1,ph/.07);
+       fp[i*3]=fx[i]+Math.sin(t*3+i*1.7)*.45*ph;fp[i*3+1]=BH+.4+ph*fh[i];fp[i*3+2]=fz[i]+Math.cos(t*2.4+i)*.45*ph;
+       fc[i*3]=fade;fc[i*3+1]=fade*Math.max(0,.5-ph*.75);fc[i*3+2]=fade*Math.max(0,.1-ph*.2)}
+     fg.attributes.position.needsUpdate=true;fg.attributes.color.needsUpdate=true};
+   b.setDeco=(c,f)=>{c=(c>=1&&c<=10)?(c|0):0;f=f?1:0;
+     if(b.deco.c!==c){b.deco.c=c;paint(c)}
+     if(b.deco.f!==f){b.deco.f=f;fire.visible=!!f;if(f)b.fireUpd(performance.now())}}}
   /* 10 puntos de colocacion */
   SLOT_DEF.forEach(([x,z,dx,dz])=>{
     const rot=Math.atan2(dx,dz);
@@ -475,7 +556,7 @@ function buildBase(idx,cx,z0,dir){
      t.needsUpdate=true};
   }
   b.upd=(dt,now)=>{
-    b.drawBar(now);b.drawBtnT(now);
+    b.drawBar(now);b.drawBtnT(now);if(b.deco.f)b.fireUpd(now);
     b.barrierT+=((b.barrierOn?1:0)-b.barrierT)*Math.min(1,dt*7);
     barrier.visible=b.barrierT>.02;barrier.scale.y=Math.max(.001,b.barrierT);
     barGlow.opacity=.2+.12*Math.sin(now/150);
@@ -492,7 +573,7 @@ BASE_POS.forEach(([cx,z0,dir],i)=>buildBase(i,cx,z0,dir));
 let myBase=BASES[0],slots=myBase.slots;
 function setMyBase(b){myBase=b;slots=b.slots}
 function assignBase(b,pid,name){b.owner=pid;b.name=name;b.drawSign()}
-function freeBaseObj(b){b.slots.forEach(s=>{if(s.item){scene.remove(s.item);s.item=null}});b.barrierOn=false;b.barEnd=0;b.barCd=0;b.owner=null;b.name='';b.drawSign();b.drawBtn()}
+function freeBaseObj(b){b.slots.forEach(s=>{if(s.item){scene.remove(s.item);s.item=null}});b.barrierOn=false;b.barEnd=0;b.barCd=0;b.owner=null;b.name='';b.setDeco(0,0);b.drawSign();b.drawBtn()}
 /* colinas lejanas con neblina (diseno propio) */
 {const W=2048,Hh=256,c=document.createElement('canvas');c.width=W;c.height=Hh;const x=c.getContext('2d');
  const layer=(base,amps,col)=>{x.beginPath();x.moveTo(0,Hh);for(let i=0;i<=W;i+=8){let y=base;amps.forEach(([k,a,ph])=>{y-=a*Math.sin(2*Math.PI*k*i/W+ph)});x.lineTo(i,y)}x.lineTo(W,Hh);x.closePath();x.fillStyle=col;x.fill()};
@@ -532,8 +613,45 @@ const SHOP_P={x:90.2,z:BELT_Z-1},shopG=new THREE.Group();shopG.position.set(94,0
  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{x.clearRect(0,0,256,96);x.fillStyle='#38b24a';x.beginPath();x.roundRect?x.roundRect(8,8,240,80,18):x.rect(8,8,240,80);x.fill();x.lineWidth=5;x.strokeStyle='#fff';x.stroke();x.fillStyle='#fff';x.font='800 42px Orbitron,sans-serif';x.fillText('Tienda',128,50);sp.material.map.needsUpdate=true});
 }
 SOL.push([91.5,BELT_Z-4.7,97.4,BELT_Z+2.7]);
-function openShop(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('shop').style.display='flex'}
-function closeShop(){shopOpen=false;$('shop').style.display='none'}
+function openShop(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('shop').style.display='flex';renderShop()}
+function closeShop(){shopOpen=false;$('shop').style.display='none';$('conf').style.display='none';pendingAct=null}
+/* ===== tienda: Decoración ===== */
+const fmtM=n=>'$'+Math.round(n).toLocaleString('es-MX');
+const myDeco=()=>{const d=ACC.st&&ACC.st.deco;return d?{o:d.o||[],c:d.c|0,f:d.f?1:0}:{o:[],c:0,f:0}};
+function swatchOf(d){
+  if(d.fire)return 'radial-gradient(circle at 50% 80%,#ff7a1a,#c4120c 55%,#2a0505)';
+  if(d.gold)return 'linear-gradient(135deg,#ffe58a,#f2c230 35%,#fff0a8 50%,#f2c230 72%,#c8960f)';
+  const c=d.sw;if(c.length===1)return c[0];
+  const n=c.length;return 'linear-gradient(135deg,'+c.map((h,i)=>h+' '+(i*100/n)+'% '+((i+1)*100/n)+'%').join(',')+')'}
+let shopSig='';
+function refreshShop(){if($('shop').style.display==='flex'&&JSON.stringify(myDeco())!==shopSig)renderShop()}
+function renderShop(){
+  const g=$('dGrid');if(!g)return;g.textContent='';const D=myDeco();shopSig=JSON.stringify(D);
+  DECO.forEach(d=>{if(!d)return;
+    const own=D.o.includes(d.id),eq=d.fire?!!D.f:D.c===d.id;
+    const card=document.createElement('div');card.className='dcard'+(own?' own':'')+(eq?' eq':'');
+    const sw=document.createElement('div');sw.className='dsw';sw.style.background=swatchOf(d);if(d.fire)sw.textContent='🔥';card.appendChild(sw);
+    const ck=document.createElement('div');ck.className='dchk';ck.textContent='✓';card.appendChild(ck);
+    const nm=document.createElement('div');nm.className='dn';nm.textContent=d.n;card.appendChild(nm);
+    const pr=document.createElement('div');pr.className='dp';pr.textContent=own?'Comprado':fmtM(d.pr);card.appendChild(pr);
+    const bt=document.createElement('button');bt.textContent=own?(eq?'Equipado ✓':'Equipar'):'Comprar';card.appendChild(bt);
+    if(own)card.onclick=()=>equipDeco(d.id);
+    bt.onclick=e=>{e.stopPropagation();bt.blur();own?equipDeco(d.id):askBuyDeco(d.id)};
+    g.appendChild(card)})}
+function askBuyDeco(id){const d=DECO[id];pendingAct={buy:id};
+  $('confDesc').textContent='¿Comprar «'+d.n+'» por '+fmtM(d.pr)+'? Se descuenta de tu dinero y es tuyo para siempre: lo equipas o quitas cuando quieras.';$('conf').style.display='flex'}
+async function buyDeco(id){const d=DECO[id];
+  if(money<d.pr){toast('No te alcanza el dinero para '+d.n);return}
+  const r=await srv('dbuy',{id});
+  if(r&&!r.err)toast('¡Compraste '+d.n+'! Toca el artículo para equiparlo')}
+function equipDeco(id){const D=myDeco(),d=DECO[id];if(!D.o.includes(id))return;
+  const nd={o:D.o,c:D.c,f:D.f};if(d.fire)nd.f=D.f?0:1;else nd.c=D.c===id?0:id;
+  ACC.st=Object.assign({},ACC.st,{deco:nd});applyMyDeco(nd);renderShop();
+  srv('dequip',{id});
+  toast(d.fire?(nd.f?'Papu Fuego activado':'Papu Fuego desactivado'):(nd.c?d.n+' equipado':d.n+' quitado'))}
+function applyMyDeco(d){const b=myBase;if(!b||!b.setDeco)return;const c=d.c|0,f=d.f?1:0;
+  if(b.deco.c!==c||b.deco.f!==f){b.setDeco(c,f);if(NET.on)emit({t:'deco',c,f})}}
+const myDc=()=>{const d=myDeco();return [d.c,d.f]};
 $('shopX').onclick=closeShop;
 const tipEl=document.createElement('div');tipEl.id='tip';document.body.appendChild(tipEl);
 let tipPos=null,tipHtml='',tipShown='';
@@ -589,10 +707,19 @@ $('optReset').onclick=()=>askConfirm('all');$('optClean').onclick=()=>askConfirm
 $('confNo').onclick=()=>{pendingAct=null;$('conf').style.display='none'};
 $('confYes').onclick=()=>{
   const k=pendingAct;pendingAct=null;
+  if(k&&k.buy){$('conf').style.display='none';buyDeco(k.buy);return}
   if(k==='all'){resetMe(false);srv('reset')}else if(k==='base'){clearBase();srv('clear')}
   $('conf').style.display='none';closeSet();
   toast(k==='all'?'Todo reiniciado: base vacía y dinero en $50':'Base limpia: tu dinero sigue igual');
 };
+/* teletransporte rapido: Tienda / mi Base */
+function tpTo(x,z,h){
+  if(!running||shopOpen||setOpen||stunT>0||(mode!=='ground'&&mode!=='land'))return;
+  if(DNL.on)stopDance();cancelSteal();
+  player.position.x=x;player.position.z=z;yaw=h;heading=h;pitch=.28;camT=camD=17.5;speed=0;carryT=0;py=0;vy=0;
+}
+$('tpShop').onclick=()=>{$('tpShop').blur();tpTo(SHOP_P.x-2.5,SHOP_P.z,-Math.PI/2)};
+$('tpBase').onclick=()=>{$('tpBase').blur();const sp=myBase.W(0,BZ0-3);tpTo(sp[0],sp[1],myBase.dir>0?0:Math.PI)};
 /* catalogo (bitacora de Papus conseguidos, guardada en el servidor) */
 const CAT_ORDER=[5,6,13,14,11,12,7,8,9,10,15,16];
 let catR=null,catImgs=null,catSel=-1;
@@ -1141,7 +1268,7 @@ function delSlot(){
 function act(){
   if(!running)return;
   if(setOpen||stunT>0)return;
-  if(shopOpen){closeShop();return}
+  if(shopOpen){if($('conf').style.display!=='flex')closeShop();return}
   if(mode!=='ground'&&mode!=='land')return;
   {const q=player.position;
    if(Math.hypot(q.x-SHOP_P.x,q.z-SHOP_P.z)<4.5){openShop();return}
@@ -1174,7 +1301,7 @@ addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter'){const id=e.target.id;if(id==='nmIn')$('nmYes').click();else if(id.startsWith('lg'))$('lgGo').click();else if(id.startsWith('rg'))$('rgGo').click()}else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();return}
   const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();
-  if(k==='Escape'){if($('adm').style.display==='flex')closeAdm();else if(shopOpen)closeShop();else if($('conf').style.display==='flex')$('confNo').click();else if(setOpen)closeSet()}if(k==='e'&&!e.repeat)act();if(k==='b'&&!e.repeat){if(DNL.on)stopDance();else startDance()}if(k==='m'&&!e.repeat){bgmOn=!bgmOn;toast(bgmOn?'Música activada':'Música silenciada')}if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
+  if(k==='Escape'){if($('adm').style.display==='flex')closeAdm();else if($('conf').style.display==='flex')$('confNo').click();else if(shopOpen)closeShop();else if(setOpen)closeSet()}if(k==='e'&&!e.repeat)act();if(k==='b'&&!e.repeat){if(DNL.on)stopDance();else startDance()}if(k==='m'&&!e.repeat){bgmOn=!bgmOn;toast(bgmOn?'Música activada':'Música silenciada')}if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
 addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='e'||e.key==='E')cancelSteal();keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 let pitch=1.15;
 addEventListener('contextmenu',e=>e.preventDefault());
@@ -1199,7 +1326,7 @@ function toggleBarrier(){
   }else{myBase.barrierOn=false;barCd=now+BAR_CD}
   myBase.barEnd=barEnd;myBase.barCd=barCd;
   myBase.btnPress=.25;myBase.drawBtn();emit(myBase.barrierOn?{t:'bar',on:true,left:BAR_ON}:{t:'bar',on:false,cd:BAR_CD});
-  toast(myBase.barrierOn?'Barrera ACTIVADA por 80 s: nadie más puede pasar':'Barrera desactivada (enfriamiento de 60 s)')
+  toast(myBase.barrierOn?'Barrera ACTIVADA por 80 s: nadie más puede pasar':'Barrera apagada antes de tiempo (enfriamiento de 60 s)')
 }
 function updBarrier(dt,now){BASES.forEach(b=>b.upd(dt,now))}
 /* ====== objetos en la base y en la cinta ====== */
@@ -1285,10 +1412,11 @@ function bcast(m,except){for(const id in NET.conns){if(+id===except)continue;con
 function emit(m){if(!NET.on)return;if(NET.host)bcast(Object.assign({pid:NET.pid},m));else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send(m)}
 function freeBaseIdx(){for(let i=0;i<BASES.length;i++)if(BASES[i].owner===null)return i;return -1}
 function setTgt(p,a){p.tgt={x:a[0],y:a[1],z:a[2],h:a[3],sp:a[4],m:a[5],vy:a[6],fa:a[7],hl:a[8],st:a[9]|0,sc:a[10]|0}}
-function addPlayer(pid,name,skin,base,bar,aid){
+const cleanDc=a=>Array.isArray(a)?[(a[0]>=1&&a[0]<=10)?a[0]|0:0,a[1]?1:0]:[0,0];
+function addPlayer(pid,name,skin,base,bar,aid,dc){
   if(NET.players[pid]){if(aid)NET.players[pid].aid=aid;return NET.players[pid]}
   assignBase(BASES[base],pid,name);if(bar){BASES[base].barrierOn=true;BASES[base].barEnd=performance.now()+BAR_ON;BASES[base].drawBtn()}
-  const p={pid,name,skin,base,aid,tgt:null,av:makeAvatar(skin,name)};
+  const p={pid,name,skin,base,aid,dc:cleanDc(dc),tgt:null,av:makeAvatar(skin,name)};BASES[base].setDeco(p.dc[0],p.dc[1]);
   NET.players[pid]=p;updRoom();return p;
 }
 function dropPlayer(pid){
@@ -1310,12 +1438,13 @@ function applyEvt(pid,m){
   else if(m.t==='bar'){b.barrierOn=!!m.on;b.btnPress=.25;b.drawBtn();const n=performance.now();if(m.on){b.barEnd=n+(m.left||BAR_ON)}else b.barCd=n+(m.cd||0)}
   else if(m.t==='name'){p.name=m.name;b.name=m.name;b.drawSign();if(p.av){p.av.g.remove(p.av.ns);p.av.ns=makeNameSprite(m.name,1);p.av.ns.position.y=4.9;p.av.g.add(p.av.ns)}}
   else if(m.t==='skin'){p.skin=m.k;if(p.av)setAvSkin(p.av,m.k)}
+  else if(m.t==='deco'){p.dc=cleanDc([m.c,m.f]);b.setDeco(p.dc[0],p.dc[1])}
 }
 const snapItems=()=>{const n=performance.now();return items.filter(o=>itemX(o,n)<BELT_L/2-1).map(o=>({iid:o.iid,lvl:o.g.userData.lvl,x:+itemX(o,n).toFixed(2)}))};
 function snapSlots(){const l=[];BASES.forEach(b=>b.slots.forEach((s,i)=>{if(s.item)l.push([b.idx,i,s.item.userData.lvl])}));return l}
 function snapPlayers(){
-  const l=[{pid:NET.pid,name:userName,skin:curSkin,base:myBase.idx,bar:myBase.barrierOn,aid:myAid(),tgt:null}];
-  for(const id in NET.players){const p=NET.players[id];l.push({pid:p.pid,name:p.name,skin:p.skin,base:p.base,aid:p.aid,bar:BASES[p.base].barrierOn})}
+  const l=[{pid:NET.pid,name:userName,skin:curSkin,base:myBase.idx,bar:myBase.barrierOn,aid:myAid(),dc:myDc(),tgt:null}];
+  for(const id in NET.players){const p=NET.players[id];l.push({pid:p.pid,name:p.name,skin:p.skin,base:p.base,aid:p.aid,dc:p.dc,bar:BASES[p.base].barrierOn})}
   return l;
 }
 /* anfitrion */
@@ -1331,9 +1460,9 @@ function hostMsg(conn,m){
       np=NET.nextPid++;
     }
     conn._pid=np;NET.conns[np]=conn;NET.byPeer[conn.peer]=np;
-    const p=addPlayer(np,String(m.name||'Jugador').slice(0,14),m.skin|0,base,false,m.aid);
+    const p=addPlayer(np,String(m.name||'Jugador').slice(0,14),m.skin|0,base,false,m.aid,m.dc);
     conn.send({t:'welcome',pid:np,base,code:NET.code,hostPid:NET.pid,rj:!!ex,players:snapPlayers(),slots:snapSlots(),items:snapItems()});
-    bcast({t:'join',p:{pid:np,name:p.name,skin:p.skin,base,aid:p.aid}},np);
+    bcast({t:'join',p:{pid:np,name:p.name,skin:p.skin,base,aid:p.aid,dc:p.dc}},np);
     return;
   }
   if(pid==null)return;
@@ -1380,7 +1509,7 @@ function hostRoom(name,done,fixed){
 function applyWelcome(m){
   NET.pid=m.pid;NET.hostPid=m.hostPid||0;NET.code=m.code;
   items.forEach(o=>scene.remove(o.g));items=[];
-  m.players.forEach(p=>{if(p.pid!==m.pid)addPlayer(p.pid,p.name,p.skin,p.base,p.bar,p.aid)});
+  m.players.forEach(p=>{if(p.pid!==m.pid)addPlayer(p.pid,p.name,p.skin,p.base,p.bar,p.aid,p.dc)});
   setMyBase(BASES[m.base]);assignBase(BASES[m.base],m.pid,userName);
   m.slots.forEach(([b,i,l])=>{if(b!==m.base)putRemoteSlot(BASES[b],i,l)});
   m.items.forEach(it=>spawnItem(it.lvl,it.x,it.iid));
@@ -1400,7 +1529,7 @@ function clientMsg(m){
     case 'ping':break;
     case 'pong':NET.rtt=Math.round(performance.now()-m.ts);updRoom();break;
     case 'bye':onHostGone();break;
-    case 'join':addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false,m.p.aid);break;
+    case 'join':addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false,m.p.aid,m.p.dc);break;
     case 'leave':dropPlayer(m.pid);break;
     case 'S':m.l.forEach(a=>{const p=NET.players[a[0]];if(p)setTgt(p,a.slice(1))});break;
     case 'sp':spawnItem(m.lvl,-BELT_L/2+2,m.iid);if(m.leg)toast('¡Apareció un Papu LEGENDARIO: '+NAMES[m.lvl]+'!');break;
@@ -1414,7 +1543,7 @@ function applyRejoin(m){
   NET.hostPid=m.hostPid;
   const ids=new Set(m.players.map(p=>p.pid));
   for(const id in NET.players)if(!ids.has(+id))dropPlayer(+id);
-  m.players.forEach(p=>{if(p.pid!==NET.pid)addPlayer(p.pid,p.name,p.skin,p.base,p.bar,p.aid)});
+  m.players.forEach(p=>{if(p.pid!==NET.pid)addPlayer(p.pid,p.name,p.skin,p.base,p.bar,p.aid,p.dc)});
   m.slots.forEach(([b,i,l])=>{if(b!==myBase.idx)putRemoteSlot(BASES[b],i,l)});
   items.forEach(o=>scene.remove(o.g));items=[];m.items.forEach(it=>spawnItem(it.lvl,it.x,it.iid));
   slots.forEach((q,i)=>{if(q.item)emit({t:'place',slot:i,lvl:q.item.userData.lvl})});
@@ -1449,7 +1578,7 @@ function migJoin(n,oldHost){
   peer.on('error',retry);
   peer.on('open',()=>{
     const c=peer.connect(peerId(MAIN_CODE),{serialization:'json',reliable:true});
-    c.on('open',()=>c.send({t:'hello',name:userName,skin:curSkin,rc:NET.pid,aid:myAid()}));
+    c.on('open',()=>c.send({t:'hello',name:userName,skin:curSkin,rc:NET.pid,aid:myAid(),dc:myDc()}));
     c.on('data',m=>{
       if(m.t==='welcome'&&!ok&&!fin){
         ok=true;fin=true;NET.peer=peer;NET.hostConn=c;NET.host=false;NET.migrating=false;
@@ -1488,7 +1617,7 @@ function joinRoom(name,code,done){
     peer.on('error',e=>{try{peer.destroy()}catch(x){}end(e.type==='peer-unavailable'?'NOROOM':'Error de conexión ('+e.type+').')});
     peer.on('open',()=>{
       const c=peer.connect(peerId(code),{serialization:'json',reliable:true});
-      c.on('open',()=>{NET.peer=peer;NET.hostConn=c;c.send({t:'hello',name,skin:curSkin,aid:myAid()})});
+      c.on('open',()=>{NET.peer=peer;NET.hostConn=c;c.send({t:'hello',name,skin:curSkin,aid:myAid(),dc:myDc()})});
       c.on('data',m=>{
         if(m.t==='welcome'&&!fin){NET.on=true;NET.host=false;applyWelcome(m);end(null);openFast(peer,code);return}
         if(m.t==='full'){end('La sala está llena (máximo 6 jugadores).');return}
@@ -1568,6 +1697,8 @@ function applyServerState(st){
     if(want>=0)putItem(s,makeBR(want));
     if(NET.on)emit({t:'place',slot:i,lvl:want});
   }
+  if(st.deco)applyMyDeco(st.deco);
+  refreshShop();
 }
 function handleRes(r,last){
   if(r.code==='auth'){kicked(r.err);return}
@@ -1585,7 +1716,7 @@ setInterval(()=>{
   ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'){kicked(r.err);return}gotSrv(r);if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
 },5000);
 addEventListener('pagehide',()=>{if(ACC.tok&&running){try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'sync',tok:ACC.tok})],{type:'application/json'}))}catch(e){}}});
-function beginPlay(){$('panel').style.display='none';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
+function beginPlay(){$('panel').style.display='none';$('tpRow').style.display='flex';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
 function startOwnBase(n){setUserName(n);setMyBase(BASES[0]);assignBase(BASES[0],0,n);reset()}
 function enterFail(m){lobbyBusy(false);lobbyMsg(m,true);cleanupNet()}
 function enterGame(st,retry,tries){
@@ -1796,9 +1927,9 @@ async function finishSteal(t){
     if(!held)mkHeld(r.lvl);toast('¡Robaste '+NAMES[r.lvl]+'! Llévalo a tu base');
   }else if(r&&!r.err)toast('Ya no estaba ahí');
 }
-/* barrera: 80 s activa + 60 s de enfriamiento */
+/* barrera: 80 s activa; si termina sola puedes activarla al instante, si la apagas antes hay 60 s de enfriamiento */
 function updBar(now){
-  if(myBase.barrierOn&&now>=barEnd){myBase.barrierOn=false;myBase.btnPress=.25;myBase.drawBtn();barCd=now+BAR_CD;myBase.barCd=barCd;emit({t:'bar',on:false,cd:BAR_CD});toast('Tu barrera se desactivó (enfriamiento de 60 s)')}
+  if(myBase.barrierOn&&now>=barEnd){myBase.barrierOn=false;myBase.btnPress=.25;myBase.drawBtn();barCd=0;myBase.barCd=0;emit({t:'bar',on:false,cd:0});toast('Tu barrera terminó: ya puedes activarla otra vez')}
 }
 function gameTick(dt,now){
   for(let i=GROUND.length-1;i>=0;i--){
@@ -1908,8 +2039,8 @@ function updParty(dt,now){
   });
 }
 let fwNext=.5;
-/* ====== Papu legendario asegurado cada 10 minutos (hora del servidor, igual para todos) ====== */
-const LEG_MS=600000,LEG={slot:-1};let SRV_OFF=0,legLast=-1;
+/* ====== Papu legendario asegurado cada 5 minutos (hora del servidor, igual para todos) ====== */
+const LEG_MS=300000,LEG={slot:-1};let SRV_OFF=0,legLast=-1;
 const srvNow=()=>Date.now()+SRV_OFF;
 /* letrero fisico de madera clavado en el suelo, junto a donde salen los Papus */
 const LW=640,LH=360;
