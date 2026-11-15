@@ -484,7 +484,7 @@ const RAR_OF=l=>l===16?4:isGold(l)?3:(l===7||l===9||l===15)?2:l===11?1:0;
 const RAR_N=['COMÚN','ÉPICO','LEGENDARIO','DORADO','ULTRA'],RAR_C=['#b8bcc4','#b36bff','#ff8a1f','#ffd23a','#ff2a2a'];
 const fm=n=>Math.floor(n).toLocaleString('es-MX'),fc=n=>n>=1e6?+(n/1e6).toFixed(2)+'M':n>=1e3?+(n/1e3).toFixed(1)+'K':String(n);
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
-const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=7,GROUND_LIFE=5000,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
+const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=7,GROUND_LIFE=10000,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
 const SPAWN=3,BELT_V=3.2,MAXB=50,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
@@ -1027,7 +1027,7 @@ function updPrompt(){
         tipHtml=key+'<b>Comprar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="'+(ok?'ok':'no')+'">$'+fm(PRICE[l])+(ok?'':' · te faltan $'+fm(Math.ceil(PRICE[l]-money)))+'</i>'}
       else if(nr&&nr.k==='ground'){const o=nr.o;tipPos=[o.g.position.x,o.g.position.y+2.1,o.g.position.z];tipHtml=key+'<b>Agarrar '+NAMES[o.lvl]+'</b>'+rarTag(o.lvl)+'<i class="ok">¡del suelo!</i>'}
       else if(nr&&nr.k==='steal'&&!STL){const q=nr.o,l=q.s.item.userData.lvl;tipPos=[q.s.x,(q.s.y||BH)+2.2,q.s.z];tipHtml=key+'<b>Mantén E para robar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="ok">'+STEAL_T+' s</i>'}
-      if(!tipHtml&&!MOB){const nd=nearDancer();if(nd){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+6.6,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
+      if(!tipHtml&&!MOB){const nd=nearDancer();if(nd&&syncGap(nd)>.8){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+6.6,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
       if(!tipHtml){const on=ownSlotNear();if(on){tipPos=[on.s.x,(on.s.y||BH)+2.2,on.s.z];tipHtml='<span class="k">F</span><b>Mover</b> &nbsp;<span class="k">H</span><b>Eliminar</b>'}}
     }else{
       let bd=5,bs=null;slots.forEach(s=>{if(!lvOk(s,p))return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;bs=s}});
@@ -1436,11 +1436,13 @@ function nearDancer(){
   for(const id in NET.players){const p=NET.players[id],a=p.av;if(!a||!a.init)continue;trackDance(a);
     if(a.dS){const d=Math.hypot(a.g.position.x-q.x,a.g.position.z-q.z);if(d<bd){bd=d;best=p}}}
   return best}
+const syncGap=p=>DNL.on?Math.abs(DNL.t-(performance.now()-p.av.dS)/1000):99;   /* cuanto me falta para ir al mismo punto del baile */
 function syncDance(){
   if(!running||shopOpen||setOpen||stunT>0)return;
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground'&&mode!=='land'){return}
   const p=nearDancer();if(!p){toast('No hay nadie bailando cerca');return}
+  if(syncGap(p)<=.8){toast('Ya estás sincronizado con '+(p.name||'tu amigo'));return}
   let off=(performance.now()-p.av.dS)/1000;
   const du=(SFX.buf.dance&&SFX.buf.dance.duration)||30;if(off>=du-1){toast('Ese baile ya casi termina');return}
   off=Math.max(0,off);
@@ -2735,7 +2737,12 @@ function swingBat(){
   if(!running||!myEq||shopOpen||setOpen||stunT>0||held)return;
   const now=performance.now();if(now-batLast<SW_MS+90)return;
   if(mode==='sit'||mode==='slam'||mode==='spin'||mode==='get')return;
-  batLast=now;batSw={t0:now,h:0};if(DNL.on)stopDance();emit({t:'sw'})}
+  batLast=now;batSw={t0:now,h:0};if(DNL.on)stopDance();emit({t:'sw'});
+  /* punteria asistida: el personaje se voltea hacia el rival mas cercano a su alcance (en PC y celular el personaje no siempre mira al rival) */
+  {const p=player.position;let bq=null,bd=BAT_RANGE;
+    for(const id in NET.players){const a=NET.players[id].av;if(!a||!a.g.visible)continue;
+      const d=Math.hypot(a.g.position.x-p.x,a.g.position.z-p.z);if(d<bd&&d>1e-3&&Math.abs(a.g.position.y-p.y)<=4){bd=d;bq=a}}
+    if(bq)heading=Math.atan2(bq.g.position.x-p.x,bq.g.position.z-p.z)}}
 function batHit(){
   if(!NET.on)return;const p=player.position,fx=Math.sin(heading),fz=Math.cos(heading);
   let best=null,bd=BAT_RANGE;
@@ -2893,7 +2900,7 @@ function mobTick(){
   if(document.body.classList.contains('ui')!==ui)document.body.classList.toggle('ui',ui);
   if(!show&&(joy.on||CT.size)){joyEnd();CT.clear()}
   const own=show&&/Mover/.test(tipHtml)&&!held,
-        sy=show&&!held&&!!nearDancer(),
+        sy=show&&!held&&(()=>{const nd=nearDancer();return !!nd&&syncGap(nd)>.8})(),
         s=[show,show&&!!held,show&&!!myEq,own,sy].join();
   if(s===mobSt)return;mobSt=s;
   $('mob').style.display=show?'block':'none';
