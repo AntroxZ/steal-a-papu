@@ -24,7 +24,7 @@ async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +
 const DPRICE = [0, 5000, 20000, 80000, 300000, 1200000, 5000000, 800000000, 20000000, 75000000, 250000000, 2500000000];
 /* pisos de la base: se empieza con 1 (10 espacios) y se pueden comprar hasta 5; precio del piso numero n */
 const FPRICE = [0, 0, 5000000, 60000000, 600000000, 6000000000], MAXF = 5, SLOTF = 10;
-const MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
+const OPRICE = { bat: 30000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -75,7 +75,7 @@ function accrue(r, now) {
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
   r.money = Math.min(MAXM, r.money + inc * dt); r.t = now; r.seen = now;
 }
-const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r) });
+const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r), inv: Array.isArray(r.inv) ? r.inv : [], vol: r.vol || null });
 function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0, n: r.fl || 1 }; }
 /* catálogo (bitácora): primera vez que colocaste cada Papu en tu base. Los Papus que ya tenías puestos antes del catálogo se anotan una sola vez */
 function touchCat(r) {
@@ -271,6 +271,25 @@ const actions = {
     r.money -= DPRICE[id]; d.o.push(id);
     await saveRec(r); return { st: view(r) };
   },
+  /* objetos (inventario): se compran una sola vez */
+  async obuy(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const id = String(b.id || '');
+    if (!OPRICE[id]) throw new Err('Jugada no válida.', 'bad');
+    const inv = Array.isArray(r.inv) ? r.inv : (r.inv = []);
+    if (inv.includes(id)) { await saveRec(r); throw Object.assign(new Err('Ya lo compraste.', 'bad'), { st: view(r) }); }
+    if (r.money < OPRICE[id]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
+    r.money -= OPRICE[id]; inv.push(id);
+    await saveRec(r); return { st: view(r) };
+  },
+  /* ajustes de sonido por cuenta */
+  async vol(b) {
+    const r = await userFromTok(b.tok);
+    const m = Number(b.m), f = Number(b.f);
+    if (!(m >= 0 && m <= 1 && f >= 0 && f <= 1)) throw new Err('Valor no válido.', 'bad');
+    r.vol = { m: Math.round(m * 100) / 100, f: Math.round(f * 100) / 100 };
+    await saveRec(r); return { ok: true };
+  },
   /* equipar / quitar: un solo color a la vez; el Papu Fuego se activa aparte */
   async dequip(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
@@ -325,7 +344,7 @@ const actions = {
   async aclear(b) {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
-    r.slots = emptySlots(); r.fl = 1; r.dco = { o: [], c: 0, f: 0 }; await saveRec(r); return { ok: true };
+    r.slots = emptySlots(); r.fl = 1; r.dco = { o: [], c: 0, f: 0 }; r.inv = []; await saveRec(r); return { ok: true };
   },
   /* eventos: iniciar o detener el Papu Golden Time */
   async aev(b) {
