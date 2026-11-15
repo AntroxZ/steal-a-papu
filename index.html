@@ -892,7 +892,7 @@ function closeSet(){setOpen=false;skinOpen=false;$('cat').style.display='none';$
 function askConfirm(kind){
   pendingAct=kind;
   $('confDesc').textContent=kind==='all'
-    ?'Se quitarán TODOS los Papus de tu base, TODOS tus pisos comprados y tu dinero volverá a $50 (el inicial). Los colores y el Papu Fuego que compraste se quedan. Esta acción no se puede deshacer.'
+    ?'Se quitarán TODOS los Papus de tu base, TODOS tus pisos comprados y tu dinero volverá a $50 (el inicial). También pierdes tus objetos comprados (el bate). Los colores y el Papu Fuego que compraste se quedan. Esta acción no se puede deshacer.'
     :'Se quitarán todos los Papus de tu base. Tu dinero NO se reiniciará. Esta acción no se puede deshacer.';
   $('conf').style.display='flex';
 }
@@ -908,9 +908,9 @@ $('confYes').onclick=()=>{
   if(k&&k.buy){$('conf').style.display='none';buyDeco(k.buy);return}
   if(k&&k.buyF){$('conf').style.display='none';buyFloor(k.buyF);return}
   if(k&&k.buyO){$('conf').style.display='none';buyObj(k.buyO);return}
-  if(k==='all'){resetMe(false);dropFloors();srv('reset')}else if(k==='base'){clearBase();srv('clear')}
+  if(k==='all'){resetMe(false);dropFloors();ACC.st=Object.assign({},ACC.st,{inv:[]});setEq(false);updInv();srv('reset')}else if(k==='base'){clearBase();srv('clear')}
   $('conf').style.display='none';closeSet();
-  toast(k==='all'?'Todo reiniciado: base vacía, sin pisos y dinero en $50':'Base limpia: tu dinero sigue igual');
+  toast(k==='all'?'Todo reiniciado: base vacía, sin pisos, sin objetos y dinero en $50':'Base limpia: tu dinero sigue igual');
 };
 /* teletransporte rapido: Tienda / mi Base */
 function tpTo(x,z,h){
