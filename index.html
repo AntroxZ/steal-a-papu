@@ -274,7 +274,7 @@ button:hover{background:var(--cy);color:#04060f}
   <div class="opt vol"><label for="volM">Música <b id="volMv">50%</b></label><input type="range" id="volM" min="0" max="100" step="1" value="50"><p>La música principal del juego.</p></div>
   <div class="opt vol"><label for="volF">Efectos <b id="volFv">15%</b></label><input type="range" id="volF" min="0" max="100" step="1" value="15"><p>Saltos, sentones, baile y todo lo que no sea la música principal.</p></div>
   <div class="opt"><button id="volReset" class="vreset">Restablecer a predeterminado</button></div>
-  <div class="opt"><button id="optReset" class="big danger">Reiniciar todo</button><p>Quita todos los Papus de tu base y tu dinero vuelve a $50 (el inicial).</p></div>
+  <div class="opt"><button id="optReset" class="big danger">Reiniciar todo</button><p>Reinicia tu cuenta desde cero: quita Papus, pisos, decoración y objetos comprados, y tu dinero vuelve a $50.</p></div>
   <div class="opt"><button id="optClean" class="big">Limpiar base</button><p>Quita todos los Papus de tu base. Tu dinero NO se reinicia.</p></div>
   <div class="opt"><button id="optName" class="big">Cambiar nombre</button><p>Cambia el nombre que aparece sobre tu personaje. Puedes hacerlo cuando quieras.</p></div>
 </div></div>
@@ -892,7 +892,7 @@ function closeSet(){setOpen=false;skinOpen=false;$('cat').style.display='none';$
 function askConfirm(kind){
   pendingAct=kind;
   $('confDesc').textContent=kind==='all'
-    ?'Se quitarán TODOS los Papus de tu base, TODOS tus pisos comprados y tu dinero volverá a $50 (el inicial). También pierdes tus objetos comprados (el bate). Los colores y el Papu Fuego que compraste se quedan. Esta acción no se puede deshacer.'
+    ?'Se borra TODO de tu cuenta y empiezas desde cero: Papus, pisos, colores y Papu Fuego, objetos (el bate) y tu dinero vuelve a $50. Esta acción no se puede deshacer.'
     :'Se quitarán todos los Papus de tu base. Tu dinero NO se reiniciará. Esta acción no se puede deshacer.';
   $('conf').style.display='flex';
 }
@@ -908,9 +908,9 @@ $('confYes').onclick=()=>{
   if(k&&k.buy){$('conf').style.display='none';buyDeco(k.buy);return}
   if(k&&k.buyF){$('conf').style.display='none';buyFloor(k.buyF);return}
   if(k&&k.buyO){$('conf').style.display='none';buyObj(k.buyO);return}
-  if(k==='all'){resetMe(false);dropFloors();ACC.st=Object.assign({},ACC.st,{inv:[]});setEq(false);updInv();srv('reset')}else if(k==='base'){clearBase();srv('clear')}
+  if(k==='all'){resetMe(false);const nd={o:[],c:0,f:0,n:1};ACC.st=Object.assign({},ACC.st,{deco:nd,inv:[]});applyMyDeco(nd);setEq(false);updInv();srv('reset')}else if(k==='base'){clearBase();srv('clear')}
   $('conf').style.display='none';closeSet();
-  toast(k==='all'?'Todo reiniciado: base vacía, sin pisos, sin objetos y dinero en $50':'Base limpia: tu dinero sigue igual');
+  toast(k==='all'?'Cuenta reiniciada desde cero: sin Papus, pisos, decoración ni objetos, y dinero en $50':'Base limpia: tu dinero sigue igual');
 };
 /* teletransporte rapido: Tienda / mi Base */
 function tpTo(x,z,h){
@@ -1561,6 +1561,14 @@ function makeNameSprite(name,op){
 let nameSpr=null;
 function setUserName(n){userName=n;if(nameSpr)player.remove(nameSpr);nameSpr=makeNameSprite(n,.5);nameSpr.position.y=4.9;player.add(nameSpr);if(myBase.owner!==null){myBase.name=n;myBase.drawSign()}}
 /* ====== barreras ====== */
+function admBarrier(on){
+  const now=performance.now();
+  if(on){myBase.barrierOn=true;barEnd=now+BAR_ON;barCd=0}
+  else{if(!myBase.barrierOn)return;myBase.barrierOn=false;barCd=now+BAR_CD}
+  myBase.barEnd=barEnd;myBase.barCd=barCd;myBase.btnPress=.25;myBase.drawBtn();
+  emit(on?{t:'bar',on:true,left:BAR_ON}:{t:'bar',on:false,cd:BAR_CD});
+  toast(on?'El admin activó tu barrera (80 s)':'El admin desactivó tu barrera: enfriamiento de 20 s')}
+let lastCmd='';
 function toggleBarrier(){
   const now=performance.now();
   if(!myBase.barrierOn){
@@ -1940,6 +1948,7 @@ function applyServerState(st){
   }
   money=st.money;
   volFromSt(st);
+  if(st.cmd&&st.cmd.id!==lastCmd){lastCmd=st.cmd.id;if(st.cmd.age<60000)admBarrier(!!st.cmd.on)}
   if(st.deco)applyMyDeco(st.deco);
   for(let i=0;i<MAXB;i++){
     const s=slots[i];if(!s)continue;const cur=s.item?s.item.userData.lvl:-1,want=st.slots[i];
@@ -2022,7 +2031,7 @@ function admLogout(){clearInterval(admTimer);ACC.tok=null;saveTok(null);location
 const ADM_AID={};
 async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}
   if(a==='asummon'||a==='aev'){emit({t:'adm',u:'*'});liveSync()}
-  else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
+  else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'||a==='abar'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
   return r}
 let admTab='u',evEnd=0;
 let smBusy=false;
@@ -2068,6 +2077,7 @@ async function admLoad(){
     td(u.online?'● En línea':'Visto hace '+(ago<90?ago+' s':ago<5400?Math.round(ago/60)+' min':ago<172800?Math.round(ago/3600)+' h':Math.round(ago/86400)+' d'),u.online?'aon':'aoff');
     const ta=td();
     const mk=(txt,fn,dng)=>{const b=document.createElement('button');b.className='wbtn2'+(dng?' dng':'');b.textContent=txt;let armed=0;b.onclick=()=>{if(!armed){armed=1;b.textContent='¿Seguro?';setTimeout(()=>{armed=0;b.textContent=txt},3000);return}fn()};ta.appendChild(b)};
+    if(u.online){const mkD=(txt,on)=>{const b=document.createElement('button');b.className='wbtn2';b.textContent=txt;b.onclick=async()=>{b.disabled=true;if(await admCall('abar',{user:u.user,on})){toast('Barrera de '+u.user+(on?' activada':' desactivada'))}setTimeout(()=>b.disabled=false,600)};ta.appendChild(b)};mkD('Barrera ON',true);mkD('Barrera OFF',false)}
     mk('Limpiar base',async()=>{if(await admCall('aclear',{user:u.user})){toast('Base limpiada');admLoad()}});
     mk('Restablecer catálogo',async()=>{if(await admCall('acat',{user:u.user})){toast('Catálogo restablecido');admLoad()}});
     if(!u.admin)mk('Borrar cuenta',async()=>{if(await admCall('adel',{user:u.user})){toast('Cuenta borrada');admLoad()}},true);
@@ -2450,7 +2460,8 @@ function batPose(o,t0,now){
   add(BI.RightArm,a);add(BI.RightForeArm,fa);
   if(o.batG)o.batG.rotation.z=BAT_BASEZ+(B-45+a+fa)*Math.PI/180}
 function updInv(){
-  const el=$('inv');if(!el)return;const own=hasBat()&&running;
+  const el=$('inv');if(!el)return;const ui=['shop','set','conf','cat','skins','nm','adm','panel'].some(i=>{const e=$(i);return e&&e.style.display&&e.style.display!=='none'});
+  const own=hasBat()&&running&&!ui;
   el.style.display=own?'flex':'none';$('invBat').classList.toggle('on',myEq)}
 function setEq(v){if(myEq===v)return;myEq=v;if(!v)batSw=null;emit({t:'eq',v:v?1:0});updInv()}
 function toggleBat(){
@@ -2501,7 +2512,7 @@ function drawHp(sp,n){
 function batTick(now){
   if(batSw){const ph=(now-batSw.t0)/SW_MS;if(!batSw.h&&ph>=.42){batSw.h=1;batHit()}if(ph>=1){batSw=null}}
   if(myEq&&(held||!hasBat()))setEq(false);
-  if(now-invLast>250){invLast=now;updInv()}
+  if(now-invLast>100){invLast=now;updInv()}
   for(const id in HPS){const st=HPS[id];
     if(st.n>0&&now-st.t0>=HIT_WIN){st.n=0;st.show=now+3000}
     const vis=st.n>0||now<st.show,n=st.n>0?HIT_N-st.n:HIT_N;let sp=null,y=4.9;
