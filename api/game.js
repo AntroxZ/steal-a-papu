@@ -24,7 +24,7 @@ async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +
 const DPRICE = [0, 5000, 20000, 80000, 300000, 1200000, 5000000, 800000000, 20000000, 75000000, 250000000, 2500000000];
 /* pisos de la base: se empieza con 1 (10 espacios) y se pueden comprar hasta 5; precio del piso numero n */
 const FPRICE = [0, 0, 5000000, 60000000, 600000000, 6000000000], MAXF = 5, SLOTF = 10;
-const START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
+const MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -73,7 +73,7 @@ class Err extends Error { constructor(msg, code) { super(msg); this.code = code 
 function accrue(r, now) {
   const dt = Math.min(Math.max(now - (r.t || now), 0), MAX_DT) / 1000;
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
-  r.money += inc * dt; r.t = now; r.seen = now;
+  r.money = Math.min(MAXM, r.money + inc * dt); r.t = now; r.seen = now;
 }
 const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r) });
 function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0, n: r.fl || 1 }; }
@@ -319,7 +319,7 @@ const actions = {
   async aset(b) {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
-    const m = Number(b.money); if (!isFinite(m) || m < 0 || m > 1e12) throw new Err('Cantidad no válida.');
+    const m = Number(b.money); if (!isFinite(m) || m < 0 || m > MAXM) throw new Err('Cantidad no válida.');
     r.money = Math.floor(m); r.t = Date.now(); await saveRec(r); return { ok: true };
   },
   async aclear(b) {
