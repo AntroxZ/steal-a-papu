@@ -20,6 +20,8 @@ async function evInfo() {
   return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now };
 }
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
+/* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
+const DPRICE = [0, 5000, 20000, 80000, 300000, 1200000, 5000000, 20000000, 75000000, 250000000, 800000000, 2500000000];
 const START = 50, NSLOT = 10, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
@@ -71,7 +73,8 @@ function accrue(r, now) {
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
   r.money += inc * dt; r.t = now; r.seen = now;
 }
-const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {} });
+const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r) });
+function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0 }; }
 /* catálogo (bitácora): primera vez que colocaste cada Papu en tu base. Los Papus que ya tenías puestos antes del catálogo se anotan una sola vez */
 function touchCat(r) {
   if (!r.cat) r.cat = {};
@@ -251,6 +254,27 @@ const actions = {
     if (!Number.isInteger(slot) || slot < 0 || slot >= NSLOT) throw new Err('Jugada no válida.', 'bad');
     r.slots[slot] = -1; await saveRec(r);
     return { ok: true, st: view(r) };
+  },
+  /* decoracion: comprar un color o el Papu Fuego (se paga una sola vez) */
+  async dbuy(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const id = b.id;
+    if (!Number.isInteger(id) || id < 1 || id > 11) throw new Err('Jugada no válida.', 'bad');
+    const d = r.dco || (r.dco = { o: [], c: 0, f: 0 });
+    if (d.o.includes(id)) { await saveRec(r); throw Object.assign(new Err('Ya lo compraste.', 'bad'), { st: view(r) }); }
+    if (r.money < DPRICE[id]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
+    r.money -= DPRICE[id]; d.o.push(id);
+    await saveRec(r); return { st: view(r) };
+  },
+  /* equipar / quitar: un solo color a la vez; el Papu Fuego se activa aparte */
+  async dequip(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const id = b.id;
+    if (!Number.isInteger(id) || id < 1 || id > 11) throw new Err('Jugada no válida.', 'bad');
+    const d = r.dco || (r.dco = { o: [], c: 0, f: 0 });
+    if (!d.o.includes(id)) { await saveRec(r); throw Object.assign(new Err('Primero cómpralo.', 'bad'), { st: view(r) }); }
+    if (id === 11) d.f = d.f ? 0 : 1; else d.c = d.c === id ? 0 : id;
+    await saveRec(r); return { st: view(r) };
   },
   async clear(b) { const r = await userFromTok(b.tok); accrue(r, Date.now()); r.slots = emptySlots(); await saveRec(r); return { st: view(r) }; },
   async reset(b) { const r = await userFromTok(b.tok); r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
