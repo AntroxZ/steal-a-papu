@@ -203,6 +203,16 @@ button:hover{background:var(--cy);color:#04060f}
 .finfo:empty{display:none}
 .fsw{background:linear-gradient(180deg,#cfe7f2,#9ec4d6)!important}
 .dcard button:disabled{cursor:default;filter:none}
+.vol{gap:4px}
+.vol label{display:flex;justify-content:space-between;font-weight:800;font-size:1.05rem;color:var(--tx);text-shadow:var(--ol)}
+.vol label b{color:#ffe08a}
+.vol input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;margin:0;cursor:pointer;touch-action:none}
+.vol input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:999px;background:linear-gradient(90deg,#ffd54a var(--p,50%),#3a200b var(--p,50%));border:3px solid #4a2a12;box-shadow:inset 0 2px 3px rgba(0,0,0,.5)}
+.vol input[type=range]::-moz-range-track{height:8px;border-radius:999px;background:#3a200b;border:3px solid #4a2a12}
+.vol input[type=range]::-moz-range-progress{height:8px;border-radius:999px;background:#ffd54a}
+.vol input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c4,#f2c230 60%,#b9871a);border:3px solid #4a2a12;box-shadow:0 3px 0 #35200e}
+.vol input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c4,#f2c230 60%,#b9871a);border:3px solid #4a2a12;box-shadow:0 3px 0 #35200e}
+.dcard.poor::after{content:"Dinero\A Insuficiente";white-space:pre;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-24deg);font:900 clamp(.8rem,2.3vw,1.2rem)/1.05 Impact,"Arial Black",Arial,sans-serif;text-transform:uppercase;text-align:center;letter-spacing:.05em;color:rgba(225,28,28,.93);border:4px solid rgba(225,28,28,.93);border-radius:8px;padding:5px 10px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 2px rgba(225,28,28,.35),0 0 0 1px rgba(80,0,0,.25);text-shadow:0 0 1px rgba(60,0,0,.5);pointer-events:none;z-index:3}
 </style>
 </head>
 <body>
@@ -250,6 +260,8 @@ button:hover{background:var(--cy);color:#04060f}
 </div></div>
 <div id="set"><div class="sbox sm">
   <div class="shead"><div class="stitle">AJUSTES</div><button id="setX" aria-label="Cerrar">&times;</button></div>
+  <div class="opt vol"><label for="volM">Música <b id="volMv">50%</b></label><input type="range" id="volM" min="0" max="100" step="1" value="50"><p>La música principal del juego.</p></div>
+  <div class="opt vol"><label for="volF">Efectos <b id="volFv">15%</b></label><input type="range" id="volF" min="0" max="100" step="1" value="15"><p>Saltos, sentones, baile y todo lo que no sea la música principal.</p></div>
   <div class="opt"><button id="optReset" class="big danger">Reiniciar todo</button><p>Quita todos los Papus de tu base y tu dinero vuelve a $50 (el inicial).</p></div>
   <div class="opt"><button id="optClean" class="big">Limpiar base</button><p>Quita todos los Papus de tu base. Tu dinero NO se reinicia.</p></div>
   <div class="opt"><button id="optName" class="big">Cambiar nombre</button><p>Cambia el nombre que aparece sobre tu personaje. Puedes hacerlo cuando quieras.</p></div>
@@ -416,6 +428,20 @@ function groundY(x,z,ref){
   return best;
 }
 /* los rectangulos solidos pueden llevar rango de altura [y0,y1]: asi las paredes de un piso no estorban en otro */
+let camCT=1;
+/* la camara no atraviesa escaleras ni descansos: recorta la distancia hasta el primer bloque */
+function camClip(tx,ty,tz,dx,dy,dz){
+  let tm=1;const M=.3;
+  for(const b of BASES){if(b.nf<2)continue;
+    for(let k=1;k<b.nf;k++){const F=b.fl[k];if(!F||!F.cb||!F.g.visible)continue;
+      for(const r of F.cb){
+        let t0=0,t1=1,ok=true;
+        const ax=[[tx,dx,r[0]-M,r[2]+M],[ty,dy,r[4]-M,r[5]+M],[tz,dz,r[1]-M,r[3]+M]];
+        for(let i=0;i<3;i++){const [o,d,lo,hi]=ax[i];
+          if(Math.abs(d)<1e-9){if(o<lo||o>hi){ok=false;break}}
+          else{let a=(lo-o)/d,c=(hi-o)/d;if(a>c){const q=a;a=c;c=q}if(a>t0)t0=a;if(c<t1)t1=c;if(t0>t1){ok=false;break}}}
+        if(ok&&t0>0&&t0<tm)tm=t0}}}
+  return tm}
 function hitSolid(x,z,y){
   const hit=([x0,z0,x1,z1,y0,y1])=>{if(y0!==undefined&&y!==undefined&&(y<y0||y>y1))return false;const cx=Math.max(x0,Math.min(x,x1)),cz=Math.max(z0,Math.min(z,z1));return (x-cx)*(x-cx)+(z-cz)*(z-cz)<.64};
   if(SOL.some(hit))return true;
@@ -475,8 +501,12 @@ function buildFloor(b,k){
   {const T=TW[k-1],L=T.land;
    const st=new THREE.Mesh(stairGeo(Math.abs(T.ze-T.zs),T.ye-T.ys,T.x1-T.x0,T.n,k===1),new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide}));
    st.position.set((T.x0+T.x1)/2,T.ys,T.zs);st.rotation.y=T.ze<T.zs?Math.PI/2:-Math.PI/2;g.add(st);
-   const lm=new THREE.Mesh(new THREE.BoxGeometry(L.x1-L.x0,.6,L.z1-L.z0),B(0x1d1d22));lm.position.set((L.x0+L.x1)/2,L.y-.3,(L.z0+L.z1)/2);g.add(lm);
-   const lt=new THREE.Mesh(new THREE.BoxGeometry(L.x1-L.x0,.08,.3),B(0xe8e8ee));lt.position.set((L.x0+L.x1)/2,L.y+.02,L.z0<-20?L.z0+.15:L.z1-.15);g.add(lt)}
+   const lx0=Math.max(L.x0,14.85),lmat=[0x8a8e96,0x8a8e96,0x1d1d22,0x6a6e76,0x7a7e86,0x7a7e86].map(h=>new THREE.MeshBasicMaterial({color:h}));
+   const lm=new THREE.Mesh(new THREE.BoxGeometry(L.x1-lx0,.6,L.z1-L.z0),lmat);lm.position.set((lx0+L.x1)/2,L.y-.3,(L.z0+L.z1)/2);g.add(lm);
+   F.cb=[];const sg=(T.ze-T.zs)/T.n,dyy=(T.ye-T.ys)/T.n;
+   for(let i=0;i<T.n;i++){const za=T.zs+i*sg,zb=za+sg,yt=T.ys+(i+1)*dyy;F.cb.push([...worldRect(b,T.x0,za,T.x1,zb),k===1?0:yt-dyy-.9,yt])}
+   F.cb.push([...worldRect(b,lx0,L.z0,L.x1,L.z1),L.y-.6,L.y]);
+   const lt=new THREE.Mesh(new THREE.BoxGeometry(L.x1-lx0,.08,.3),B(0xe8e8ee));lt.position.set((lx0+L.x1)/2,L.y+.02,L.z0<-20?L.z0+.15:L.z1-.15);g.add(lt)}
   return F}
 /* ===== decoracion de bases: colores de la estructura (de barato a caro) + efecto Papu Fuego ===== */
 /* g = piezas doradas (1 paredes, 2 columnas, 4 techo); sw = colores del cuadrito de la tienda */
@@ -748,7 +778,7 @@ function renderFloors(){
   $('fInfo').textContent='Tu base tiene '+n+' de 5 pisos · cada piso tiene 10 espacios y una escalera exterior · las compras son permanentes (solo "Restablecer todo" en Ajustes las quita)';
   for(let k=2;k<=MAXF;k++){
     const own=n>=k,next=k===n+1;
-    const card=document.createElement('div');card.className='dcard'+(own?' own eq':'');
+    const card=document.createElement('div');card.className='dcard'+(own?' own eq':'');if(!own){card.dataset.pr=FPR[k];if(money<FPR[k])card.classList.add('poor')}
     const sw=document.createElement('div');sw.className='dsw fsw';sw.innerHTML=floorSvg(k);card.appendChild(sw);
     const ck=document.createElement('div');ck.className='dchk';ck.textContent='✓';card.appendChild(ck);
     const nm=document.createElement('div');nm.className='dn';nm.textContent='Piso '+k+' · '+(k*10)+' espacios';card.appendChild(nm);
@@ -771,7 +801,7 @@ function renderShop(){
   const g=$('dGrid');if(!g)return;g.textContent='';const D=myDeco();shopSig=JSON.stringify(D);
   DECO.filter(Boolean).sort((a,b)=>a.pr-b.pr).forEach(d=>{
     const own=D.o.includes(d.id),eq=d.fire?!!D.f:D.c===d.id;
-    const card=document.createElement('div');card.className='dcard'+(own?' own':'')+(eq?' eq':'');
+    const card=document.createElement('div');card.className='dcard'+(own?' own':'')+(eq?' eq':'');if(!own){card.dataset.pr=d.pr;if(money<d.pr)card.classList.add('poor')}
     const sw=document.createElement('div');sw.className='dsw';sw.style.background=swatchOf(d);if(d.fire)sw.textContent='🔥';card.appendChild(sw);
     const ck=document.createElement('div');ck.className='dchk';ck.textContent='✓';card.appendChild(ck);
     const nm=document.createElement('div');nm.className='dn';nm.textContent=d.n;card.appendChild(nm);
@@ -1184,9 +1214,20 @@ const SFX={ctx:null,buf:{}};
 function sfxInit(){if(SFX.ctx)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;SFX.ctx=new C();
   [['jump',JUMP_SRC],['slam',SLAM_SRC]].forEach(([k,u])=>{const bin=atob(u.split(',')[1]),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
     SFX.ctx.decodeAudioData(a.buffer,d=>{SFX.buf[k]=d},()=>{})})}catch(e){}}
-function sfxVol(x,z){const q=player.position;return Math.max(.12,1-Math.hypot(x-q.x,z-q.z)/170)}
+const VOL={m:.5,f:.15};
+try{const a=parseFloat(localStorage.getItem('papu_vm')),b=parseFloat(localStorage.getItem('papu_vf'));if(a>=0&&a<=1)VOL.m=a;if(b>=0&&b<=1)VOL.f=b}catch(e){}
+const danceVol=()=>Math.min(1,VOL.f*3);
+function applyVol(){try{if(danceAudio)danceAudio.volume=danceVol()}catch(e){}}
+function initVolUI(){
+  const set=(id,vid,k,lk)=>{const el=$(id),lb=$(vid);if(!el)return;
+    const paint=()=>{el.value=Math.round(VOL[k]*100);el.style.setProperty('--p',el.value+'%');lb.textContent=el.value+'%'};paint();
+    el.oninput=()=>{VOL[k]=el.value/100;paint();applyVol();try{localStorage.setItem(lk,VOL[k])}catch(e){}}};
+  set('volM','volMv','m','papu_vm');set('volF','volFv','f','papu_vf')}
+/* los efectos de otros jugadores solo se oyen si estan cerca (como el alcance del senton) */
+const SFX_R=SLAM_R*1.4;
+function sfxVol(x,z){const q=player.position,d=Math.hypot(x-q.x,z-q.z);return d>=SFX_R?0:Math.sqrt(1-d/SFX_R)}
 function sfxPlay(k,v){if(!bgmOn||!SFX.ctx||!SFX.buf[k]||!(v>.01))return;
-  try{if(SFX.ctx.state==='suspended')SFX.ctx.resume();const o=SFX.ctx.createBufferSource(),g=SFX.ctx.createGain();o.buffer=SFX.buf[k];g.gain.value=v;o.connect(g);g.connect(SFX.ctx.destination);o.start()}catch(e){}}
+  try{if(SFX.ctx.state==='suspended')SFX.ctx.resume();const o=SFX.ctx.createBufferSource(),g=SFX.ctx.createGain();o.buffer=SFX.buf[k];g.gain.value=v*VOL.f*2;o.connect(g);g.connect(SFX.ctx.destination);o.start()}catch(e){}}
 const chr=new THREE.Group();chr.scale.setScalar(3.7/178.3);chr.position.y=-1.85;const flipG=new THREE.Group();flipG.position.y=1.85;flipG.add(chr);player.add(flipG);
 const NB=SKIN.names.length,PAR=SKIN.par,BI={};SKIN.names.forEach((n,i)=>BI[n]=i);
 let bones,restQ,restQi,hipsY,KS=1,curSkin=0,RG=null;
@@ -1264,7 +1305,7 @@ function updBgm(dt,now){
   if(!running)return;
   if(!bgm){try{bgm=new Audio(BGM_SRC);bgm.loop=true;bgm.preload='auto';bgm.volume=0}catch(e){return}}
   if(danceAudio&&danceAudio.muted===bgmOn)danceAudio.muted=!bgmOn;
-    const want=(!DNL.on&&bgmOn)?BGM_VOL:0;
+    const want=(!DNL.on&&bgmOn)?Math.min(1,BGM_VOL*VOL.m*2):0;
   bgmV+=(want-bgmV)*Math.min(1,dt*(want?2.2:8));
   if(want>0&&bgm.paused&&now-bgmTry>1000){bgmTry=now;try{const pr=bgm.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}
   if(want===0&&bgmV<.004&&!bgm.paused)bgm.pause();
@@ -1275,7 +1316,7 @@ function startDance(){
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground')return;
   DN.on=true;DN.t=0;DN.q=null;DN.w=0;
-  try{if(!danceAudio){danceAudio=new Audio(DANCE_SRC);danceAudio.preload='auto';danceAudio.volume=1}danceAudio.muted=!bgmOn;danceAudio.currentTime=0;const pr=danceAudio.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
+  try{if(!danceAudio){danceAudio=new Audio(DANCE_SRC);danceAudio.preload='auto'}danceAudio.volume=danceVol();danceAudio.muted=!bgmOn;danceAudio.currentTime=0;const pr=danceAudio.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
 }
 function stopDance(){
   if(!DNL.on)return;DNL.on=false;
@@ -1350,7 +1391,7 @@ function animate(sp,dt){
   applyPose(d);
 }
 /* estado */
-let hudLast=0,hudM='',hudI='',hudC='',promptLast=0,fxLast=-999,fxCache=new Set();
+let poorLast=0,hudLast=0,hudM='',hudI='',hudC='',promptLast=0,fxLast=-999,fxCache=new Set();
 let gY=0,camG=0;const GROUND=[],keys={};let stunT=0,slamCd=0,STL=null,picking=false,yaw=Math.PI,items=[],held=null,money=0,t=0,spawnT=0,running=false,toastT=0;
 function toast(m){const e=$('toast');e.textContent=m;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,1600)}
 /* Papu Golden Time: evento en vivo de 2 minutos (lo inicia el admin) con los Papus más raros */
@@ -2282,12 +2323,12 @@ function loop(now){
     player.rotation.y=heading;
     animate(speed,dt);
     let inc=0,n=0;slots.forEach(s=>{if(s.item){inc+=INC[s.item.userData.lvl];n++;s.item.children[0].position.y=bobY(s.item.userData.lvl)+Math.sin(now/400+s.x)*.15}});
-    money+=inc*dt;
-    if(now-hudLast>120){hudLast=now;const mt=Math.floor(money).toLocaleString('es-MX')+'$';if(mt!==hudM){hudM=mt;$('money').textContent=mt}const it=fm(inc)+' $/s';if(it!==hudI){hudI=it;$('inc').textContent=it}const ct=n+'/'+slots.length;if(ct!==hudC){hudC=ct;$('cnt').textContent=ct}}
+    money=Math.min(1e27,money+inc*dt);
+    if(now-hudLast>120){hudLast=now;const mt=Math.floor(money).toLocaleString('es-MX')+'$';if(mt!==hudM){hudM=mt;const me=$('money');me.textContent=mt;me.style.fontSize=mt.length>22?'.62rem':mt.length>16?'.8rem':''}const it=fm(inc)+' $/s';if(it!==hudI){hudI=it;$('inc').textContent=it}const ct=n+'/'+slots.length;if(ct!==hudC){hudC=ct;$('cnt').textContent=ct}}
     gameTick(dt,now);
   }
-  updWaves(dt);updBarrier(dt,now);if(now-promptLast>66){promptLast=now;updPrompt()}if(NET.on)updRemotes(dt);if(shopOpen)$('shopMoney').textContent='$'+Math.floor(money).toLocaleString('es-MX');
-  camG+=(gY-camG)*Math.min(1,dt*8);const p=player.position,ly=1.1+camG+py*.5;
+  updWaves(dt);updBarrier(dt,now);if(now-promptLast>66){promptLast=now;updPrompt()}if(NET.on)updRemotes(dt);if(shopOpen){$('shopMoney').textContent='$'+Math.floor(money).toLocaleString('es-MX');if(now-poorLast>200){poorLast=now;document.querySelectorAll('#dGrid .dcard[data-pr]').forEach(c=>c.classList.toggle('poor',money<+c.dataset.pr))}}
+  const p=player.position,cgT=gY+py-.5*Math.min(py,4);camG+=(cgT-camG)*Math.min(1,dt*(cgT<camG?10:8));const ly=1.1+camG;
   shadow.position.set(p.x,gY+.06,p.z);shadow.scale.setScalar(Math.max(.4,1-py/9));shadow.material.opacity=Math.max(.25,1-py/6);
   {const c0=cam.position;ROOFS.forEach(r=>{const ddx=Math.max(Math.abs(c0.x-r.x)-(BW/2+.8),0),ddy=Math.max(Math.abs(c0.y-r.y)-.55,0),ddz=Math.max(Math.abs(c0.z-r.z)-(BD/2+.8),0),dist=Math.hypot(ddx,ddy,ddz),tgt=Math.min(1,Math.max(.12,(dist-.8)/2.2));if(Math.abs(tgt-r.a)>.003){r.a+=(tgt-r.a)*Math.min(1,dt*10);r.mats.forEach(m=>m.opacity=r.a)}})}
   shake*=Math.max(0,1-dt*6);
@@ -2299,12 +2340,16 @@ function loop(now){
   if(camD>=1.8&&pitch<.05)pitch+=(.05-pitch)*Math.min(1,dt*8);
   const cp=Math.cos(pitch),D=camD;
   if(fp){const ex=p.x-Math.sin(yaw)*.2,ez=p.z-Math.cos(yaw)*.2,ey=p.y+3.4;cam.position.set(ex,ey,ez);cam.lookAt(ex-Math.sin(yaw)*cp,ey-Math.sin(pitch),ez-Math.cos(yaw)*cp)}
-  else{cam.position.set(p.x+Math.sin(yaw)*cp*D+(Math.random()-.5)*shake,ly+Math.sin(pitch)*D+(Math.random()-.5)*shake,p.z+Math.cos(yaw)*cp*D);cam.lookAt(p.x,ly,p.z)}
+  else{const ox=Math.sin(yaw)*cp*D,oy=Math.sin(pitch)*D,oz=Math.cos(yaw)*cp*D;
+    const ct=camClip(p.x,ly,p.z,ox,oy,oz);camCT=ct<camCT?ct:camCT+(ct-camCT)*Math.min(1,dt*5);
+    const kk=Math.max(camCT,Math.min(1,1.2/Math.max(D,.01)));
+    cam.position.set(p.x+ox*kk+(Math.random()-.5)*shake,ly+oy*kk+(Math.random()-.5)*shake,p.z+oz*kk);cam.lookAt(p.x,ly,p.z)}
   faceModels();updGT();
   {if(now-fxLast>150){fxLast=now;fxCache=fxSet()}const fs=fxCache;if(fs.size){if(now-labLast>50){labLast=now;drawGold(now,fs)}auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1)}updFire(now);updParty(dt,now);updLegSign(now)}
   updBgm(dt,now);
   placeTip();R.render(scene,cam);requestAnimationFrame(loop);
 }
+initVolUI();
 Promise.all(SRC.map(u=>new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.src=u}))).then(a=>{
   a.forEach((i,k)=>IMG[k]=i);buildTex();reset();requestAnimationFrame(loop);
 });
