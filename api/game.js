@@ -148,7 +148,7 @@ const actions = {
     if (!nick) throw new Err('Escribe un nickname.');
     if (ADMIN_USER && user.toLowerCase() === ADMIN_USER.toLowerCase()) throw new Err('Ese usuario ya existe.');
     const sid = crypto.randomBytes(9).toString('base64url'), now = Date.now();
-    const r = { user, pass: encPass(pass), nick, skin: 0, money: START, slots: emptySlots(), held: -1, hpaid: 0, t: now, seen: now, created: now, sid };
+    const r = { user, pass: encPass(pass), nick, skin: 0, money: START, slots: emptySlots(), held: -1, hpaid: 0, t: now, seen: now, created: now, lin: now, sid };
     r.aid = crypto.randomBytes(6).toString('base64url');
     const ok = await db('SET', ukey(user), JSON.stringify(r), 'NX');
     if (!ok) throw new Err('Ese usuario ya existe.');
@@ -163,7 +163,7 @@ const actions = {
     if (ADMIN_USER && ADMIN_PASS && safeEq(user.toLowerCase(), ADMIN_USER.toLowerCase())) {
       if (!safeEq(pass, ADMIN_PASS)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
       const r = await adminRec();
-      r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t;
+      r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.lin = r.t;
       settleHeld(r); touchCat(r); await ensureAid(r);
       await db('SADD', 'users', ADMIN_USER.toLowerCase());
       await saveRec(r);
@@ -171,7 +171,7 @@ const actions = {
     }
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
-    r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; /* sin ingresos mientras estuviste fuera */
+    r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
     return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r), ...(await evInfo()) };
@@ -330,9 +330,10 @@ const actions = {
     for (const n of names) {
       const r = await loadRec(n);
       if (!r) { await db('SREM', 'users', n); continue; }
-      out.push({ aid: r.aid || null, user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
+      out.push({ lin: r.lin || r.created || 0, aid: r.aid || null, user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: Date.now() - r.seen < 20000 });
     }
-    out.sort((a, b) => b.seen - a.seen);
+    /* en línea arriba por orden de entrada (el que entró primero, primero); fuera de línea abajo: el que entró más recientemente arriba y el que lleva más tiempo sin entrar hasta abajo */
+    out.sort((a, b) => (b.online - a.online) || (a.online ? (a.lin - b.lin) : (b.seen - a.seen)));
     return { users: out, now: Date.now(), ev: await evLeft() };
   },
   async aset(b) {
