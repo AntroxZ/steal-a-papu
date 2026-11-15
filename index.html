@@ -1694,6 +1694,7 @@ function addPlayer(pid,name,skin,base,bar,aid,dc){
 }
 function dropPlayer(pid){
   const p=NET.players[pid];if(!p)return;
+  if(running&&pid!==NET.pid)srvMsg(p.name+' abandonó Papulandia.');
   if(p.av)scene.remove(p.av.g);
   freeBaseObj(BASES[p.base]);
   delete NET.players[pid];delete NET.conns[pid];delete NET.uc[pid];for(const k in NET.byPeer)if(NET.byPeer[k]==pid)delete NET.byPeer[k];
@@ -1704,6 +1705,7 @@ function applyEvt(pid,m){
   if(m.t==='gd'){addGround(m.gid,m.lvl,m.x,m.z,null,3.5,m.y,m.lf>0&&m.lf<=5000?m.lf|0:0);return}
   if(m.t==='gr'){removeGround(m.gid);return}
   if(m.t==='hit'){onHit(m.v,pid);return}
+  if(m.t==='srv'){if(running&&NAMES[m.l|0])srvMsg('Admin spawneó '+NAMES[m.l|0]+'.');return}
   if(m.t==='adm'){if(m.u==='*'||(m.u&&m.u===myAid()))liveSync();return}
   if(m.t==='sfx'){sfxPlay('jump',1.2*sfxVol(m.x,m.z));return}
   if(m.t==='slam'){sfxPlay('slam',.8*sfxVol(m.x,m.z));shockwave(m.x,m.z);if(running&&stunT<=0&&Math.hypot(player.position.x-m.x,player.position.z-m.z)<=SLAM_R)stunMe();return}
@@ -1739,7 +1741,7 @@ function hostMsg(conn,m){
       np=NET.nextPid++;
     }
     conn._pid=np;NET.conns[np]=conn;NET.byPeer[conn.peer]=np;
-    const p=addPlayer(np,String(m.name||'Jugador').slice(0,14),m.skin|0,base,false,m.aid,m.dc);
+    const p=addPlayer(np,String(m.name||'Jugador').slice(0,14),m.skin|0,base,false,m.aid,m.dc);if(running)srvMsg(p.name+' se ha unido a Papulandia.');
     conn.send({t:'welcome',pid:np,base,code:NET.code,hostPid:NET.pid,rj:!!ex,players:snapPlayers(),slots:snapSlots(),items:snapItems()});
     bcast({t:'join',p:{pid:np,name:p.name,skin:p.skin,base,aid:p.aid,dc:p.dc}},np);
     return;
@@ -1808,7 +1810,7 @@ function clientMsg(m){
     case 'ping':break;
     case 'pong':NET.rtt=Math.round(performance.now()-m.ts);updRoom();break;
     case 'bye':onHostGone();break;
-    case 'join':addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false,m.p.aid,m.p.dc);break;
+    case 'join':{const had=!!NET.players[m.p.pid];addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false,m.p.aid,m.p.dc);if(!had&&running)srvMsg(String(m.p.name||'Jugador').slice(0,14)+' se ha unido a Papulandia.');break}
     case 'leave':dropPlayer(m.pid);break;
     case 'S':m.l.forEach(a=>{const p=NET.players[a[0]];if(p)setTgt(p,a.slice(1))});break;
     case 'sp':spawnItem(m.lvl,-BELT_L/2+2,m.iid);if(m.leg)toast('¡Apareció un Papu LEGENDARIO: '+NAMES[m.lvl]+'!');break;
@@ -2060,6 +2062,7 @@ function admBarOn(u){
   if(live!==null)return (o&&Date.now()-o.t<4000)?o.on:live;
   return (o&&Date.now()-o.t<80000)?o.on:false}
 async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}
+  if(a==='asummon'){emit({t:'srv',l:body.lvl|0});if(running&&NAMES[body.lvl|0])srvMsg('Admin spawneó '+NAMES[body.lvl|0]+'.')}
   if(a==='asummon'||a==='aev'){emit({t:'adm',u:'*'});liveSync()}
   else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'||a==='abar'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
   return r}
@@ -2587,6 +2590,7 @@ function chatAdd(name,col,text,mine){
   while(L.childElementCount>CHAT_MAX)L.removeChild(L.firstChild);
   if(chatOpen){if(near)L.scrollTop=L.scrollHeight}
   else if(!mine){chatUnread=Math.min(99,chatUnread+1);const bd=$('chatBadge');bd.textContent=chatUnread;bd.style.display='inline-block'}}
+function srvMsg(x){chatAdd('SERVIDOR','#7dff8f',x,false)}
 function openChat(v){
   chatOpen=!!v;$('chat').style.display=chatOpen?'flex':'none';
   if(chatOpen){chatUnread=0;$('chatBadge').style.display='none';const L=$('chatL');L.scrollTop=L.scrollHeight}
