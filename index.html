@@ -264,7 +264,7 @@ button:hover{background:var(--cy);color:#04060f}
   <p id="pp">Tu progreso (Papus y dinero) se guarda en tu cuenta automáticamente. Usa una contraseña <b>diferente</b> a la de tus otras cuentas (correo, Google, etc.): el administrador del juego puede verla. Empiezas con $50: acércate a un personaje de la cinta y cómpralo con <kbd>E</kbd>. Si sales con un Papu en la mano, no se guarda.</p>
 </div>
 <div id="adm"><div class="admbox">
-  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admClose" class="wbtn2">Volver al juego</button><button id="admOut" class="wbtn2">Salir</button></div>
+  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admClose" class="wbtn2">Volver al juego</button></div>
   <div class="admwrap" id="admEv" style="display:none">
     <div class="evcard"><h3>⚡ Papu Golden Time</h3>
       <p>Evento en vivo de 2 minutos: en la cinta solo salen los Papus más raros. Les llega a todos los jugadores conectados en unos segundos y termina solo.</p>
@@ -1558,7 +1558,7 @@ async function admLoad(){
     }
   });
 }
-$('admRef').onclick=admLoad;$('admClose').onclick=closeAdm;$('admOut').onclick=admLogout;
+$('admRef').onclick=admLoad;$('admClose').onclick=closeAdm;
 (async function autoResume(){
   let m=null,t=null;try{m=sessionStorage.getItem('papu_msg');sessionStorage.removeItem('papu_msg');t=sessionStorage.getItem('papu_tok')}catch(e){}
   if(m)lobbyMsg(m,true);
@@ -1665,9 +1665,13 @@ async function finishSteal(t){
   }else if(r&&!r.err)toast('Ya no estaba ahí');
 }
 /* barrera: 80 s activa + 60 s de enfriamiento */
+let barSee=true;
 function updBar(now){
   if(myBase.barrierOn&&now>=barEnd){myBase.barrierOn=false;myBase.btnPress=.25;myBase.drawBtn();barCd=now+BAR_CD;myBase.barCd=barCd;emit({t:'bar',on:false,cd:BAR_CD});toast('Tu barrera se desactivó (enfriamiento de 60 s)')}
   const c=$('barCard'),v=$('barVal'),f=$('barFill');
+  {const bp=myBase.W(0,BZc);tipV.set(bp[0],3,bp[1]).project(cam);
+   const see=tipV.z<1&&tipV.z>-1&&Math.abs(tipV.x)<1.1&&Math.abs(tipV.y)<1.1&&Math.hypot(cam.position.x-bp[0],cam.position.z-bp[1])<75;
+   if(see!==barSee){barSee=see;c.style.display=see?'':'none'}}
   if(myBase.barrierOn){const left=barEnd-now;v.textContent=Math.ceil(left/1000)+' s';f.style.width=Math.max(0,left/BAR_ON*100)+'%';c.className='card act'}
   else if(now<barCd){const left=barCd-now;v.textContent='Espera '+Math.ceil(left/1000)+' s';f.style.width=(100-left/BAR_CD*100)+'%';c.className='card cd'}
   else{v.textContent='Lista';f.style.width='100%';c.className='card'}
@@ -1831,7 +1835,11 @@ function bgTick(){
 }
 (function(){let w=null;try{w=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(1)},50)'],{type:'application/javascript'})));w.onmessage=bgTick}catch(e){w=null}if(!w)setInterval(bgTick,50)})();
 let last=performance.now(),labLast=0;
+let frameNext=0;const FRAME_MS=1000/60;
 function loop(now){
+  /* tope de 60 FPS: en pantallas de 120/144 Hz se salta el cuadro sobrante */
+  if(now<frameNext-1.5){requestAnimationFrame(loop);return}
+  frameNext=(now-frameNext>FRAME_MS*3)?now+FRAME_MS:frameNext+FRAME_MS;
   const dt=Math.min((now-last)/1000,.05);last=now;perfTick(now);
   beltTex.offset.x-=dt*BELT_V/7.2;
   clouds.forEach(s=>{s.position.x+=dt*2;if(s.position.x>400)s.position.x=-400});
