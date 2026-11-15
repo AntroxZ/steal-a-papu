@@ -286,6 +286,51 @@ body.mob #stl{bottom:30%}
 #rot{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 6px);z-index:150;justify-content:center;pointer-events:none}
 #rot span{background:rgba(20,12,5,.8);color:#fff8e6;border:2px solid #4a2a12;border-radius:999px;padding:5px 14px;font:700 .75rem "Trebuchet MS","Segoe UI",Verdana,sans-serif}
 @media(orientation:portrait){body.mob #rot{display:flex}}
+
+/* ===== HUD móvil v2 + detalles + servidor ===== */
+#room{white-space:pre;text-align:center;line-height:1.25;user-select:none}
+#room.open{border-radius:18px;padding:7px 14px}
+body.det #tpRow{top:calc(env(safe-area-inset-top,0px) + 82px)}
+#evSt,#srvSt{font-weight:800;margin-bottom:10px}#srvSt.on{color:#ff9a8a}
+html.mob{font-size:13px}
+body.mob #gear,body.mob #skinBtn,body.mob #catBtn,body.mob #admBtn,body.mob #chatBtn{font-size:0;gap:0;padding:0;width:38px;height:38px;justify-content:center;border-radius:12px}
+body.mob #gear svg,body.mob #skinBtn svg,body.mob #catBtn svg,body.mob #admBtn svg,body.mob #chatBtn svg{width:21px;height:21px}
+body.mob #chatBadge{position:absolute;top:-7px;right:-7px;font-size:.6rem;min-width:16px;height:16px;line-height:16px}
+body.mob #gear{top:calc(env(safe-area-inset-top,0px) + 8px)}
+body.mob #skinBtn{top:calc(env(safe-area-inset-top,0px) + 52px)}
+body.mob #catBtn{top:calc(env(safe-area-inset-top,0px) + 96px)}
+body.mob #admBtn{top:calc(env(safe-area-inset-top,0px) + 140px)}
+body.mob #chatBtn{top:calc(env(safe-area-inset-top,0px) + 140px)}
+body.mob.isadm #chatBtn{top:calc(env(safe-area-inset-top,0px) + 184px)}
+body.mob #hud{transform:none;left:calc(env(safe-area-inset-left,0px) + 54px);right:calc(env(safe-area-inset-right,0px) + 96px);padding:calc(env(safe-area-inset-top,0px) + 8px) 0 0;gap:4px;flex-wrap:nowrap}
+body.mob .card{flex:1 1 0;min-width:0;max-width:130px;padding:3px 6px 4px;border-width:2px;box-shadow:0 3px 0 #35200e,inset 0 2px 0 rgba(255,225,170,.45)}
+body.mob .card:first-child{flex:1.6 1 0}
+body.mob .card small{font-size:.55rem;white-space:nowrap}
+body.mob .card b{font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.mob #room{font-size:.62rem;padding:5px 10px;border-width:2px;box-shadow:0 3px 0 #35200e,inset 0 2px 0 rgba(255,225,170,.45)}
+body.mob #room.open{padding:5px 10px}
+body.mob #tpRow{top:calc(env(safe-area-inset-top,0px) + 42px);gap:5px}
+body.mob #tpRow button{padding:4px 11px;font-size:.62rem;border-width:2px}
+body.mob.det #tpRow{top:calc(env(safe-area-inset-top,0px) + 82px)}
+body.mob #toast{top:calc(env(safe-area-inset-top,0px) + 58px);left:54px;right:96px;font-size:.75rem}
+body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 84px)}
+body.mob .sbox{padding:10px 12px;border-width:4px;border-radius:20px}
+body.mob #shop,body.mob #set,body.mob #conf,body.mob #nm,body.mob #cat,body.mob #skins{padding:6px}
+body.mob .sbox,body.mob #adm .admbox,body.mob #chatL,body.mob #panel,body.mob .admwrap{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+body.mob .admwrap{touch-action:pan-x pan-y}
+body.mob .vol input[type=range]{height:46px}
+@media(orientation:portrait){
+ body.mob #inv{left:calc(env(safe-area-inset-left,0px) + 10px);transform:none;bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+ body.mob #chat{bottom:calc(env(safe-area-inset-bottom,0px) + 216px);width:min(320px,66vw)}
+}
+
+body.mob.ui #gear,body.mob.ui #skinBtn,body.mob.ui #catBtn,body.mob.ui #admBtn,body.mob.ui #chatBtn,body.mob.ui #room,body.mob.ui #tpRow,body.mob.ui #hud{visibility:hidden}
+body.mob .dcard{padding:6px 5px 7px;gap:3px}
+body.mob .dsw{max-width:74px;font-size:1.8rem}
+body.mob .dn{min-height:2.2em;font-size:.7rem}body.mob .dp{font-size:.72rem}body.mob .dcard button{padding:5px 3px;font-size:.7rem}
+body.mob .dgrid{gap:7px}
+@media(orientation:landscape){body.mob .dgrid{grid-template-columns:repeat(5,1fr)}body.mob .sgrid{grid-template-columns:repeat(5,1fr)}body.mob .skgrid{grid-template-columns:repeat(5,1fr)}body.mob .catgrid{grid-template-columns:repeat(4,1fr)}}
+body.mob .dcard.poor::after{font-size:.62rem}
 </style>
 </head>
 <body>
@@ -399,6 +444,11 @@ body.mob #stl{bottom:30%}
     <div class="evcard wide"><h3>✨ Invocar un Papu</h3>
       <p>Toca un Papu y aparece al instante en la cinta, asegurado, para todos los jugadores conectados (les llega en unos segundos).</p>
       <div class="catgrid" id="smGrid"></div><div id="smSt"></div>
+    </div>
+    <div class="evcard"><h3>🔒 Servidor</h3>
+      <p>Para hacer pruebas: si lo cierras, nadie más puede entrar al juego (solo tú, el admin). Los jugadores que estén dentro salen en unos segundos y su progreso se guarda. Al abrirlo, todos entran normal.</p>
+      <div id="srvSt">Cargando…</div>
+      <button id="srvBtn" class="wbtn2 dng">Cerrar servidor</button>
     </div></div>
   <div class="admwrap" id="admUsers"><table id="admT"><thead><tr><th>Usuario</th><th>Contraseña</th><th>Nickname</th><th>Dinero</th><th>Papus</th><th>Catálogo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="admB"></tbody></table><div id="admEmpty">Aún no hay cuentas creadas.</div></div>
 </div></div>
@@ -1746,7 +1796,10 @@ function loadPeer(cb){
   const urls=['https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'];
   let i=0;const next=()=>{if(i>=urls.length)return cb(false);const s=document.createElement('script');s.src=urls[i++];s.onload=()=>window.Peer?cb(true):next();s.onerror=next;document.head.appendChild(s)};next();
 }
-function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';const n=Object.keys(NET.players).length+1;e.textContent='Sala principal · '+n+(n>1?' jugadores':' jugador')+' · '+FPS+' FPS'+(NET.host||NET.rtt==null?'':' · '+NET.rtt+' ms')}
+let detOpen=false;
+function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';const n=Object.keys(NET.players).length+1;
+  e.textContent=detOpen?(MOB?'Sala principal\n'+n+(n>1?' jugadores':' jugador')+'\n':'Sala principal · '+n+(n>1?' jugadores':' jugador')+'\n')+FPS+' FPS'+(NET.host||NET.rtt==null?'':' · '+NET.rtt+' ms'):'Detalles';
+  e.classList.toggle('open',detOpen);document.body.classList.toggle('det',detOpen)}
 function bcast(m,except){for(const id in NET.conns){if(+id===except)continue;const c=NET.conns[id];if(c&&c.open)c.send(m)}}
 function emit(m){if(!NET.on)return;if(NET.host)bcast(Object.assign({pid:NET.pid},m));else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send(m)}
 function freeBaseIdx(){for(let i=0;i<BASES.length;i++)if(BASES[i].owner===null)return i;return -1}
@@ -2050,7 +2103,7 @@ function applyServerState(st){
   refreshShop();
 }
 function handleRes(r,last){
-  if(r.code==='auth'){kicked(r.err);return}
+  if(r.code==='auth'||r.code==='closed'){kicked(r.err);return}
   if(r.err&&r.code!=='net')toast(r.err);
   if(r.st&&last)applyServerState(r.st);
 }
@@ -2063,7 +2116,7 @@ function srv(a,body){
 let syncAt=0;
 function syncNow(){
   if(!running||!ACC.tok)return;syncAt=performance.now();const v=ACC.ver;
-  ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'){kicked(r.err);return}gotSrv(r);if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
+  ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'||r.code==='closed'){kicked(r.err);return}gotSrv(r);if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
 }
 setInterval(syncNow,5000);
 /* el admin avisa por la sala: el afectado (o todos) sincroniza al instante, sin esperar el ciclo */
@@ -2128,6 +2181,7 @@ function admBarOn(u){
   if(live!==null)return (o&&Date.now()-o.t<4000)?o.on:live;
   return (o&&Date.now()-o.t<80000)?o.on:false}
 async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}
+  if(a==='aclose'){emit({t:'adm',u:'*'});liveSync()}
   if(a==='asummon'){emit({t:'srv',l:body.lvl|0});if(running&&NAMES[body.lvl|0])srvMsg('Admin spawneó '+NAMES[body.lvl|0]+'.')}
   if(a==='asummon'||a==='aev'){emit({t:'adm',u:'*'});liveSync()}
   else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'||a==='abar'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
@@ -2152,10 +2206,17 @@ function showAdmTab(k){admTab=k;if(k==='e')renderSummon();$('admUsers').style.di
 function paintEv(){const left=evEnd-Date.now(),on=left>0,e=$('evSt');e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo'}
 setInterval(()=>{if($('adm').style.display==='flex')paintEv()},500);
 $('admTabU').onclick=()=>showAdmTab('u');$('admTabE').onclick=()=>showAdmTab('e');
+let srvClosed=false,srvArm=0;
+function paintSrv(){const b=$('srvBtn'),s=$('srvSt');s.className=srvClosed?'on':'';s.textContent=srvClosed?'🔒 Cerrado · solo el admin puede entrar':'🟢 Abierto · todos pueden entrar';
+  b.textContent=srvClosed?'Abrir servidor':(srvArm>Date.now()?'¿Seguro? Toca otra vez para cerrar':'Cerrar servidor');b.className='wbtn2'+(srvClosed?'':' dng')}
+$('srvBtn').onclick=async()=>{
+  if(srvClosed){const r=await admCall('aclose',{on:false});if(r){srvClosed=!!r.closed;paintSrv();toast('Servidor abierto: todos pueden entrar')}return}
+  if(srvArm<Date.now()){srvArm=Date.now()+4000;paintSrv();setTimeout(paintSrv,4100);return}
+  srvArm=0;const r=await admCall('aclose',{on:true});if(r){srvClosed=!!r.closed;paintSrv();toast('Servidor cerrado: solo tú puedes entrar')}};
 $('evGo').onclick=async()=>{const r=await admCall('aev',{on:true});if(r){evEnd=Date.now()+r.ev;paintEv();toast('Papu Golden Time iniciado')}};
 $('evStop').onclick=async()=>{const r=await admCall('aev',{on:false});if(r){evEnd=0;paintEv();toast('Evento detenido')}};
 async function admLoad(){
-  const r=await admCall('alist');if(!r)return;evEnd=Date.now()+(r.ev||0);paintEv();
+  const r=await admCall('alist');if(!r)return;evEnd=Date.now()+(r.ev||0);paintEv();srvClosed=!!r.closed;paintSrv();
   r.users.forEach(u=>{ADM_AID[u.user]=u.aid||null});const B=$('admB');B.textContent='';$('admEmpty').style.display=r.users.length?'none':'block';
   $('admInfo').textContent=r.users.length+' cuenta'+(r.users.length===1?'':'s')+' · '+r.users.filter(u=>u.online).length+' en línea';
   r.users.forEach(u=>{
@@ -2196,7 +2257,7 @@ $('admRef').onclick=admLoad;$('admClose').onclick=closeAdm;
   if(!t)return;
   lobbyBusy(true);lobbyMsg('Reconectando…');
   const r=await api('resume',{tok:t});
-  if(r.err){saveTok(null);lobbyBusy(false);lobbyMsg(r.code==='net'?r.err:'Inicia sesión de nuevo',true);return}
+  if(r.err){saveTok(null);lobbyBusy(false);lobbyMsg(r.code==='net'||r.code==='closed'?r.err:'Inicia sesión de nuevo',true);return}
   authOk(r);
 })();
 
@@ -2672,6 +2733,7 @@ function chatRecv(pid,p,m){
   const now=performance.now();if(chatRate[pid]&&now-chatRate[pid]<350)return;chatRate[pid]=now;
   const t=chatClean(m.x);if(!t)return;
   chatAdd(p.name||'Jugador',CHAT_COL[(p.base|0)%6],t,false)}
+$('room').onclick=()=>{detOpen=!detOpen;updRoom()};
 $('chatBtn').onclick=()=>{$('chatBtn').blur();toggleChat()};$('chatX').onclick=()=>openChat(false);
 
 /* ===== plataforma + controles táctiles ===== */
@@ -2679,7 +2741,7 @@ let MOB=false;
 const joy={on:false,x:0,y:0,m:0,id:null,cx:0,cy:0},CT=new Map(),JR=52;
 function mobTxt(s){return String(s).replace(/presiona E en otro lugar/i,'toca Acción en otro lugar').replace(/Presiona H otra vez/i,'Toca Quitar otra vez').replace(/Presiona 1/i,'Toca el bate').replace(/\(M para activar\)/,'').replace(/Mant[eé]n E\b/g,'Mantén Acción')}
 function setPlatform(m){
-  MOB=!!m;document.body.classList.toggle('mob',MOB);$('plat').style.display='none';
+  MOB=!!m;document.body.classList.toggle('mob',MOB);document.documentElement.classList.toggle('mob',MOB);$('plat').style.display='none';
   if(MOB){try{const d=document.documentElement,r=(d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d);if(r&&r.catch)r.catch(()=>{})}catch(e){}
     try{const o=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(o&&o.catch)o.catch(()=>{})}catch(e){}}
   resize()}
@@ -2727,7 +2789,8 @@ bindBtn('mbDel',()=>delSlot());
 let mobSt='';
 function mobTick(){
   if(!MOB)return;
-  const show=running&&!mobUiOpen();
+  const ui=mobUiOpen(),show=running&&!ui;
+  if(document.body.classList.contains('ui')!==ui)document.body.classList.toggle('ui',ui);
   if(!show&&(joy.on||CT.size)){joyEnd();CT.clear()}
   const own=show&&/Mover/.test(tipHtml)&&!held,
         s=[show,show&&!!held,show&&!!myEq,own].join();
