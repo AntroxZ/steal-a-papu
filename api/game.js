@@ -225,7 +225,7 @@ const actions = {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const gid = String(b.gid || '');
     if (!/^[a-z0-9]{4,12}$/.test(gid)) throw new Err('Jugada no válida.', 'bad');
-    if (r.held >= 0) { await db('SET', 'g:' + gid, String(r.held), 'EX', b.q ? 4 : 8); r.held = -1; r.hpaid = 0; }
+    if (r.held >= 0) { await db('SET', 'g:' + gid, String(r.held), 'EX', b.q ? 4 : 14); r.held = -1; r.hpaid = 0; }
     await saveRec(r); return { st: view(r) };
   },
   async pick(b) {
