@@ -204,6 +204,7 @@ button:hover{background:var(--cy);color:#04060f}
 .fsw{background:linear-gradient(180deg,#cfe7f2,#9ec4d6)!important}
 .dcard button:disabled{cursor:default;filter:none}
 .vol{gap:4px}
+.sbox .vreset{padding:9px 14px;font-size:.92rem;align-self:center}
 .vol label{display:flex;justify-content:space-between;font-weight:800;font-size:1.05rem;color:var(--tx);text-shadow:var(--ol)}
 .vol label b{color:#ffe08a}
 .vol input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;margin:0;cursor:pointer;touch-action:none}
@@ -262,6 +263,7 @@ button:hover{background:var(--cy);color:#04060f}
   <div class="shead"><div class="stitle">AJUSTES</div><button id="setX" aria-label="Cerrar">&times;</button></div>
   <div class="opt vol"><label for="volM">Música <b id="volMv">50%</b></label><input type="range" id="volM" min="0" max="100" step="1" value="50"><p>La música principal del juego.</p></div>
   <div class="opt vol"><label for="volF">Efectos <b id="volFv">15%</b></label><input type="range" id="volF" min="0" max="100" step="1" value="15"><p>Saltos, sentones, baile y todo lo que no sea la música principal.</p></div>
+  <div class="opt"><button id="volReset" class="vreset">Restablecer a predeterminado</button></div>
   <div class="opt"><button id="optReset" class="big danger">Reiniciar todo</button><p>Quita todos los Papus de tu base y tu dinero vuelve a $50 (el inicial).</p></div>
   <div class="opt"><button id="optClean" class="big">Limpiar base</button><p>Quita todos los Papus de tu base. Tu dinero NO se reinicia.</p></div>
   <div class="opt"><button id="optName" class="big">Cambiar nombre</button><p>Cambia el nombre que aparece sobre tu personaje. Puedes hacerlo cuando quieras.</p></div>
@@ -405,7 +407,7 @@ function worldRect(b,x0,z0,x1,z1){const a=b.W(x0,z0),c=b.W(x1,z1);return [Math.m
 const FU=10.5,MAXF=5,STEPUP=1.5,FALL_T=.9,FY=k=>BH+k*FU;
 /* TW[j]: tramo de escalera del piso j al j+1 (coordenadas locales de la base) y el descanso del piso j+1 */
 const TW=[0,1,2,3].map(j=>{const ev=j%2===0,ys=j===0?0:FY(j),ye=FY(j+1);
-  return {x0:ev?15.4:19,x1:ev?19:22.6,zs:ev?-12:-29.5,ze:ev?-29.5:-12,ys,ye,n:Math.round((ye-ys)/.52),land:{x0:14,x1:22.6,z0:ev?-35:-12,z1:ev?-29.5:-6.5,y:ye}}});
+  return {x0:ev?14.9:19,x1:ev?19:22.6,zs:ev?-12:-29.5,ze:ev?-29.5:-12,ys,ye,n:Math.round((ye-ys)/.52),land:{x0:14,x1:22.6,z0:ev?-35:-12,z1:ev?-29.5:-6.5,y:ye}}});
 function stairY(b,lx,zl,ref){
   let best=-1;
   for(let j=0;j<b.nf-1;j++){const F=TW[j],L=F.land;
@@ -442,11 +444,16 @@ function camClip(tx,ty,tz,dx,dy,dz){
           else{let a=(lo-o)/d,c=(hi-o)/d;if(a>c){const q=a;a=c;c=q}if(a>t0)t0=a;if(c<t1)t1=c;if(t0>t1){ok=false;break}}}
         if(ok&&t0>0&&t0<tm)tm=t0}}}
   return tm}
-function hitSolid(x,z,y){
-  const hit=([x0,z0,x1,z1,y0,y1])=>{if(y0!==undefined&&y!==undefined&&(y<y0||y>y1))return false;const cx=Math.max(x0,Math.min(x,x1)),cz=Math.max(z0,Math.min(z,z1));return (x-cx)*(x-cx)+(z-cz)*(z-cz)<.64};
+function stairBlk(b,x,z,y){const F=TW[0],lx=(x-b.cx)*b.dir,zl=(z-b.gz)*b.dir;
+  if(lx>=F.x0-.4&&lx<=F.x1+.4&&zl>=F.ze-.4&&zl<=F.zs){const t=(zl-F.zs)/(F.ze-F.zs),i=Math.min(F.n-1,Math.max(0,Math.floor(t*F.n))),sy=F.ys+(i+1)*(F.ye-F.ys)/F.n;return y<sy-1.6}
+  return false}
+function hitSolid(x,z,y,fx,fz){
+  const dd=(r,px,pz)=>{const cx=Math.max(r[0],Math.min(px,r[2])),cz=Math.max(r[1],Math.min(pz,r[3]));return (px-cx)*(px-cx)+(pz-cz)*(pz-cz)};
+  /* si ya estas pegado/dentro del margen de un muro (caiste ahi) puedes alejarte o deslizarte, pero no meterte mas */
+  const hit=r=>{if(r[4]!==undefined&&y!==undefined&&(y<r[4]||y>r[5]))return false;const n=dd(r,x,z);if(n>=.64)return false;if(fx!==undefined){const c=dd(r,fx,fz);if(c<.64&&n>=c-1e-6)return false}return true};
   if(SOL.some(hit))return true;
-  if(y!==undefined)for(const b of BASES)if(b.nf>1){const F=TW[0],lx=(x-b.cx)*b.dir,zl=(z-b.gz)*b.dir;
-    if(lx>=F.x0-.8&&lx<=F.x1+.8&&zl>=F.ze-.8&&zl<=F.zs){const t=(zl-F.zs)/(F.ze-F.zs),i=Math.min(F.n-1,Math.max(0,Math.floor(t*F.n))),sy=F.ys+(i+1)*(F.ye-F.ys)/F.n;if(y<sy-1.6)return true}}
+  /* bajo la escalera: si ya estas dentro de esa zona (caiste ahi) se te deja salir en vez de dejarte atrapado */
+  if(y!==undefined)for(const b of BASES)if(b.nf>1&&stairBlk(b,x,z,y)&&!(fx!==undefined&&stairBlk(b,fx,fz,y)))return true;
   for(const b of BASES)if(b.barrierOn&&b!==myBase&&(hit([b.cx-BW/2,b.z0-.45,b.cx+BW/2,b.z0+.45])||b.fl.some((F,k)=>k>0&&k<b.nf&&F&&hit(F.barRect))))return true;
   return false;
 }
@@ -461,6 +468,7 @@ function stairGeo(run,rise,w,n,solid){
     quad([x0,yb,-hw],[x1,yb,-hw],[x1,yt,-hw],[x0,yt,-hw],CS);
     quad([x0,yb,hw],[x1,yb,hw],[x1,yt,hw],[x0,yt,hw],CS);
     quad([x0,yb,-hw],[x1,yb,-hw],[x1,yb,hw],[x0,yb,hw],CB)}
+  {const yt=n*dy,yb=solid?0:(n-1)*dy-T;quad([run,yb,-hw],[run,yt,-hw],[run,yt,hw],[run,yb,hw],CS)}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);return g}
 let _cor=null;
 function corTex(){if(_cor)return _cor;const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.fillStyle='#061226';x.fillRect(0,0,128,128);x.strokeStyle='rgba(0,240,255,.55)';x.lineWidth=2;x.strokeRect(1,1,126,126);
@@ -1218,14 +1226,28 @@ const VOL={m:.5,f:.15};
 try{const a=parseFloat(localStorage.getItem('papu_vm')),b=parseFloat(localStorage.getItem('papu_vf'));if(a>=0&&a<=1)VOL.m=a;if(b>=0&&b<=1)VOL.f=b}catch(e){}
 const danceVol=()=>Math.min(1,VOL.f*3);
 function applyVol(){try{if(danceAudio)danceAudio.volume=danceVol()}catch(e){}}
+function resetVol(){VOL.m=.5;VOL.f=.15;try{localStorage.setItem('papu_vm',VOL.m);localStorage.setItem('papu_vf',VOL.f)}catch(e){}initVolUI();applyVol();toast('Volumen restablecido')}
 function initVolUI(){
   const set=(id,vid,k,lk)=>{const el=$(id),lb=$(vid);if(!el)return;
     const paint=()=>{el.value=Math.round(VOL[k]*100);el.style.setProperty('--p',el.value+'%');lb.textContent=el.value+'%'};paint();
     el.oninput=()=>{VOL[k]=el.value/100;paint();applyVol();try{localStorage.setItem(lk,VOL[k])}catch(e){}}};
-  set('volM','volMv','m','papu_vm');set('volF','volFv','f','papu_vf')}
+  set('volM','volMv','m','papu_vm');set('volF','volFv','f','papu_vf');const rb=$('volReset');if(rb)rb.onclick=()=>{rb.blur();resetVol()}}
 /* los efectos de otros jugadores solo se oyen si estan cerca (como el alcance del senton) */
-const SFX_R=SLAM_R*1.4;
-function sfxVol(x,z){const q=player.position,d=Math.hypot(x-q.x,z-q.z);return d>=SFX_R?0:Math.sqrt(1-d/SFX_R)}
+const SFX_R=45,DANCE_R=40;
+function sfxVol(x,z){const q=player.position,d=Math.hypot(x-q.x,z-q.z);return d>=SFX_R?0:Math.pow(1-d/SFX_R,1.4)}
+/* baile de otros: solo se oye el del mas cercano dentro del rango, y nunca mientras bailas tu */
+let farA=null,farPid=null,farLast=0;
+function updFarDance(now){
+  if(now-farLast<150)return;farLast=now;
+  let best=null,bd=DANCE_R;const q=player.position;
+  for(const id in NET.players){const p=NET.players[id],a=p.av;if(!a)continue;
+    if(a.mode==='dance'){if(!p.dS)p.dS=now;if(!DNL.on&&a.g.visible){const d=Math.hypot(a.g.position.x-q.x,a.g.position.z-q.z);if(d<bd){bd=d;best=p}}}else p.dS=0}
+  if(!best||!bgmOn||VOL.f<=.005){if(farA&&!farA.paused)farA.pause();farPid=null;return}
+  try{if(!farA){farA=new Audio(DANCE_SRC);farA.preload='auto'}
+    if(farPid!==best.pid){farPid=best.pid;let t=(now-best.dS)/1000;const du=farA.duration;if(du&&isFinite(du))t=Math.min(t,du-.1);farA.currentTime=Math.max(0,t)}
+    farA.volume=Math.max(0,Math.min(1,danceVol()*Math.pow(1-bd/DANCE_R,1.4)));
+    if(farA.paused&&!farA.ended){const pr=farA.play();if(pr&&pr.catch)pr.catch(()=>{})}}catch(e){}}
+function stopFarDance(){try{if(farA)farA.pause()}catch(e){}farPid=null}
 function sfxPlay(k,v){if(!bgmOn||!SFX.ctx||!SFX.buf[k]||!(v>.01))return;
   try{if(SFX.ctx.state==='suspended')SFX.ctx.resume();const o=SFX.ctx.createBufferSource(),g=SFX.ctx.createGain();o.buffer=SFX.buf[k];g.gain.value=v*VOL.f*2;o.connect(g);g.connect(SFX.ctx.destination);o.start()}catch(e){}}
 const chr=new THREE.Group();chr.scale.setScalar(3.7/178.3);chr.position.y=-1.85;const flipG=new THREE.Group();flipG.position.y=1.85;flipG.add(chr);player.add(flipG);
@@ -1315,7 +1337,7 @@ function startDance(){
   if(!running||shopOpen||setOpen||stunT>0||DN.on)return;
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground')return;
-  DN.on=true;DN.t=0;DN.q=null;DN.w=0;
+  DN.on=true;DN.t=0;DN.q=null;DN.w=0;stopFarDance();
   try{if(!danceAudio){danceAudio=new Audio(DANCE_SRC);danceAudio.preload='auto'}danceAudio.volume=danceVol();danceAudio.muted=!bgmOn;danceAudio.currentTime=0;const pr=danceAudio.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
 }
 function stopDance(){
@@ -1628,6 +1650,7 @@ function dropPlayer(pid){
 function applyEvt(pid,m){
   if(m.t==='gd'){addGround(m.gid,m.lvl,m.x,m.z,null,3.5,m.y);return}
   if(m.t==='gr'){removeGround(m.gid);return}
+  if(m.t==='adm'){if(m.u==='*'||(m.u&&m.u===myAid()))liveSync();return}
   if(m.t==='sfx'){sfxPlay('jump',1.2*sfxVol(m.x,m.z));return}
   if(m.t==='slam'){sfxPlay('slam',.8*sfxVol(m.x,m.z));shockwave(m.x,m.z);if(running&&stunT<=0&&Math.hypot(player.position.x-m.x,player.position.z-m.z)<=SLAM_R)stunMe();return}
   if(m.t==='stl'){const sb=BASES[m.b];if(sb){putRemoteSlot(sb,m.slot,-1);if(sb===myBase)toast('¡Te robaron un Papu de tu base!')}return}
@@ -1910,10 +1933,14 @@ function srv(a,body){
   const pr=ACC.q.then(async()=>{const r=await api(a,Object.assign({tok:ACC.tok},body));ACC.pend--;handleRes(r,ACC.pend===0);return r});
   ACC.q=pr.catch(()=>{});return pr;
 }
-setInterval(()=>{
-  if(!running||!ACC.tok)return;const v=ACC.ver;
+let syncAt=0;
+function syncNow(){
+  if(!running||!ACC.tok)return;syncAt=performance.now();const v=ACC.ver;
   ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'){kicked(r.err);return}gotSrv(r);if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
-},5000);
+}
+setInterval(syncNow,5000);
+/* el admin avisa por la sala: el afectado (o todos) sincroniza al instante, sin esperar el ciclo */
+function liveSync(){if(performance.now()-syncAt>1500)syncNow()}
 addEventListener('pagehide',()=>{if(ACC.tok&&running){try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'sync',tok:ACC.tok})],{type:'application/json'}))}catch(e){}}});
 function beginPlay(){sfxInit();$('panel').style.display='none';$('tpRow').style.display='flex';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
 function startOwnBase(n){setUserName(n);setMyBase(BASES[0]);assignBase(BASES[0],0,n);reset()}
@@ -1964,7 +1991,11 @@ function openAdmin(){if(running){setOpen=true;Object.keys(keys).forEach(k=>keys[
 function closeAdm(){clearInterval(admTimer);$('adm').style.display='none';setOpen=false}
 $('admBtn').onclick=()=>{$('admBtn').blur();if(!running||shopOpen||setOpen)return;openAdmin()};
 function admLogout(){clearInterval(admTimer);ACC.tok=null;saveTok(null);location.reload()}
-async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}return r}
+const ADM_AID={};
+async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}
+  if(a==='asummon'||a==='aev'){emit({t:'adm',u:'*'});liveSync()}
+  else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
+  return r}
 let admTab='u',evEnd=0;
 let smBusy=false;
 function renderSummon(){
@@ -1989,7 +2020,7 @@ $('evGo').onclick=async()=>{const r=await admCall('aev',{on:true});if(r){evEnd=D
 $('evStop').onclick=async()=>{const r=await admCall('aev',{on:false});if(r){evEnd=0;paintEv();toast('Evento detenido')}};
 async function admLoad(){
   const r=await admCall('alist');if(!r)return;evEnd=Date.now()+(r.ev||0);paintEv();
-  const B=$('admB');B.textContent='';$('admEmpty').style.display=r.users.length?'none':'block';
+  r.users.forEach(u=>{ADM_AID[u.user]=u.aid||null});const B=$('admB');B.textContent='';$('admEmpty').style.display=r.users.length?'none':'block';
   $('admInfo').textContent=r.users.length+' cuenta'+(r.users.length===1?'':'s')+' · '+r.users.filter(u=>u.online).length+' en línea';
   r.users.forEach(u=>{
     const tr=document.createElement('tr'),td=(t,c)=>{const e=document.createElement('td');if(c)e.className=c;if(t!=null)e.textContent=t;tr.appendChild(e);return e};
@@ -2314,7 +2345,7 @@ function loop(now){
       speed+=(tgt-speed)*Math.min(1,dt*(tgt>speed?5:8)*ac);
     }else{speed+=(0-speed)*Math.min(1,dt*9*ac);if(speed<.05)speed=0}
     {const nx=Math.max(-135,Math.min(135,pp.x+Math.sin(heading)*speed*dt)),nz=Math.max(-80,Math.min(120,pp.z+Math.cos(heading)*speed*dt));
-    {const ft=gY+py;if(!hitSolid(nx,pp.z,ft))pp.x=nx;if(!hitSolid(pp.x,nz,ft))pp.z=nz}}
+    {const ft=gY+py;if(!hitSolid(nx,pp.z,ft,pp.x,pp.z))pp.x=nx;if(!hitSolid(pp.x,nz,ft,pp.x,pp.z))pp.z=nz}}
     {const ft=gY+py,g=groundY(pp.x,pp.z,ft+STEPUP);gY=g;py=ft-g;
      if(mode==='air'||mode==='spin'||mode==='slam'){/* en el aire se conserva la altura: al tocar suelo, physics aterriza */}
      else if(py>FALL_T){mode='air';vy=0;airT=0}
@@ -2346,7 +2377,7 @@ function loop(now){
     cam.position.set(p.x+ox*kk+(Math.random()-.5)*shake,ly+oy*kk+(Math.random()-.5)*shake,p.z+oz*kk);cam.lookAt(p.x,ly,p.z)}
   faceModels();updGT();
   {if(now-fxLast>150){fxLast=now;fxCache=fxSet()}const fs=fxCache;if(fs.size){if(now-labLast>50){labLast=now;drawGold(now,fs)}auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1)}updFire(now);updParty(dt,now);updLegSign(now)}
-  updBgm(dt,now);
+  updBgm(dt,now);updFarDance(now);
   placeTip();R.render(scene,cam);requestAnimationFrame(loop);
 }
 initVolUI();
