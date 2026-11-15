@@ -2028,7 +2028,15 @@ function openAdmin(){if(running){setOpen=true;Object.keys(keys).forEach(k=>keys[
 function closeAdm(){clearInterval(admTimer);$('adm').style.display='none';setOpen=false}
 $('admBtn').onclick=()=>{$('admBtn').blur();if(!running||shopOpen||setOpen)return;openAdmin()};
 function admLogout(){clearInterval(admTimer);ACC.tok=null;saveTok(null);location.reload()}
-const ADM_AID={};
+const ADM_AID={},ADM_BAR={};
+/* estado real de la barrera de un jugador (lo ve el admin por la sala); si no se ve, se usa la última orden */
+function admBarOn(u){
+  let live=null;
+  if(u.aid&&u.aid===myAid())live=!!myBase.barrierOn;
+  else for(const id in NET.players){const p=NET.players[id];if(u.aid&&p.aid===u.aid){const b=BASES[p.base];live=!!(b&&b.barrierOn);break}}
+  const o=ADM_BAR[u.user];
+  if(live!==null)return (o&&Date.now()-o.t<4000)?o.on:live;
+  return (o&&Date.now()-o.t<80000)?o.on:false}
 async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}
   if(a==='asummon'||a==='aev'){emit({t:'adm',u:'*'});liveSync()}
   else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'||a==='abar'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
@@ -2077,7 +2085,8 @@ async function admLoad(){
     td(u.online?'● En línea':'Visto hace '+(ago<90?ago+' s':ago<5400?Math.round(ago/60)+' min':ago<172800?Math.round(ago/3600)+' h':Math.round(ago/86400)+' d'),u.online?'aon':'aoff');
     const ta=td();
     const mk=(txt,fn,dng)=>{const b=document.createElement('button');b.className='wbtn2'+(dng?' dng':'');b.textContent=txt;let armed=0;b.onclick=()=>{if(!armed){armed=1;b.textContent='¿Seguro?';setTimeout(()=>{armed=0;b.textContent=txt},3000);return}fn()};ta.appendChild(b)};
-    if(u.online){const mkD=(txt,on)=>{const b=document.createElement('button');b.className='wbtn2';b.textContent=txt;b.onclick=async()=>{b.disabled=true;if(await admCall('abar',{user:u.user,on})){toast('Barrera de '+u.user+(on?' activada':' desactivada'))}setTimeout(()=>b.disabled=false,600)};ta.appendChild(b)};mkD('Barrera ON',true);mkD('Barrera OFF',false)}
+    if(u.online){const b=document.createElement('button');b.className='wbtn2';b.textContent=admBarOn(u)?'Barrera OFF':'Barrera ON';
+      b.onclick=async()=>{const want=!admBarOn(u);b.disabled=true;if(await admCall('abar',{user:u.user,on:want})){ADM_BAR[u.user]={on:want,t:Date.now()};b.textContent=want?'Barrera OFF':'Barrera ON';toast('Barrera de '+u.user+(want?' activada':' desactivada'))}setTimeout(()=>b.disabled=false,600)};ta.appendChild(b)}
     mk('Limpiar base',async()=>{if(await admCall('aclear',{user:u.user})){toast('Base limpiada');admLoad()}});
     mk('Restablecer catálogo',async()=>{if(await admCall('acat',{user:u.user})){toast('Catálogo restablecido');admLoad()}});
     if(!u.admin)mk('Borrar cuenta',async()=>{if(await admCall('adel',{user:u.user})){toast('Cuenta borrada');admLoad()}},true);
