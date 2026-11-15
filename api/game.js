@@ -325,7 +325,7 @@ const actions = {
   async aclear(b) {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
-    r.slots = emptySlots(); r.fl = 1; await saveRec(r); return { ok: true };
+    r.slots = emptySlots(); r.fl = 1; r.dco = { o: [], c: 0, f: 0 }; await saveRec(r); return { ok: true };
   },
   /* eventos: iniciar o detener el Papu Golden Time */
   async aev(b) {
