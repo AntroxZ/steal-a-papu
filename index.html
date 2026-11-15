@@ -379,7 +379,7 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
 <div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mover · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> girar la cámara · <kbd>Q</kbd> soltar el Papu · <kbd>/</kbd> chat · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>F</kbd> mover un Papu de tu base · <kbd>H</kbd> eliminarlo · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>B</kbd> bailar (cualquier tecla de movimiento lo cancela) · <kbd>T</kbd> cerca de alguien que baila = sincronizar su baile · <kbd>M</kbd> música · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
 <div id="prompt"></div>
-<div id="chat"><button id="chatX" aria-label="Cerrar chat">&times;</button><div id="chatL"></div><input id="chatIn" maxlength="120" placeholder="Escribe y presiona Enter…" autocomplete="off"></div>
+<div id="chat"><button id="chatX" aria-label="Cerrar chat">&times;</button><div id="chatL"></div><input id="chatIn" maxlength="120" placeholder="Escribe y presiona Enter…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences"></div>
 <div id="shop"><div class="sbox">
   <div class="shead"><div class="stitle">TIENDA</div><div class="smoney">Dinero<b id="shopMoney">$0</b></div><button id="shopX" aria-label="Cerrar">&times;</button></div>
   <div class="stabs"><span class="on" id="tabD">Decoración</span><span id="tabB">Base</span><span id="tabO">Objetos</span></div>
@@ -1430,13 +1430,36 @@ const trackDance=a=>{if(a.mode==='dance'){const n=performance.now();
     if(!a.dS)a.dS=n-(a.dT>0?a.dT*1000:0);   /* arranca en el punto que ya lleva ese jugador */
     else if(a.dT>0&&Math.abs((n-a.dS)/1000-a.dT)>.6)a.dS=n-a.dT*1000}   /* si se sincronizo con alguien, lo seguimos */
   else a.dS=0};
-const SYNC_R=14;
+/* luces de escenario: cuadritos de colores, pequeños y translucidos, que suben desde el piso alrededor de quien baila */
+const DFX_COL=[[1,.25,.85],[.25,.9,1],[1,.9,.25],[.45,1,.45],[1,.55,.2],[.7,.45,1]],DFX_N=44;
+function makeDanceFx(){
+  const pos=new Float32Array(DFX_N*3),col=new Float32Array(DFX_N*3),prm=[];
+  for(let i=0;i<DFX_N;i++)prm.push({a:Math.random()*6.283,r:1+Math.random()*1.4,s:.22+Math.random()*.4,o:Math.random(),c:DFX_COL[i%6],d:Math.random()<.5?1:-1,h:.8+Math.random()*1.1});
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const m=new THREE.PointsMaterial({size:.17,vertexColors:true,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,fog:false});
+  const p=new THREE.Points(g,m);p.frustumCulled=false;p.visible=false;p.userData={pos,col,prm,g};return p}
+function updDanceFx(host,on,now){
+  let f=host.dfx;
+  if(!on){if(f&&f.visible)f.visible=false;return}
+  if(!f){f=host.dfx=makeDanceFx();host.g.add(f)}
+  f.visible=true;const u=f.userData,t=now/1000;
+  for(let i=0;i<DFX_N;i++){const q=u.prm[i],ph=(t*q.s+q.o)%1,ang=q.a+t*.5*q.d,r=q.r*(.85+.3*ph),k=Math.sin(ph*Math.PI)*.9;
+    u.pos[i*3]=Math.cos(ang)*r;u.pos[i*3+1]=.06+ph*q.h;u.pos[i*3+2]=Math.sin(ang)*r;
+    u.col[i*3]=q.c[0]*k;u.col[i*3+1]=q.c[1]*k;u.col[i*3+2]=q.c[2]*k}
+  u.g.attributes.position.needsUpdate=true;u.g.attributes.color.needsUpdate=true}
+const ME_FX={g:player};
+const SYNC_R=14,DLINK=new Set();let dlinkT=0;
 function nearDancer(){
   let best=null,bd=SYNC_R;const q=player.position;
   for(const id in NET.players){const p=NET.players[id],a=p.av;if(!a||!a.init)continue;trackDance(a);
     if(a.dS){const d=Math.hypot(a.g.position.x-q.x,a.g.position.z-q.z);if(d<bd){bd=d;best=p}}}
   return best}
 const syncGap=p=>DNL.on?Math.abs(DNL.t-(performance.now()-p.av.dS)/1000):99;   /* cuanto me falta para ir al mismo punto del baile */
+/* respaldo: si quien baila conmigo desaparece o deja de bailar (pestaña congelada, desconexion), yo tambien paro */
+function dlinkTick(now){
+  if(!DLINK.size||!DNL.on||now-dlinkT<2500)return;
+  for(const pid of [...DLINK]){const q=NET.players[pid];
+    if(!q||(q.av&&q.av.mode!=='dance')){DLINK.delete(pid);stopDance();return}}}
 function syncDance(){
   if(!running||shopOpen||setOpen||stunT>0)return;
   if(held){toast('Suelta tu Papu para bailar');return}
@@ -1447,9 +1470,11 @@ function syncDance(){
   const du=(SFX.buf.dance&&SFX.buf.dance.duration)||30;if(off>=du-1){toast('Ese baile ya casi termina');return}
   off=Math.max(0,off);
   if(DNL.on){DNL.t=off;startOwnAudio(off)}else startDance(off);
+  if(DNL.on){const old=[...DLINK].filter(x=>x!==p.pid);DLINK.clear();DLINK.add(p.pid);dlinkT=performance.now();emit({t:'dl',to:p.pid,un:old})}
   if(DNL.on)toast('¡Sincronizado con '+(p.name||'tu amigo')+'!')}
 /* el audio del baile ajeno sigue corriendo (en silencio si no debe oirse) para no perder la sincronia: el tiempo sale del inicio de ese baile */
 function updFarDance(now){
+  if(document.hidden){if(WA.far||farPid!=null)stopFarDance();return}
   if(now-farLast<120)return;farLast=now;
   let tr=null,td=1e9;const q=player.position;
   for(const id in NET.players){const p=NET.players[id],a=p.av;if(!a)continue;trackDance(a);
@@ -1563,7 +1588,7 @@ function startDance(off){
   if(!running||shopOpen||setOpen||stunT>0||DN.on)return;
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground')return;
-  off=off>0?+off:0;DN.on=true;DN.t=off;DN.q=null;DN.w=0;
+  off=off>0?+off:0;DN.on=true;DN.t=off;DN.q=null;DN.w=0;DLINK.clear();
   startOwnAudio(off);
 }
 function startOwnAudio(off){
@@ -1573,6 +1598,7 @@ function startOwnAudio(off){
 }
 function stopDance(){
   if(!DNL.on)return;DNL.on=false;
+  if(DLINK.size){DLINK.clear();emit({t:'dx'})}   /* quien se sincronizo conmigo (o con quien me sincronice) tambien deja de bailar */
   if(WA.own){waStop(WA.own);WA.own=null;WA.ownEnded=false}
   try{if(danceAudio){danceAudio.pause();danceAudio.currentTime=0}}catch(e){}
 }
@@ -1835,23 +1861,24 @@ function animateAv(a,dt){
   bones=a.rig.bones;restQ=a.rig.restQ;restQi=a.rig.restQi;hipsY=a.rig.hipsY;KS=a.rig.hipsY/rigA.hipsY;
   walkPh=a.walkPh;idleT=a.idleT;carryT=a.carryT;mode=a.mode;landT=a.landT;vy=a.vy;wSm=a.wSm;dropSm=a.dropSm;held=(a.hl>=0&&a.heldG)?a.heldG:null;CQ=a.CQ;
   animate(a.speed,dt);
-  syncBat(a,a.rig,!!a.eq);if(a.eq&&a.swT)batPose(a,a.swT,performance.now());
+  syncBat(a,a.rig,!!a.eq&&a.mode!=='dance');if(a.eq&&a.swT)batPose(a,a.swT,performance.now());
   a.walkPh=walkPh;a.idleT=idleT;a.carryT=carryT;a.landT=landT;a.wSm=wSm;a.dropSm=dropSm;
   [bones,restQ,restQi,hipsY,KS,walkPh,idleT,carryT,mode,landT,vy,wSm,dropSm,held,CQ,RG,DN]=S;
 }
 function updRemotes(dt){
-  const k=1-Math.exp(-dt*14);
+  const k=1-Math.exp(-dt*14),snap=snapRem;snapRem=false;
   for(const id in NET.players){
     const p=NET.players[id],a=p.av,t=p.tgt;if(!a||!t)continue;
     const g=a.g;
     if(!a.init){g.position.set(t.x,t.y,t.z);g.rotation.y=t.h;a.init=true;g.visible=true}
+    if(snap){g.position.set(t.x,t.y,t.z);g.rotation.y=t.h;a.speed=t.sp}
     g.position.x+=(t.x-g.position.x)*k;g.position.y+=(t.y-g.position.y)*k;g.position.z+=(t.z-g.position.z)*k;
     let dh=t.h-g.rotation.y;dh=Math.atan2(Math.sin(dh),Math.cos(dh));g.rotation.y+=dh*k;
     a.fg.rotation.x=t.fa;a.dT=t.dt;
     {const nn=performance.now();
       if(t.m==='dance'){if(t.dt!==a.dTl){a.dTl=t.dt;a.dTc=nn}}else{a.dTl=null;a.dTc=0}
       /* si el que baila dejo de mandar datos (pestaña congelada, mala conexion) su baile se detiene en vez de repetirse roto */
-      a.mode=(t.m==='dance'&&((a.dTc&&nn-a.dTc>2500)||(a.dS&&(nn-a.dS)/1000>31)))?'ground':t.m}a.vy=t.vy;a.speed+=(t.sp-a.speed)*k;
+      a.mode=(t.m==='dance'&&((a.dTc&&nn-a.dTc>2500)||(a.dS&&(nn-a.dS)/1000>31)))?'ground':t.m;updDanceFx(a,a.mode==='dance',nn)}a.vy=t.vy;a.speed+=(t.sp-a.speed)*k;
     if(a.mode==='land')a.landT+=dt;else a.landT=0;
     if(t.hl!==a.hl){
       if(a.heldG){g.remove(a.heldG);a.heldG=null}
@@ -1911,6 +1938,8 @@ function applyEvt(pid,m){
   if(m.t==='gr'){removeGround(m.gid);return}
   if(m.t==='hit'){onHit(m.v,pid);return}
   if(m.t==='srv'){if(running&&NAMES[m.l|0])srvMsg('Admin spawneó '+NAMES[m.l|0]+'.');return}
+  if(m.t==='dl'){if(m.to===NET.pid&&DNL.on){DLINK.add(pid);dlinkT=performance.now()}if(Array.isArray(m.un)&&m.un.includes(NET.pid))DLINK.delete(pid);return}
+  if(m.t==='dx'){if(DLINK.has(pid)){DLINK.delete(pid);if(DNL.on)stopDance()}return}
   if(m.t==='adm'){if(m.u==='*'||(m.u&&m.u===myAid()))liveSync();return}
   if(m.t==='sfx'){sfxPlay('jump',1.2*sfxVol(m.x,m.z));return}
   if(m.t==='slam'){sfxPlay('slam',.8*sfxVol(m.x,m.z));shockwave(m.x,m.z);if(running&&stunT<=0&&Math.hypot(player.position.x-m.x,player.position.z-m.z)<=SLAM_R)stunMe();return}
@@ -2140,9 +2169,13 @@ function cleanupNet(){try{NET.peer&&NET.peer.destroy()}catch(e){}NET.peer=null;N
 /* pestaña oculta: el navegador congela el juego, asi que se avisa a todos de inmediato (sin baile, quieto) y se sigue retransmitiendo con poco trafico */
 function hideState(){
   if(!running)return;
-  try{if(DNL.on)stopDance();speed=0;Object.keys(keys).forEach(k=>keys[k]=false);if(typeof joyEnd==='function')joyEnd();if(typeof CT!=='undefined')CT.clear();
+  try{stopFarDance();if(DNL.on)stopDance();speed=0;Object.keys(keys).forEach(k=>keys[k]=false);if(typeof joyEnd==='function')joyEnd();if(typeof CT!=='undefined')CT.clear();
     if(NET.on){NET.stT=1;netTick(0,performance.now())}}catch(e){}}
-document.addEventListener('visibilitychange',()=>{if(document.hidden)hideState()});
+let snapRem=false;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)hideState();
+  else{const n=performance.now();last=n;fpsT=n;fpsN=0;frameNext=0;snapRem=true;farLast=0;try{waResume()}catch(e){}}   /* al volver: sin saltos, sin bajar la resolucion por los FPS de cuando estaba oculto */
+});
 setInterval(()=>{if(document.hidden&&running&&NET.on){NET.stT=1;netTick(0,performance.now())}},700);
 let relT=0;
 function relayHidden(){if(!document.hidden||!NET.host)return;const n=performance.now();if(n-relT<50)return;relT=n;NET.stT=1;netTick(0,n)}
@@ -2653,7 +2686,7 @@ function loop(now){
     pp.y=gY+py;flipG.rotation.x=flipA;
     player.rotation.y=heading;
     animate(speed,dt);
-    syncBat(BATL,RG,myEq);if(myEq&&batSw)batPose(BATL,batSw.t0,performance.now());
+    syncBat(BATL,RG,myEq&&!DNL.on);if(myEq&&batSw)batPose(BATL,batSw.t0,performance.now());
     let inc=0,n=0;slots.forEach(s=>{if(s.item){inc+=INC[s.item.userData.lvl];n++;s.item.children[0].position.y=bobY(s.item.userData.lvl)+Math.sin(now/400+s.x)*.15}});
     money=Math.min(1e27,money+inc*dt);
     if(now-hudLast>120){hudLast=now;const mt=Math.floor(money).toLocaleString('es-MX')+'$';if(mt!==hudM){hudM=mt;const me=$('money');me.textContent=mt;me.style.fontSize=mt.length>22?'.62rem':mt.length>16?'.8rem':''}const it=fm(inc)+' $/s';if(it!==hudI){hudI=it;$('inc').textContent=it}const ct=n+'/'+slots.length;if(ct!==hudC){hudC=ct;$('cnt').textContent=ct}}
@@ -2679,7 +2712,7 @@ function loop(now){
     cam.position.set(p.x+ox*kk+(Math.random()-.5)*shake,ly+oy*kk+(Math.random()-.5)*shake,p.z+oz*kk);cam.lookAt(p.x,ly,p.z)}
   faceModels();updGT();
   {if(now-fxLast>150){fxLast=now;fxCache=fxSet()}const fs=fxCache;if(fs.size){if(now-labLast>50){labLast=now;drawGold(now,fs)}auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1)}updFire(now);updParty(dt,now);updLegSign(now)}
-  updBgm(dt,now);updFarDance(now);
+  updBgm(dt,now);updFarDance(now);dlinkTick(now);updDanceFx(ME_FX,DNL.on,now);
   placeTip();R.render(scene,cam);requestAnimationFrame(loop);
 }
 
@@ -2732,7 +2765,7 @@ function toggleBat(){
   if(myEq){setEq(false);return}
   if(held){toast('Suelta tu Papu para equipar el bate');return}
   if(stunT>0)return;
-  if(DNL.on)stopDance();setEq(true);toast(MOB?'Bate equipado: toca Golpear':'Bate equipado: clic izquierdo para golpear')}
+  setEq(true);toast(DNL.on?'Bate equipado: volverá a tu mano al terminar el baile':(MOB?'Bate equipado: toca Golpear':'Bate equipado: clic izquierdo para golpear'))}
 function swingBat(){
   if(!running||!myEq||shopOpen||setOpen||stunT>0||held)return;
   const now=performance.now();if(now-batLast<SW_MS+90)return;
@@ -2828,7 +2861,7 @@ function openChat(v){
   if(chatOpen){chatUnread=0;$('chatBadge').style.display='none';const L=$('chatL');L.scrollTop=L.scrollHeight}
   else{$('chatIn').blur();if(MOB){try{scrollTo(0,0)}catch(e){}}}}
 function focusChat(){Object.keys(keys).forEach(k=>keys[k]=false);$('chatIn').focus()}
-function toggleChat(){if(!running)return;if(chatOpen)openChat(false);else{openChat(true);focusChat()}}
+function toggleChat(){if(!running)return;if(chatOpen)openChat(false);else{openChat(true);if(!MOB)focusChat()}}   /* en celular se abre sin teclado: toca el cuadro para escribir */
 function sendChat(){
   const inp=$('chatIn'),t=chatClean(inp.value);if(!t){inp.blur();return}
   const now=performance.now();if(now-chatSendT<700){toast('Más despacio con el chat');return}
@@ -2846,7 +2879,7 @@ let MOB=false;
 const joy={on:false,x:0,y:0,m:0,id:null,cx:0,cy:0},CT=new Map(),JR=52;
 function mobTxt(s){return String(s).replace(/presiona E en otro lugar/i,'toca Acción en otro lugar').replace(/Presiona H otra vez/i,'Toca Quitar otra vez').replace(/Presiona 1/i,'Toca el bate').replace(/\(M para activar\)/,'').replace(/Mant[eé]n E\b/g,'Mantén Acción')}
 function setPlatform(m){
-  MOB=!!m;document.body.classList.toggle('mob',MOB);document.documentElement.classList.toggle('mob',MOB);$('plat').style.display='none';
+  MOB=!!m;document.body.classList.toggle('mob',MOB);if(MOB)$('chatIn').placeholder='Toca aquí para escribir…';document.documentElement.classList.toggle('mob',MOB);$('plat').style.display='none';
   if(MOB){try{const d=document.documentElement,r=(d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d);if(r&&r.catch)r.catch(()=>{})}catch(e){}
     try{const o=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(o&&o.catch)o.catch(()=>{})}catch(e){}}
   if(MOB){const vm=document.querySelector('meta[name=viewport]');if(vm)vm.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover')}
