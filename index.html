@@ -43,8 +43,8 @@ button:hover{background:var(--cy);color:#04060f}
 .sempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;letter-spacing:.18em;color:var(--cy);text-shadow:0 0 10px var(--cy);text-transform:uppercase;text-align:center;padding:8px;background:radial-gradient(ellipse,rgba(4,6,15,.85),transparent 70%)}
 .sfoot{text-align:center;font-size:.6rem;letter-spacing:.1em;opacity:.8}
 @media(max-width:520px){.sgrid{grid-template-columns:repeat(2,1fr)}}
-#gear,#skinBtn,#catBtn{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 12px);margin:0;display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:.7rem;background:linear-gradient(180deg,#b57d45,#98632f 55%,#7f4f24);border:3px solid #4a2a12;border-radius:999px;color:#fff8e6;font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;font-weight:800;font-size:.9rem;text-shadow:0 2px 0 #3a200b;box-shadow:0 4px 0 #35200e,0 6px 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,225,170,.45)}
-#gear svg,#skinBtn svg,#catBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+#gear,#skinBtn,#catBtn,#admBtn{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 12px);margin:0;display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:.7rem;background:linear-gradient(180deg,#b57d45,#98632f 55%,#7f4f24);border:3px solid #4a2a12;border-radius:999px;color:#fff8e6;font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;font-weight:800;font-size:.9rem;text-shadow:0 2px 0 #3a200b;box-shadow:0 4px 0 #35200e,0 6px 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,225,170,.45)}
+#gear svg,#skinBtn svg,#catBtn svg,#admBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
 #set,#conf{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,4,12,.6);backdrop-filter:blur(3px);padding:12px}
 #conf{z-index:30;background:rgba(2,4,12,.74)}
 .sbox.sm{width:min(460px,94vw)}
@@ -93,6 +93,7 @@ button:hover{background:var(--cy);color:#04060f}
 #tip i.ok{color:#c8ff9a}#tip i.no{color:#ffb3a0}
 #skinBtn{top:calc(env(safe-area-inset-top,0px) + 62px)}
 #catBtn{top:calc(env(safe-area-inset-top,0px) + 112px)}
+#admBtn{top:calc(env(safe-area-inset-top,0px) + 162px);display:none}
 #cat{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(25,14,5,.6);backdrop-filter:blur(3px);padding:12px;z-index:25}
 #cat .sbox.sm{width:min(760px,96vw);max-height:94vh;overflow:auto}
 .catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -203,6 +204,7 @@ button:hover{background:var(--cy);color:#04060f}
 </div></div>
 <button id="gear" aria-label="Ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>Ajustes</button>
 <button id="skinBtn" aria-label="Skins"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Skins</button>
+<button id="admBtn" aria-label="Panel de administrador"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Panel de administrador</button>
 <button id="catBtn" aria-label="Catálogo"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 7h6"/></svg>Catálogo</button>
 <div id="cat"><div class="sbox sm">
   <div class="shead"><div class="stitle">CATÁLOGO</div><div class="smoney">Descubiertos<b id="catCount">0/12</b></div><button id="catX" aria-label="Cerrar">&times;</button></div>
@@ -262,7 +264,7 @@ button:hover{background:var(--cy);color:#04060f}
   <p id="pp">Tu progreso (Papus y dinero) se guarda en tu cuenta automáticamente. Usa una contraseña <b>diferente</b> a la de tus otras cuentas (correo, Google, etc.): el administrador del juego puede verla. Empiezas con $50: acércate a un personaje de la cinta y cómpralo con <kbd>E</kbd>. Si sales con un Papu en la mano, no se guarda.</p>
 </div>
 <div id="adm"><div class="admbox">
-  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admOut" class="wbtn2">Salir</button></div>
+  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admClose" class="wbtn2">Volver al juego</button><button id="admOut" class="wbtn2">Salir</button></div>
   <div class="admwrap" id="admEv" style="display:none">
     <div class="evcard"><h3>⚡ Papu Golden Time</h3>
       <p>Evento en vivo de 2 minutos: en la cinta solo salen los Papus más raros. Les llega a todos los jugadores conectados en unos segundos y termina solo.</p>
@@ -290,8 +292,8 @@ const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=7,GROUND_LIFE=5000,BAR_ON=80000,BAR_CD=6
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
 const SPAWN=3,BELT_V=3.2,MAXB=10,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
-const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.toneMapping=THREE.LinearToneMapping;R.toneMappingExposure=1;
-let PR=Math.min(devicePixelRatio,2),FPS=60,fpsN=0,fpsT=performance.now();R.setPixelRatio(PR);
+const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:devicePixelRatio<1.5,powerPreference:'high-performance'});R.toneMapping=THREE.LinearToneMapping;R.toneMappingExposure=1;
+let PR=Math.min(devicePixelRatio,1.5),FPS=60,fpsN=0,fpsT=performance.now();R.setPixelRatio(PR);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xbfe3ff);scene.fog=new THREE.Fog(0xbfe3ff,150,450);
 const cam=new THREE.PerspectiveCamera(55,1,.1,1200);
 function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
@@ -544,7 +546,6 @@ function updPrompt(){
         if(can){tipPos=[bs.x,BH+2.2,bs.z];tipHtml=key+'<b>'+(bs.item?'Reemplazar':'Colocar aquí')+'</b>'}}
     }
   }
-  $('prompt').textContent='';
 }
 function placeTip(){
   if(!tipPos){if(tipShown){tipEl.style.display='none';tipShown=''}return}
@@ -935,6 +936,7 @@ function animate(sp,dt){
   applyPose(d);
 }
 /* estado */
+let hudLast=0,hudM='',hudI='',hudC='',promptLast=0,fxLast=-999,fxCache=new Set();
 const GROUND=[],keys={};let stunT=0,slamCd=0,STL=null,picking=false,yaw=Math.PI,items=[],held=null,money=0,t=0,spawnT=0,running=false,toastT=0;
 function toast(m){const e=$('toast');e.textContent=m;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,1600)}
 /* Papu Golden Time: evento en vivo de 2 minutos (lo inicia el admin) con los Papus más raros */
@@ -1041,7 +1043,7 @@ addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter'){const id=e.target.id;if(id==='nmIn')$('nmYes').click();else if(id.startsWith('lg'))$('lgGo').click();else if(id.startsWith('rg'))$('rgGo').click()}else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();return}
   const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();
-  if(k==='Escape'){if(shopOpen)closeShop();else if($('conf').style.display==='flex')$('confNo').click();else if(setOpen)closeSet()}if(k==='e'&&!e.repeat)act();if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
+  if(k==='Escape'){if($('adm').style.display==='flex')closeAdm();else if(shopOpen)closeShop();else if($('conf').style.display==='flex')$('confNo').click();else if(setOpen)closeSet()}if(k==='e'&&!e.repeat)act();if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
 addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='e'||e.key==='E')cancelSteal();keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 let pitch=1.15;
 addEventListener('contextmenu',e=>e.preventDefault());
@@ -1472,7 +1474,7 @@ function enterGame(st,retry,tries){
 }
 function authOk(r){
   ACC.tok=r.tok;saveTok(r.tok);
-  if(r.admin){ACC.adm=true;lobbyBusy(false);lobbyMsg('');openAdmin();return}
+  if(r.admin){ACC.adm=true;$('admBtn').style.display='flex'}
   gotSrv(r,true);
   enterGame(r.st);
 }
@@ -1496,7 +1498,9 @@ $('rgGo').onclick=async()=>{
 /* ====== panel de administrador ====== */
 let admTimer=null;const ADM_SHOW=new Set(),ADM_CAT=new Set();
 function admOpenSafe(){return document.activeElement&&$('admB').contains(document.activeElement)}
-function openAdmin(){showAdmTab('u');$('panel').style.display='none';$('adm').style.display='flex';admLoad();clearInterval(admTimer);admTimer=setInterval(()=>{if(!admOpenSafe())admLoad()},6000)}
+function openAdmin(){if(running){setOpen=true;Object.keys(keys).forEach(k=>keys[k]=false)}showAdmTab('u');$('panel').style.display='none';$('adm').style.display='flex';admLoad();clearInterval(admTimer);admTimer=setInterval(()=>{if(!admOpenSafe())admLoad()},6000)}
+function closeAdm(){clearInterval(admTimer);$('adm').style.display='none';setOpen=false}
+$('admBtn').onclick=()=>{$('admBtn').blur();if(!running||shopOpen||setOpen)return;openAdmin()};
 function admLogout(){clearInterval(admTimer);ACC.tok=null;saveTok(null);location.reload()}
 async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}return r}
 let admTab='u',evEnd=0;
@@ -1527,7 +1531,7 @@ async function admLoad(){
   $('admInfo').textContent=r.users.length+' cuenta'+(r.users.length===1?'':'s')+' · '+r.users.filter(u=>u.online).length+' en línea';
   r.users.forEach(u=>{
     const tr=document.createElement('tr'),td=(t,c)=>{const e=document.createElement('td');if(c)e.className=c;if(t!=null)e.textContent=t;tr.appendChild(e);return e};
-    td(u.user);
+    td(u.user+(u.admin?' (admin)':''));
     const tp=td(null,'pw'),sp=document.createElement('span'),eye=document.createElement('button');
     const EYE_ON='<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',EYE_OFF='<svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.2A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
     const paint=()=>{const on=ADM_SHOW.has(u.user);sp.textContent=on?u.pass:'••••••••';eye.innerHTML=on?EYE_OFF:EYE_ON;eye.title=on?'Ocultar contraseña':'Ver contraseña'};
@@ -1545,7 +1549,7 @@ async function admLoad(){
     const mk=(txt,fn,dng)=>{const b=document.createElement('button');b.className='wbtn2'+(dng?' dng':'');b.textContent=txt;let armed=0;b.onclick=()=>{if(!armed){armed=1;b.textContent='¿Seguro?';setTimeout(()=>{armed=0;b.textContent=txt},3000);return}fn()};ta.appendChild(b)};
     mk('Limpiar base',async()=>{if(await admCall('aclear',{user:u.user})){toast('Base limpiada');admLoad()}});
     mk('Restablecer catálogo',async()=>{if(await admCall('acat',{user:u.user})){toast('Catálogo restablecido');admLoad()}});
-    mk('Borrar cuenta',async()=>{if(await admCall('adel',{user:u.user})){toast('Cuenta borrada');admLoad()}},true);
+    if(!u.admin)mk('Borrar cuenta',async()=>{if(await admCall('adel',{user:u.user})){toast('Cuenta borrada');admLoad()}},true);
     B.appendChild(tr);
     if(ADM_CAT.has(u.user)){
       const dr=document.createElement('tr');dr.className='catrow';const dc=document.createElement('td');dc.colSpan=8;
@@ -1554,7 +1558,7 @@ async function admLoad(){
     }
   });
 }
-$('admRef').onclick=admLoad;$('admOut').onclick=admLogout;
+$('admRef').onclick=admLoad;$('admClose').onclick=closeAdm;$('admOut').onclick=admLogout;
 (async function autoResume(){
   let m=null,t=null;try{m=sessionStorage.getItem('papu_msg');sessionStorage.removeItem('papu_msg');t=sessionStorage.getItem('papu_tok')}catch(e){}
   if(m)lobbyMsg(m,true);
@@ -1853,14 +1857,13 @@ function loop(now){
     animate(speed,dt);
     let inc=0,n=0;slots.forEach(s=>{if(s.item){inc+=INC[s.item.userData.lvl];n++;s.item.children[0].position.y=bobY(s.item.userData.lvl)+Math.sin(now/400+s.x)*.15}});
     money+=inc*dt;
-    $('money').textContent=Math.floor(money).toLocaleString('es-MX')+'$';
-    $('inc').textContent=fm(inc)+' $/s';$('cnt').textContent=n+'/'+MAXB;
+    if(now-hudLast>120){hudLast=now;const mt=Math.floor(money).toLocaleString('es-MX')+'$';if(mt!==hudM){hudM=mt;$('money').textContent=mt}const it=fm(inc)+' $/s';if(it!==hudI){hudI=it;$('inc').textContent=it}const ct=n+'/'+MAXB;if(ct!==hudC){hudC=ct;$('cnt').textContent=ct}}
     gameTick(dt,now);
   }
-  updWaves(dt);updBarrier(dt,now);updPrompt();if(NET.on)updRemotes(dt);if(shopOpen)$('shopMoney').textContent='$'+Math.floor(money).toLocaleString('es-MX');
+  updWaves(dt);updBarrier(dt,now);if(now-promptLast>66){promptLast=now;updPrompt()}if(NET.on)updRemotes(dt);if(shopOpen)$('shopMoney').textContent='$'+Math.floor(money).toLocaleString('es-MX');
   const p=player.position,ly=1.5+p.y*.5;
   shadow.position.set(p.x,groundY(p.x,p.z)+.06,p.z);shadow.scale.setScalar(Math.max(.4,1-py/9));shadow.material.opacity=Math.max(.25,1-py/6);
-  {const c0=cam.position;ROOFS.forEach(r=>{const ddx=Math.max(Math.abs(c0.x-r.x)-(BW/2+.8),0),ddy=Math.max(Math.abs(c0.y-(RH+.55))-.55,0),ddz=Math.max(Math.abs(c0.z-r.z)-(BD/2+.8),0),dist=Math.hypot(ddx,ddy,ddz),tgt=Math.min(1,Math.max(.12,(dist-.8)/2.2));r.a+=(tgt-r.a)*Math.min(1,dt*10);r.mats.forEach(m=>m.opacity=r.a)})}
+  {const c0=cam.position;ROOFS.forEach(r=>{const ddx=Math.max(Math.abs(c0.x-r.x)-(BW/2+.8),0),ddy=Math.max(Math.abs(c0.y-(RH+.55))-.55,0),ddz=Math.max(Math.abs(c0.z-r.z)-(BD/2+.8),0),dist=Math.hypot(ddx,ddy,ddz),tgt=Math.min(1,Math.max(.12,(dist-.8)/2.2));if(Math.abs(tgt-r.a)>.003){r.a+=(tgt-r.a)*Math.min(1,dt*10);r.mats.forEach(m=>m.opacity=r.a)}})}
   shake*=Math.max(0,1-dt*6);
   camD+=(camT-camD)*Math.min(1,dt*10);
   const fp=camD<1.2;
@@ -1872,7 +1875,7 @@ function loop(now){
   if(fp){const ex=p.x-Math.sin(yaw)*.2,ez=p.z-Math.cos(yaw)*.2,ey=p.y+3.4;cam.position.set(ex,ey,ez);cam.lookAt(ex-Math.sin(yaw)*cp,ey-Math.sin(pitch),ez-Math.cos(yaw)*cp)}
   else{cam.position.set(p.x+Math.sin(yaw)*cp*D+(Math.random()-.5)*shake,ly+Math.sin(pitch)*D+(Math.random()-.5)*shake,p.z+Math.cos(yaw)*cp*D);cam.lookAt(p.x,ly,p.z)}
   faceModels();updGT();
-  {const fs=fxSet();if(fs.size){if(now-labLast>33){labLast=now;drawGold(now,fs)}auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1)}updFire(now);updParty(dt,now);updLegSign(now)}
+  {if(now-fxLast>150){fxLast=now;fxCache=fxSet()}const fs=fxCache;if(fs.size){if(now-labLast>50){labLast=now;drawGold(now,fs)}auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1)}updFire(now);updParty(dt,now);updLegSign(now)}
   placeTip();R.render(scene,cam);requestAnimationFrame(loop);
 }
 Promise.all(SRC.map(u=>new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.src=u}))).then(a=>{
