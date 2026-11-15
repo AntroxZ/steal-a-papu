@@ -229,7 +229,7 @@ body.isadm #chatBtn{top:calc(env(safe-area-inset-top,0px) + 212px)}
 #chatBadge{display:none;min-width:18px;height:18px;border-radius:9px;background:#e23b3b;color:#fff;font-size:.65rem;line-height:18px;text-align:center;padding:0 4px;border:2px solid #4a2a12}
 #chat{position:fixed;left:12px;bottom:62px;width:min(350px,74vw);display:none;flex-direction:column;gap:6px;padding:10px 10px 8px;background:rgba(20,12,5,.38);border:3px solid rgba(110,70,35,.85);border-radius:16px;font-family:var(--wf);box-shadow:0 4px 14px rgba(0,0,0,.35)}
 #chatX{position:absolute;left:-10px;top:-12px;width:28px;height:28px;border-radius:50%;padding:0;margin:0;font-size:1.15rem;line-height:1;background:linear-gradient(180deg,#c2603f,#a4472b 55%,#8a361e);border:3px solid #4a2a12;color:#fff8e6;cursor:pointer;box-shadow:0 3px 0 #35200e;display:flex;align-items:center;justify-content:center}
-#chatL{height:7.6em;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,225,170,.5) transparent;font-size:.86rem;line-height:1.35;color:#fff8e6;text-shadow:0 1px 2px #000,0 0 3px #000;word-break:break-word;padding-right:4px}
+#chatL{height:7.6em;overflow-y:auto;overscroll-behavior:contain;font-size:.86rem;line-height:1.35;color:#fff8e6;text-shadow:0 1px 2px #000,0 0 3px #000;word-break:break-word;padding-right:4px}
 #chatL div{padding:1px 2px}#chatL b{font-weight:800}
 #chatIn{width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:2px solid rgba(110,70,35,.9);border-radius:10px;color:#fff8e6;padding:6px 9px;font:600 .85rem var(--wf);outline:none}
 #chatIn:focus{border-color:#ffe08a}
@@ -263,6 +263,7 @@ body.mob #hint{display:none}
 #mbSwing{width:56px;height:56px;right:calc(env(safe-area-inset-right,0px) + 26px);bottom:calc(env(safe-area-inset-bottom,0px) + 104px)}
 #mbDrop{width:52px;height:52px;right:calc(env(safe-area-inset-right,0px) + 94px);bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 #mbDance{width:52px;height:52px;right:calc(env(safe-area-inset-right,0px) + 176px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px)}
+#mbSync{width:60px;height:60px;right:calc(env(safe-area-inset-right,0px) + 236px);bottom:calc(env(safe-area-inset-bottom,0px) + 22px)}
 #mbLift{width:54px;height:54px;right:calc(env(safe-area-inset-right,0px) + 164px);bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 #mbDel{width:54px;height:54px;right:calc(env(safe-area-inset-right,0px) + 164px);bottom:calc(env(safe-area-inset-bottom,0px) + 150px)}
 body.mob #gear,body.mob #skinBtn,body.mob #catBtn,body.mob #admBtn,body.mob #chatBtn{left:calc(env(safe-area-inset-left,0px) + 8px);padding:5px 10px;font-size:.6rem;gap:5px}
@@ -335,6 +336,16 @@ body.mob .dcard.poor::after{font-size:.62rem}
 .sbox.fx{overflow:hidden;display:flex;flex-direction:column}
 .sbox.fx>.sfix{flex:none;display:flex;flex-direction:column;gap:inherit;padding-bottom:8px;border-bottom:3px solid rgba(74,42,18,.55);margin-bottom:6px}
 .sbox.fx>.sscroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:inherit;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+
+/* barras de desplazamiento: blancas, finas y redondeadas */
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:rgba(40,20,5,.3);border-radius:999px;box-shadow:inset 0 0 0 2px rgba(74,42,18,.5)}
+::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#ffffff,#efe6d2);border-radius:999px;border:2px solid #4a2a12;box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(0,0,0,.4)}
+::-webkit-scrollbar-thumb:hover{background:#fff}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+::-webkit-scrollbar-corner{background:transparent}
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#fff8e6 rgba(40,20,5,.35)}}
+body.mob ::-webkit-scrollbar{width:7px;height:7px}
 </style>
 </head>
 <body>
@@ -353,6 +364,7 @@ body.mob .dcard.poor::after{font-size:.62rem}
 <button class="mb" id="mbSwing"><span>🏏</span><b>Golpear</b></button>
 <button class="mb" id="mbDrop"><span>⬇️</span><b>Soltar</b></button>
 <button class="mb" id="mbDance"><span>💃</span><b>Bailar</b></button>
+<button class="mb" id="mbSync"><span>🔄</span><b>Sincronizar</b></button>
 <button class="mb" id="mbLift"><span>↔️</span><b>Mover</b></button>
 <button class="mb" id="mbDel"><span>🗑️</span><b>Quitar</b></button>
 </div>
@@ -360,7 +372,7 @@ body.mob .dcard.poor::after{font-size:.62rem}
 <div id="gtFlash"></div>
 <div id="gt"></div>
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
-<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mover · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> girar la cámara · <kbd>Q</kbd> soltar el Papu · <kbd>/</kbd> chat · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>F</kbd> mover un Papu de tu base · <kbd>H</kbd> eliminarlo · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>B</kbd> bailar (cualquier tecla de movimiento lo cancela) · <kbd>M</kbd> música · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
+<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mover · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> girar la cámara · <kbd>Q</kbd> soltar el Papu · <kbd>/</kbd> chat · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>F</kbd> mover un Papu de tu base · <kbd>H</kbd> eliminarlo · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>B</kbd> bailar (cualquier tecla de movimiento lo cancela) · <kbd>T</kbd> cerca de alguien que baila = sincronizar su baile · <kbd>M</kbd> música · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
 <div id="prompt"></div>
 <div id="chat"><button id="chatX" aria-label="Cerrar chat">&times;</button><div id="chatL"></div><input id="chatIn" maxlength="120" placeholder="Escribe y presiona Enter…" autocomplete="off"></div>
 <div id="shop"><div class="sbox">
@@ -604,8 +616,8 @@ function hitSolid(x,z,y,fx,fz){
 /* geometria de un tramo de escalera: x a lo largo de la subida, y hacia arriba, z el ancho (con colores por cara) */
 function stairGeo(run,rise,w,n,solid){
   const pos=[],col=[],idx=[];let vi=0;const T=.9,dx=run/n,dy=rise/n,hw=w/2;
-  const quad=(a,b,c,d,cl)=>{pos.push(...a,...b,...c,...d);for(let i=0;i<4;i++)col.push(cl[0],cl[1],cl[2]);idx.push(vi,vi+1,vi+2,vi,vi+2,vi+3);vi+=4};
-  const CT=[.74,.76,.8],CR=[.46,.48,.52],CS=[.6,.62,.66],CB=[.3,.31,.34];
+  const quad=(a,b,c,d,cl)=>{pos.push(...a,...b,...c,...d);for(let i=0;i<4;i++){col.push(cl[0],cl[1],cl[2]);ty.push(cl===CT?0:cl===CR?1:cl===CS?2:3)}idx.push(vi,vi+1,vi+2,vi,vi+2,vi+3);vi+=4};
+  const CT=[.74,.76,.8],CR=[.46,.48,.52],CS=[.6,.62,.66],CB=[.3,.31,.34],ty=[];
   for(let i=0;i<n;i++){const x0=i*dx,x1=x0+dx,yt=(i+1)*dy,yb=solid?0:i*dy-T;
     quad([x0,yt,-hw],[x1,yt,-hw],[x1,yt,hw],[x0,yt,hw],CT);
     quad([x0,i*dy,-hw],[x0,yt,-hw],[x0,yt,hw],[x0,i*dy,hw],CR);
@@ -613,7 +625,7 @@ function stairGeo(run,rise,w,n,solid){
     quad([x0,yb,hw],[x1,yb,hw],[x1,yt,hw],[x0,yt,hw],CS);
     quad([x0,yb,-hw],[x1,yb,-hw],[x1,yb,hw],[x0,yb,hw],CB)}
   {const yt=n*dy,yb=solid?0:(n-1)*dy-T;quad([run,yb,-hw],[run,yt,-hw],[run,yt,hw],[run,yb,hw],CS)}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);return g}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.userData.ty=ty;g.userData.oc=col.slice();g.setIndex(idx);return g}
 let _cor=null;
 function corTex(){if(_cor)return _cor;const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.fillStyle='#061226';x.fillRect(0,0,128,128);x.strokeStyle='rgba(0,240,255,.55)';x.lineWidth=2;x.strokeRect(1,1,126,126);
   _cor=new THREE.CanvasTexture(c);_cor.wrapS=_cor.wrapT=THREE.RepeatWrapping;_cor.repeat.set(8,13);return _cor}
@@ -652,9 +664,9 @@ function buildFloor(b,k){
   /* tramo de escalera (del piso k-1 al k) + descanso */
   {const T=TW[k-1],L=T.land;
    const st=new THREE.Mesh(stairGeo(Math.abs(T.ze-T.zs),T.ye-T.ys,T.x1-T.x0,T.n,k===1),new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide}));
-   st.position.set((T.x0+T.x1)/2,T.ys,T.zs);st.rotation.y=T.ze<T.zs?Math.PI/2:-Math.PI/2;g.add(st);
+   st.position.set((T.x0+T.x1)/2,T.ys,T.zs);st.rotation.y=T.ze<T.zs?Math.PI/2:-Math.PI/2;g.add(st);DP.s.push([st,'stair']);
    const lx0=Math.max(L.x0,14.85),lmat=[0x8a8e96,0x8a8e96,0x1d1d22,0x6a6e76,0x7a7e86,0x7a7e86].map(h=>new THREE.MeshBasicMaterial({color:h}));
-   const lm=new THREE.Mesh(new THREE.BoxGeometry(L.x1-lx0,.6,L.z1-L.z0),lmat);lm.position.set((lx0+L.x1)/2,L.y-.3,(L.z0+L.z1)/2);g.add(lm);
+   const lm=new THREE.Mesh(new THREE.BoxGeometry(L.x1-lx0,.6,L.z1-L.z0),lmat);lm.position.set((lx0+L.x1)/2,L.y-.3,(L.z0+L.z1)/2);g.add(lm);DP.s.push([lm,'land']);
    F.cb=[];const sg=(T.ze-T.zs)/T.n,dyy=(T.ye-T.ys)/T.n;
    for(let i=0;i<T.n;i++){const za=T.zs+i*sg,zb=za+sg,yt=T.ys+(i+1)*dyy;F.cb.push([...worldRect(b,T.x0,za,T.x1,zb),k===1?0:yt-dyy-.9,yt])}
    F.cb.push([...worldRect(b,lx0,L.z0,L.x1,L.z1),L.y-.6,L.y]);
@@ -697,14 +709,25 @@ function paintDeco(DP,c){const D=c?DECO[c]:null,K=[.8,.8,1.1,.5,1,.7],mlist=m=>A
     mt.needsUpdate=true});
   DP.w.forEach(m=>set(m,D&&D.w,D&&(D.g&1),'panel'));
   DP.p.forEach(([m,k])=>set(m,D&&D.p,D&&(D.g&2),'plain',k));
-  DP.r.forEach(m=>set(m,D&&D.r,D&&(D.g&4),'roof'))}
+  DP.r.forEach(m=>set(m,D&&D.r,D&&(D.g&4),'roof'));
+  /* escaleras y descansos: toman el color de la base; el piso negro (parte de arriba del descanso) no cambia */
+  (DP.s||[]).forEach(([m,kind])=>{
+    if(kind==='land'){mlist(m).forEach((mt,i)=>{if(i===2)return;
+      if(!mt.userData.o)mt.userData.o={map:mt.map,color:mt.color.clone()};
+      if(!D)mt.color.copy(mt.userData.o.color);else mt.color.set(D.w).multiplyScalar(K[i%6]);mt.needsUpdate=true});return}
+    const ge=m.geometry,ca=ge.attributes.color,ty=ge.userData.ty,oc=ge.userData.oc;if(!ca||!ty)return;
+    const F=[1,.62,.8,.4],base=D?new THREE.Color(D.w):null;
+    for(let v=0;v<ty.length;v++){
+      if(!D){ca.setXYZ(v,oc[v*3],oc[v*3+1],oc[v*3+2])}
+      else{const c=base.clone().multiplyScalar(F[ty[v]]);ca.setXYZ(v,Math.min(1,c.r),Math.min(1,c.g),Math.min(1,c.b))}}
+    ca.needsUpdate=true})}
 function fireTex(){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
   x.save();x.translate(32,38);x.scale(.62,1);const g=x.createRadialGradient(0,4,1,0,0,30);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,'rgba(255,255,255,.7)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.arc(0,0,30,0,7);x.fill();x.restore();
   return new THREE.CanvasTexture(c)}
 function buildBase(idx,cx,z0,dir){
   const gx=cx,gz=dir>0?z0+6:z0-6,G=new THREE.Group();G.position.set(gx,0,gz);G.rotation.y=dir>0?0:Math.PI;scene.add(G);
   const b={idx,cx,z0,dir,G,gz,nf:1,fl:[null,null,null,null,null],owner:null,name:'',slots:[],barrierOn:false,barrierT:0,btnPress:0,W:(lx,lz)=>dir>0?[gx+lx,gz+lz]:[gx-lx,gz-lz]};
-  ROOT=G;const DP={w:[],p:[],r:[]};
+  ROOT=G;const DP={w:[],p:[],r:[],s:[]};
   /* suelo de granito */
   add(new THREE.Mesh(new THREE.BoxGeometry(BW,BH,BD),B(0xffffff,{map:noiseTex('#8c8f94',['#6d7075','#a9acb1','#5a5d62','#c4a9a4','#d6d8dc','#7b6f6f'],6,7)})),0,BH/2,BZc);
   add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BW,BH,BD)),new THREE.LineBasicMaterial({color:0x00f0ff})),0,BH/2,BZc);
@@ -999,6 +1022,7 @@ function updPrompt(){
         tipHtml=key+'<b>Comprar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="'+(ok?'ok':'no')+'">$'+fm(PRICE[l])+(ok?'':' · te faltan $'+fm(Math.ceil(PRICE[l]-money)))+'</i>'}
       else if(nr&&nr.k==='ground'){const o=nr.o;tipPos=[o.g.position.x,o.g.position.y+2.1,o.g.position.z];tipHtml=key+'<b>Agarrar '+NAMES[o.lvl]+'</b>'+rarTag(o.lvl)+'<i class="ok">¡del suelo!</i>'}
       else if(nr&&nr.k==='steal'&&!STL){const q=nr.o,l=q.s.item.userData.lvl;tipPos=[q.s.x,(q.s.y||BH)+2.2,q.s.z];tipHtml=key+'<b>Mantén E para robar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="ok">'+STEAL_T+' s</i>'}
+      if(!tipHtml){const nd=nearDancer();if(nd){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+5.4,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
       if(!tipHtml){const on=ownSlotNear();if(on){tipPos=[on.s.x,(on.s.y||BH)+2.2,on.s.z];tipHtml='<span class="k">F</span><b>Mover</b> &nbsp;<span class="k">H</span><b>Eliminar</b>'}}
     }else{
       let bd=5,bs=null;slots.forEach(s=>{if(!lvOk(s,p))return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;bs=s}});
@@ -1011,7 +1035,7 @@ function placeTip(){
   if(!tipPos){if(tipShown){tipEl.style.display='none';tipShown=''}return}
   cam.updateMatrixWorld();tipV.set(tipPos[0],tipPos[1],tipPos[2]).project(cam);
   if(tipV.z>1||tipV.z<-1){tipEl.style.display='none';tipShown='';return}
-  if(tipHtml!==tipShown){tipEl.innerHTML=MOB?tipHtml.replace(/<span class="k">E<\/span>/g,'<span class="k">Acción</span>').replace(/<span class="k">[FH]<\/span>/g,'').replace('Mantén E','Mantén Acción'):tipHtml;tipShown=tipHtml}
+  if(tipHtml!==tipShown){tipEl.innerHTML=MOB?tipHtml.replace(/<span class="k">E<\/span>/g,'<span class="k">Acción</span>').replace(/<span class="k">[FHT]<\/span>/g,'').replace('Mantén E','Mantén Acción'):tipHtml;tipShown=tipHtml}
   tipEl.style.display='flex';
   tipEl.style.left=((tipV.x*.5+.5)*innerWidth)+'px';tipEl.style.top=((-tipV.y*.5+.5)*innerHeight)+'px';
 }
@@ -1397,7 +1421,26 @@ const SFX_R=45,DANCE_R=40;
 function sfxVol(x,z){const q=player.position,d=Math.hypot(x-q.x,z-q.z);return d>=SFX_R?0:Math.pow(1-d/SFX_R,1.4)}
 /* baile de otros: solo se oye el del mas cercano dentro del rango, y nunca mientras bailas tu */
 let farA=null,farPid=null,farLast=0,farV=0;
-const trackDance=a=>{if(a.mode==='dance'){if(!a.dS)a.dS=performance.now()}else a.dS=0};
+const trackDance=a=>{if(a.mode==='dance'){const n=performance.now();
+    if(!a.dS)a.dS=n-(a.dT>0?a.dT*1000:0);   /* arranca en el punto que ya lleva ese jugador */
+    else if(a.dT>0&&Math.abs((n-a.dS)/1000-a.dT)>.6)a.dS=n-a.dT*1000}   /* si se sincronizo con alguien, lo seguimos */
+  else a.dS=0};
+const SYNC_R=14;
+function nearDancer(){
+  let best=null,bd=SYNC_R;const q=player.position;
+  for(const id in NET.players){const p=NET.players[id],a=p.av;if(!a||!a.init)continue;trackDance(a);
+    if(a.dS){const d=Math.hypot(a.g.position.x-q.x,a.g.position.z-q.z);if(d<bd){bd=d;best=p}}}
+  return best}
+function syncDance(){
+  if(!running||shopOpen||setOpen||stunT>0)return;
+  if(held){toast('Suelta tu Papu para bailar');return}
+  if(mode!=='ground'&&mode!=='land'){return}
+  const p=nearDancer();if(!p){toast('No hay nadie bailando cerca');return}
+  let off=(performance.now()-p.av.dS)/1000;
+  const du=(SFX.buf.dance&&SFX.buf.dance.duration)||30;if(off>=du-1){toast('Ese baile ya casi termina');return}
+  off=Math.max(0,off);
+  if(DNL.on){DNL.t=off;startOwnAudio(off)}else startDance(off);
+  if(DNL.on)toast('¡Sincronizado con '+(p.name||'tu amigo')+'!')}
 /* el audio del baile ajeno sigue corriendo (en silencio si no debe oirse) para no perder la sincronia: el tiempo sale del inicio de ese baile */
 function updFarDance(now){
   if(now-farLast<120)return;farLast=now;
@@ -1509,14 +1552,17 @@ function updBgm(dt,now){
   if(want===0&&bgmV<.004&&!bgm.paused)bgm.pause();
   try{const bv=Math.max(0,Math.min(1,bgmV));if(WA.bgmG)WA.bgmG.gain.value=bv;else bgm.volume=bv}catch(e){}
 }
-function startDance(){
+function startDance(off){
   if(!running||shopOpen||setOpen||stunT>0||DN.on)return;
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground')return;
-  DN.on=true;DN.t=0;DN.q=null;DN.w=0;
+  off=off>0?+off:0;DN.on=true;DN.t=off;DN.q=null;DN.w=0;
+  startOwnAudio(off);
+}
+function startOwnAudio(off){
   stopFarDance();   /* prioridad: mi baile; el de los demas se corta al instante */
-  if(waOK()){waResume();waStop(WA.own);WA.ownEnded=false;WA.ownTV=bgmOn?danceVol():0;const s=WA.own=waPlay(0,WA.ownTV);s.o.onended=()=>{if(WA.own===s)WA.ownEnded=true};return}
-  try{if(!danceAudio){danceAudio=new Audio(DANCE_SRC);danceAudio.preload='auto'}danceAudio.volume=danceVol();danceAudio.muted=!bgmOn;danceAudio.currentTime=0;const pr=danceAudio.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
+  if(waOK()){waResume();waStop(WA.own);WA.ownEnded=false;WA.ownTV=bgmOn?danceVol():0;const s=WA.own=waPlay(off,WA.ownTV);s.o.onended=()=>{if(WA.own===s)WA.ownEnded=true};return}
+  try{if(!danceAudio){danceAudio=new Audio(DANCE_SRC);danceAudio.preload='auto'}danceAudio.volume=danceVol();danceAudio.muted=!bgmOn;danceAudio.currentTime=off;const pr=danceAudio.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
 }
 function stopDance(){
   if(!DNL.on)return;DNL.on=false;
@@ -1710,7 +1756,7 @@ addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter'){const id=e.target.id;if(id==='nmIn')$('nmYes').click();else if(id.startsWith('lg'))$('lgGo').click();else if(id.startsWith('rg'))$('rgGo').click();else if(id==='chatIn')sendChat()}else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();else if(e.key==='Escape'&&e.target.id==='chatIn')e.target.blur();return}
   const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();
-  if(k==='Escape'){if($('adm').style.display==='flex')closeAdm();else if($('conf').style.display==='flex')$('confNo').click();else if(shopOpen)closeShop();else if(setOpen)closeSet();else if(chatOpen)openChat(false)}if(k==='e'&&!e.repeat)act();if(k==='b'&&!e.repeat){if(DNL.on)stopDance();else startDance()}if(k==='m'&&!e.repeat){bgmOn=!bgmOn;if(danceAudio)danceAudio.muted=!bgmOn;toast(bgmOn?'Sonido activado':'Juego en silencio (M para activar)')}if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k==='/'&&!e.repeat&&running&&!shopOpen&&!setOpen){e.preventDefault();toggleChat()}if(k==='Enter'&&!e.repeat&&chatOpen)focusChat();if(k==='q'&&!e.repeat)dropQ();if(k==='1'&&!e.repeat)toggleBat();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
+  if(k==='Escape'){if($('adm').style.display==='flex')closeAdm();else if($('conf').style.display==='flex')$('confNo').click();else if(shopOpen)closeShop();else if(setOpen)closeSet();else if(chatOpen)openChat(false)}if(k==='e'&&!e.repeat)act();if(k==='b'&&!e.repeat){if(DNL.on)stopDance();else startDance()}if(k==='m'&&!e.repeat){bgmOn=!bgmOn;if(danceAudio)danceAudio.muted=!bgmOn;toast(bgmOn?'Sonido activado':'Juego en silencio (M para activar)')}if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k==='/'&&!e.repeat&&running&&!shopOpen&&!setOpen){e.preventDefault();toggleChat()}if(k==='Enter'&&!e.repeat&&chatOpen)focusChat();if(k==='q'&&!e.repeat)dropQ();if(k==='1'&&!e.repeat)toggleBat();if(k==='t'&&!e.repeat)syncDance();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
 addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='e'||e.key==='E')cancelSteal();keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 let pitch=1.15;
 addEventListener('contextmenu',e=>e.preventDefault());
@@ -1794,7 +1840,7 @@ function updRemotes(dt){
     if(!a.init){g.position.set(t.x,t.y,t.z);g.rotation.y=t.h;a.init=true;g.visible=true}
     g.position.x+=(t.x-g.position.x)*k;g.position.y+=(t.y-g.position.y)*k;g.position.z+=(t.z-g.position.z)*k;
     let dh=t.h-g.rotation.y;dh=Math.atan2(Math.sin(dh),Math.cos(dh));g.rotation.y+=dh*k;
-    a.fg.rotation.x=t.fa;a.mode=t.m;a.vy=t.vy;a.speed+=(t.sp-a.speed)*k;
+    a.fg.rotation.x=t.fa;a.mode=t.m;a.dT=t.dt;a.vy=t.vy;a.speed+=(t.sp-a.speed)*k;
     if(a.mode==='land')a.landT+=dt;else a.landT=0;
     if(t.hl!==a.hl){
       if(a.heldG){g.remove(a.heldG);a.heldG=null}
@@ -1832,7 +1878,7 @@ function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':
 function bcast(m,except){for(const id in NET.conns){if(+id===except)continue;const c=NET.conns[id];if(c&&c.open)c.send(m)}}
 function emit(m){if(!NET.on)return;if(NET.host)bcast(Object.assign({pid:NET.pid},m));else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send(m)}
 function freeBaseIdx(){for(let i=0;i<BASES.length;i++)if(BASES[i].owner===null)return i;return -1}
-function setTgt(p,a){p.tgt={x:a[0],y:a[1],z:a[2],h:a[3],sp:a[4],m:a[5],vy:a[6],fa:a[7],hl:a[8],st:a[9]|0,sc:a[10]|0}}
+function setTgt(p,a){p.tgt={x:a[0],y:a[1],z:a[2],h:a[3],sp:a[4],m:a[5],vy:a[6],fa:a[7],hl:a[8],st:a[9]|0,sc:a[10]|0,dt:+a[11]||0}}
 const cleanDc=a=>Array.isArray(a)?[(a[0]>=1&&a[0]<=10)?a[0]|0:0,a[1]?1:0,(a[2]>=1&&a[2]<=5)?a[2]|0:1]:[0,0,1];
 function addPlayer(pid,name,skin,base,bar,aid,dc){
   if(NET.players[pid]){if(aid)NET.players[pid].aid=aid;return NET.players[pid]}
@@ -2081,10 +2127,10 @@ function cleanupNet(){try{NET.peer&&NET.peer.destroy()}catch(e){}NET.peer=null;N
 function netTick(dt,now){
   if(NET.pend&&now-NET.pend.t>2500)NET.pend=null;
   NET.stT+=dt;if(NET.stT<.04)return;NET.stT=0;
-  const pp=player.position,o=[+pp.x.toFixed(2),+pp.y.toFixed(2),+pp.z.toFixed(2),+heading.toFixed(3),+speed.toFixed(2),DNL.on?'dance':mode,+vy.toFixed(1),+flipA.toFixed(2),held?held.userData.lvl:-1,stunT>0?1:0,slamCd>0?Math.ceil(slamCd*10):0];
+  const pp=player.position,o=[+pp.x.toFixed(2),+pp.y.toFixed(2),+pp.z.toFixed(2),+heading.toFixed(3),+speed.toFixed(2),DNL.on?'dance':mode,+vy.toFixed(1),+flipA.toFixed(2),held?held.userData.lvl:-1,stunT>0?1:0,slamCd>0?Math.ceil(slamCd*10):0,DNL.on?+DNL.t.toFixed(2):0];
   if(NET.host){
     const l=[[NET.pid].concat(o)];
-    for(const id in NET.players){const t=NET.players[id].tgt;if(t)l.push([+id,t.x,t.y,t.z,t.h,t.sp,t.m,t.vy,t.fa,t.hl,t.st|0,t.sc|0])}
+    for(const id in NET.players){const t=NET.players[id].tgt;if(t)l.push([+id,t.x,t.y,t.z,t.h,t.sp,t.m,t.vy,t.fa,t.hl,t.st|0,t.sc|0,t.dt||0])}
     const msg={t:'S',l};for(const id in NET.conns){const u=NET.uc[id],c=(u&&u.open)?u:NET.conns[id];if(c&&c.open)c.send(msg)}
   }else{const c=(NET.ucon&&NET.ucon.open)?NET.ucon:NET.hostConn;if(c&&c.open)c.send({t:'st',a:o})}
 }
@@ -2817,6 +2863,7 @@ bindBtn('mbAct',()=>{keys.e=true;act()},()=>{keys.e=false;cancelSteal()});
 bindBtn('mbSwing',()=>swingBat());
 bindBtn('mbDrop',()=>dropQ());
 bindBtn('mbDance',()=>{if(!running)return;if(DNL.on)stopDance();else startDance()});
+bindBtn('mbSync',()=>syncDance());
 bindBtn('mbLift',()=>liftSlot());
 bindBtn('mbDel',()=>delSlot());
 let mobSt='';
@@ -2826,11 +2873,12 @@ function mobTick(){
   if(document.body.classList.contains('ui')!==ui)document.body.classList.toggle('ui',ui);
   if(!show&&(joy.on||CT.size)){joyEnd();CT.clear()}
   const own=show&&/Mover/.test(tipHtml)&&!held,
-        s=[show,show&&!!held,show&&!!myEq,own].join();
+        sy=show&&!held&&!!nearDancer(),
+        s=[show,show&&!!held,show&&!!myEq,own,sy].join();
   if(s===mobSt)return;mobSt=s;
   $('mob').style.display=show?'block':'none';
   const D=(id,v)=>$(id).style.display=v?'flex':'none';
-  D('mbJump',show);D('mbAct',show);D('mbDance',show);D('mbDrop',show&&!!held);D('mbSwing',show&&!!myEq);D('mbLift',own);D('mbDel',own)}
+  D('mbJump',show);D('mbAct',show);D('mbDance',show);D('mbDrop',show&&!!held);D('mbSwing',show&&!!myEq);D('mbLift',own);D('mbDel',own);D('mbSync',sy)}
 
 /* la cabecera (titulo, pestañas/filtros y la X) queda fija; solo el contenido se desliza */
 (function(){
