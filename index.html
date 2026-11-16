@@ -2188,8 +2188,12 @@ function hideState(){
   if(!running)return;
   try{stopFarDance();if(DNL.on)stopDance();speed=0;Object.keys(keys).forEach(k=>keys[k]=false);if(typeof joyEnd==='function')joyEnd();if(typeof CT!=='undefined')CT.clear();
     if(NET.on){NET.stT=1;netTick(0,performance.now())}}catch(e){}}
-let snapRem=false;
+let snapRem=false,mobLeft=false;
 document.addEventListener('visibilitychange',()=>{
+  if(MOB&&running&&ACC.tok){
+    if(document.hidden){hideState();mobLeft=true;try{leaveNow()}catch(e){}NET.on=false;return}   /* pantalla apagada: todos lo ven irse de inmediato */
+    if(mobLeft){mobLeft=false;location.reload();return}   /* al volver, entra otra vez limpio con su cuenta */
+  }
   if(document.hidden)hideState();
   else{const n=performance.now();last=n;fpsT=n;fpsN=0;frameNext=0;snapRem=true;farLast=0;try{waResume()}catch(e){}}   /* al volver: sin saltos, sin bajar la resolucion por los FPS de cuando estaba oculto */
 });
@@ -2228,15 +2232,16 @@ function kicked(msg){
 /* AFK: a los 4 min sin hacer nada sale un aviso con cuenta regresiva de 60 s; a los 5 min se desconecta */
 let AFK_WARN=240000,AFK_KICK=300000,afkLast=Date.now(),afkShown=false;
 function afkPing(){afkLast=Date.now();if(afkShown){afkShown=false;$('afk').style.display='none'}}
-['keydown','pointerdown','pointermove','touchstart','touchmove','wheel','mousemove'].forEach(ev=>addEventListener(ev,afkPing,{passive:true,capture:true}));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)afkPing()});
+['keydown','pointerdown','touchstart','touchmove','wheel','scroll'].forEach(ev=>addEventListener(ev,afkPing,{passive:true,capture:true}));   /* teclas, toques, clics y deslizar en interfaces; mover el mouse solo NO cuenta */
+let afkX=0,afkZ=0;
 setInterval(()=>{
-  if(!running||document.hidden){afkLast=Date.now();return}
+  if(!running){afkLast=Date.now();return}
+  {const q=player.position;if(Math.hypot(q.x-afkX,q.z-afkZ)>.4||speed>.5){afkX=q.x;afkZ=q.z;afkPing()}}   /* si el personaje se mueve, no esta AFK */
   const idle=Date.now()-afkLast;
   if(idle>=AFK_KICK){$('afk').style.display='none';afkShown=false;kicked('Te desconectamos por inactividad (AFK).');return}
   if(idle>=AFK_WARN){const s=Math.max(0,Math.ceil((AFK_KICK-idle)/1000));
     if(!afkShown){afkShown=true;$('afk').style.display='flex'}
-    $('afkT').textContent='Te desconectaremos por inactividad en '+s+' s. '+(MOB?'Toca la pantalla':'Mueve el mouse o presiona una tecla')+' para continuar.'}
+    $('afkT').textContent='Te desconectaremos por inactividad en '+s+' s. '+(MOB?'Toca la pantalla':'Presiona una tecla')+' para continuar.'}
 },500);
 const myAid=()=>ACC.st&&ACC.st.aid||null;
 function mkHeld(l){const g=makeBR(l);held=g;carryHeld(g);player.add(g)}
@@ -2402,6 +2407,7 @@ async function admLoad(){
     const mk=(txt,fn,dng)=>{const b=document.createElement('button');b.className='wbtn2'+(dng?' dng':'');b.textContent=txt;let armed=0;b.onclick=()=>{if(!armed){armed=1;b.textContent='¿Seguro?';setTimeout(()=>{armed=0;b.textContent=txt},3000);return}fn()};ta.appendChild(b)};
     if(u.online){const b=document.createElement('button');b.className='wbtn2';b.textContent=admBarOn(u)?'Barrera OFF':'Barrera ON';
       b.onclick=async()=>{const want=!admBarOn(u);b.disabled=true;if(await admCall('abar',{user:u.user,on:want})){ADM_BAR[u.user]={on:want,t:Date.now()};b.textContent=want?'Barrera OFF':'Barrera ON';toast('Barrera de '+u.user+(want?' activada':' desactivada'))}setTimeout(()=>b.disabled=false,600)};ta.appendChild(b)}
+    if(u.online&&!u.admin)mk('Expulsar',async()=>{if(await admCall('akick',{user:u.user})){toast(u.user+' fue expulsado (su progreso quedó guardado)');setTimeout(admLoad,800)}});
     mk('REINICIAR DATOS',async()=>{if(await admCall('aclear',{user:u.user})){toast('Datos reiniciados');admLoad()}});
     mk('Restablecer catálogo',async()=>{if(await admCall('acat',{user:u.user})){toast('Catálogo restablecido');admLoad()}});
     if(!u.admin)mk('Borrar cuenta',async()=>{if(await admCall('adel',{user:u.user})){toast('Cuenta borrada');admLoad()}},true);
@@ -2415,7 +2421,8 @@ async function admLoad(){
 }
 $('admRef').onclick=admLoad;$('admClose').onclick=closeAdm;
 (async function autoResume(){
-  let m=null,t=null;try{m=sessionStorage.getItem('papu_msg');sessionStorage.removeItem('papu_msg');t=sessionStorage.getItem('papu_tok')}catch(e){}
+  let m=null,t=null,pl=null;try{m=sessionStorage.getItem('papu_msg');sessionStorage.removeItem('papu_msg');t=sessionStorage.getItem('papu_tok');pl=sessionStorage.getItem('papu_plat')}catch(e){}
+  if(t&&pl==='m')setTimeout(()=>setPlatform(true),0);   /* si volvio a entrar tras apagar la pantalla, conserva su plataforma */
   if(m)lobbyMsg(m,true);
   if(!t)return;
   lobbyBusy(true);lobbyMsg('Reconectando…');
@@ -2917,6 +2924,7 @@ let MOB=false;
 const joy={on:false,x:0,y:0,m:0,id:null,cx:0,cy:0},CT=new Map(),JR=52;
 function mobTxt(s){return String(s).replace(/presiona E en otro lugar/i,'toca Acción en otro lugar').replace(/Presiona H otra vez/i,'Toca Quitar otra vez').replace(/Presiona 1/i,'Toca el bate').replace(/\(M para activar\)/,'').replace(/Mant[eé]n E\b/g,'Mantén Acción')}
 function setPlatform(m){
+  try{sessionStorage.setItem('papu_plat',m?'m':'p')}catch(e){}
   MOB=!!m;document.body.classList.toggle('mob',MOB);if(MOB)$('chatIn').placeholder='Toca aquí para escribir…';document.documentElement.classList.toggle('mob',MOB);$('plat').style.display='none';
   if(MOB){try{const d=document.documentElement,r=(d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d);if(r&&r.catch)r.catch(()=>{})}catch(e){}
     try{const o=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(o&&o.catch)o.catch(()=>{})}catch(e){}}
