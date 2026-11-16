@@ -119,6 +119,7 @@ async function userFromTok(tok) {
   const r = await loadRec(t.u);
   if (!r) throw new Err('Esta cuenta ya no existe.', 'auth');
   if (r.sid !== t.sid) throw new Err('Tu cuenta se abrió en otro lugar.', 'auth');
+  if (r.kk) { r.kk = 0; r.sid = crypto.randomBytes(9).toString('base64url'); r.kk = 0; await saveRec(r); throw new Err('Un administrador te expulsó de la partida.', 'auth'); }
   return r;
 }
 function adminFromTok(tok) {
@@ -166,7 +167,7 @@ const actions = {
     if (ADMIN_USER && ADMIN_PASS && safeEq(user.toLowerCase(), ADMIN_USER.toLowerCase())) {
       if (!safeEq(pass, ADMIN_PASS)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
       const r = await adminRec();
-      r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t;
+      r.sid = crypto.randomBytes(9).toString('base64url'); r.kk = 0; r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t;
       settleHeld(r); touchCat(r); await ensureAid(r);
       await db('SADD', 'users', ADMIN_USER.toLowerCase());
       await saveRec(r);
@@ -175,7 +176,7 @@ const actions = {
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
     if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
-    r.sid = crypto.randomBytes(9).toString('base64url'); r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
+    r.sid = crypto.randomBytes(9).toString('base64url'); r.kk = 0; r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
     return { tok: signTok({ u: r.user, sid: r.sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r), ...(await evInfo()) };
@@ -359,6 +360,13 @@ const actions = {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
     r.cmd = { id: crypto.randomBytes(5).toString('base64url'), on: !!b.on, ts: Date.now() }; await saveRec(r); return { ok: true };
+  },
+  /* expulsar: se guarda su progreso, se marca fuera de linea y en su siguiente peticion (<=5 s) se le cierra la sesion */
+  async akick(b) {
+    adminFromTok(b.tok);
+    const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
+    if (isAdminUser(r.user)) throw new Err('No puedes expulsar al administrador.');
+    accrue(r, Date.now()); r.off = 1; r.kk = 1; await saveRec(r); return { ok: true };
   },
   async aclear(b) {
     adminFromTok(b.tok);
