@@ -223,7 +223,10 @@ button:hover{background:var(--cy);color:#04060f}
 .objsw{background:linear-gradient(180deg,#9b7a52,#6b4a28)!important;padding:4px}
 .objsw.dnsw{background:#0b6f7a!important;padding:0;overflow:hidden}
 .objsw.dnsw img{width:100%;height:100%;object-fit:cover;filter:none;border-radius:9px}
-.excl{font-weight:900;font-size:.72rem;letter-spacing:.16em;margin:-2px 0 3px;background:linear-gradient(90deg,#ff3b6b,#ffb02e,#fff35a,#5cff7a,#33d6ff,#8a6bff,#ff3bd8,#ff3b6b);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:exclRb 2.4s linear infinite;filter:drop-shadow(0 0 3px rgba(255,255,255,.55))}
+.afk0{}#afk{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;text-align:center}
+.afkb{background:#1a0f06;border:3px solid #ffd84a;border-radius:14px;padding:16px 22px;max-width:86vw;color:#fff;font-size:1rem;box-shadow:0 0 24px rgba(0,0,0,.7)}
+.afkb b{display:block;font-size:1.3rem;color:#ffd84a;margin-bottom:6px}
+.excl{font-weight:900;font-size:1rem;letter-spacing:.16em;margin:-2px 0 3px;background:linear-gradient(90deg,#ff3b6b,#ffb02e,#fff35a,#5cff7a,#33d6ff,#8a6bff,#ff3bd8,#ff3b6b);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:exclRb 2.4s linear infinite;filter:drop-shadow(0 0 3px rgba(255,255,255,.55))}
 @keyframes exclRb{to{background-position:240% 0}}
 .objsw img{width:92%;height:92%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 .odesc{font-size:.72rem;line-height:1.3;text-align:center;color:#ffeccb;text-shadow:var(--ol);font-weight:700}
@@ -425,6 +428,7 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
   <div class="opt"><button id="optClean" class="big">Limpiar base</button><p>Quita todos los Papus de tu base. Tu dinero NO se reinicia.</p></div>
   <div class="opt"><button id="optName" class="big">Cambiar nombre</button><p>Cambia el nombre que aparece sobre tu personaje. Puedes hacerlo cuando quieras.</p></div>
 </div></div>
+<div id="afk"><div class="afkb"><b>¿Sigues ahí?</b><span id="afkT"></span></div></div>
 <div id="conf"><div class="sbox sm">
   <div class="stitle">¿Estás seguro?</div>
   <p id="confDesc"></p>
@@ -1465,7 +1469,8 @@ function dlinkTick(now){
   const q=NET.players[DHOST];
   if(!q||(q.av&&q.av.mode!=='dance')){stopDance()}}
 function syncDance(){
-  if(!running||shopOpen||setOpen||stunT>0)return;
+  if(!running||!hasDance()){if(running)toast('Necesitas comprar el baile Scenario para bailar o sincronizar');return}
+  if(shopOpen||setOpen||stunT>0)return;
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground'&&mode!=='land'){return}
   const p=nearDancer();if(!p){toast('No hay nadie bailando cerca');return}
@@ -1473,7 +1478,7 @@ function syncDance(){
   let off=(performance.now()-p.av.dS)/1000;
   const du=(SFX.buf.dance&&SFX.buf.dance.duration)||30;if(off>=du-1){toast('Ese baile ya casi termina');return}
   off=Math.max(0,off);
-  if(DNL.on){DNL.t=off;startOwnAudio(off)}else startDance(off,true);   /* sincronizar vale aunque no hayas comprado el baile */
+  if(DNL.on){DNL.t=off;startOwnAudio(off)}else startDance(off);
   if(DNL.on){DHOST=p.pid;dlinkT=performance.now();emit({t:'dl',to:p.pid})}   /* tu eres invitado del baile de ese jugador */
   if(DNL.on)toast('¡Sincronizado con '+(p.name||'tu amigo')+'!')}
 /* el audio del baile ajeno sigue corriendo (en silencio si no debe oirse) para no perder la sincronia: el tiempo sale del inicio de ese baile */
@@ -1588,8 +1593,8 @@ function updBgm(dt,now){
   if(want===0&&bgmV<.004&&!bgm.paused)bgm.pause();
   try{const bv=Math.max(0,Math.min(1,bgmV));if(WA.bgmG)WA.bgmG.gain.value=bv;else bgm.volume=bv}catch(e){}
 }
-function startDance(off,viaSync){
-  if(!running||(!hasDance()&&!viaSync)||shopOpen||setOpen||stunT>0||DN.on)return;
+function startDance(off){
+  if(!running||!hasDance()||shopOpen||setOpen||stunT>0||DN.on)return;
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground')return;
   off=off>0?+off:0;DN.on=true;DN.t=off;DN.q=null;DN.w=0;DHOST=null;DGUESTS.clear();
@@ -2168,7 +2173,9 @@ setInterval(()=>{
    if(ch)updRoom()}
   if(NET.host){
     bcast({t:'ping'});
-    for(const id in NET.players){const p=NET.players[id];if(p.seen==null)p.seen=now;if(now-p.seen>9000){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
+    for(const id in NET.players){const p=NET.players[id];if(p.seen==null)p.seen=now;const c0=NET.conns[id],pc=c0&&c0.peerConnection,ic=pc&&pc.iceConnectionState;
+      if(ic==='disconnected'){if(!p.dcT)p.dcT=now}else p.dcT=0;
+      if(now-p.seen>9000||ic==='failed'||ic==='closed'||(p.dcT&&now-p.dcT>3500)||(c0&&c0.open===false&&now-p.seen>3000)){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
   }else{
     if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'ping',ts:performance.now()});
     if(NET.hseen==null)NET.hseen=now;
@@ -2218,6 +2225,19 @@ function kicked(msg){
   try{sessionStorage.setItem('papu_msg',msg||'Sesión cerrada')}catch(e){}
   toast(msg||'Sesión cerrada');setTimeout(()=>location.reload(),1500);
 }
+/* AFK: a los 4 min sin hacer nada sale un aviso con cuenta regresiva de 60 s; a los 5 min se desconecta */
+let AFK_WARN=240000,AFK_KICK=300000,afkLast=Date.now(),afkShown=false;
+function afkPing(){afkLast=Date.now();if(afkShown){afkShown=false;$('afk').style.display='none'}}
+['keydown','pointerdown','pointermove','touchstart','touchmove','wheel','mousemove'].forEach(ev=>addEventListener(ev,afkPing,{passive:true,capture:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)afkPing()});
+setInterval(()=>{
+  if(!running||document.hidden){afkLast=Date.now();return}
+  const idle=Date.now()-afkLast;
+  if(idle>=AFK_KICK){$('afk').style.display='none';afkShown=false;kicked('Te desconectamos por inactividad (AFK).');return}
+  if(idle>=AFK_WARN){const s=Math.max(0,Math.ceil((AFK_KICK-idle)/1000));
+    if(!afkShown){afkShown=true;$('afk').style.display='flex'}
+    $('afkT').textContent='Te desconectaremos por inactividad en '+s+' s. '+(MOB?'Toca la pantalla':'Mueve el mouse o presiona una tecla')+' para continuar.'}
+},500);
 const myAid=()=>ACC.st&&ACC.st.aid||null;
 function mkHeld(l){const g=makeBR(l);held=g;carryHeld(g);player.add(g)}
 function applyServerState(st){
@@ -2790,13 +2810,13 @@ function swingBat(){
 /* se prueba en cada cuadro durante todo el giro (no en un solo instante): corriendo, persiguiendo o cruzando a alguien tambien conecta */
 function batHit(){
   if(!NET.on)return false;const p=player.position,fx=Math.sin(heading),fz=Math.cos(heading);
-  let best=null,bestD=1e9;const bd=BAT_RANGE+1.6;
+  let best=null,bestD=1e9;const bd=BAT_RANGE-1.2;
   for(const id in NET.players){const q=NET.players[id],a=q.av;if(!a||!a.g.visible)continue;
     const dx=a.g.position.x-p.x,dz=a.g.position.z-p.z,d=Math.hypot(dx,dz);
-    const front=d<1e-3||(dx*fx+dz*fz)/d>=-.25;
+    const front=d<1e-3||(dx*fx+dz*fz)/d>=.1;
     let ok=front&&d<=bd;   /* delante de mi ahora */
     if(!ok&&batSw&&batSw.x0!==undefined){const ex=a.g.position.x-batSw.x0,ez=a.g.position.z-batSw.z0,e=Math.hypot(ex,ez);   /* o estaba delante cuando empece a golpear (lo pase corriendo) */
-      if(e<=BAT_RANGE+1.6&&(e<1e-3||(ex*batSw.fx+ez*batSw.fz)/e>=.2))ok=true}
+      if(e<=BAT_RANGE-1.8&&(e<1e-3||(ex*batSw.fx+ez*batSw.fz)/e>=.5))ok=true}
     if(!ok||Math.abs(a.g.position.y-p.y)>4)continue;if(!best||d<bestD){bestD=d;best=q}}
   if(!best)return false;onHit(best.pid,NET.pid);emit({t:'hit',v:best.pid});return true}
 /* golpes: 3 en 15 s mandan al rival a su base; cada cliente lleva la misma cuenta */
@@ -2850,7 +2870,7 @@ function renderObjs(){
     if(d.cat){const ct=document.createElement('div');ct.className='excl';ct.textContent=d.cat;card.appendChild(ct)}
     const ds=document.createElement('div');ds.className='odesc';ds.textContent=d.d;card.appendChild(ds);
     const pr=document.createElement('div');pr.className='dp';pr.textContent=own?'Comprado':fmtM(d.pr);card.appendChild(pr);
-    const bt=document.createElement('button');bt.textContent=own?(d.cat?'Tuyo ✓':'En tu inventario ✓'):'Comprar';if(own){bt.disabled=true}
+    const bt=document.createElement('button');bt.textContent=own?'Tuyo ✓':'Comprar';if(own){bt.disabled=true}
     bt.onclick=e=>{e.stopPropagation();bt.blur();if(!own)askBuyObj(id)};card.appendChild(bt);
     g.appendChild(card)})}
 function askBuyObj(id){const d=OBJ[id];pendingAct={buyO:id};
@@ -2956,7 +2976,7 @@ function mobTick(){
   if(s===mobSt)return;mobSt=s;
   $('mob').style.display=show?'block':'none';
   const D=(id,v)=>$(id).style.display=v?'flex':'none';
-  D('mbJump',show);D('mbAct',show);D('mbDance',show&&(hasDance()||DNL.on));D('mbDrop',show&&!!held);D('mbSwing',show&&!!myEq);D('mbLift',own);D('mbDel',own);D('mbSync',sy)}
+  D('mbJump',show);D('mbAct',show);D('mbDance',show&&hasDance());D('mbDrop',show&&!!held);D('mbSwing',show&&!!myEq);D('mbLift',own);D('mbDel',own);D('mbSync',sy&&hasDance())}
 
 /* la cabecera (titulo, pestañas/filtros y la X) queda fija; solo el contenido se desliza */
 (function(){
