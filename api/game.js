@@ -24,7 +24,7 @@ async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +
 const DPRICE = [0, 5000, 20000, 80000, 300000, 1200000, 5000000, 800000000, 20000000, 75000000, 250000000, 2500000000];
 /* pisos de la base: se empieza con 1 (10 espacios) y se pueden comprar hasta 5; precio del piso numero n */
 const FPRICE = [0, 0, 5000000, 60000000, 600000000, 6000000000], MAXF = 5, SLOTF = 10;
-const OPRICE = { bat: 30000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
+const OPRICE = { bat: 30000, dance: 200000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
