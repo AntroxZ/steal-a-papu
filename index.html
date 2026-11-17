@@ -362,6 +362,29 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
 #tip.sm b{font-size:.7rem}
 #mbSync{width:50px!important;height:50px!important}
 #mbSync span{font-size:1.15rem}#mbSync b{font-size:.5rem}
+
+/* Rebirth: ventana con los niveles */
+#reb{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(25,14,5,.55);backdrop-filter:blur(3px);padding:12px}
+.rbbox{width:min(900px,96vw);max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
+.rbbox .sbody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-right:4px}
+#rebList{display:flex;flex-direction:column;gap:10px}
+.sbox #rebX{width:42px;height:42px;font-size:1.6rem;border-radius:50%;padding:0;margin:0;color:var(--tx);background:linear-gradient(180deg,#c2603f,#a4472b 55%,#8a361e);border:3px solid #4a2a12}
+.rbrow{display:grid;grid-template-columns:110px 1fr 160px;gap:6px 14px;align-items:center;padding:10px 14px;border:3px solid #4a2a12;border-radius:16px;background:rgba(60,30,10,.4);box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}
+.rbn{font-family:var(--wf);font-size:1.25rem;font-weight:800;color:var(--tx);text-shadow:var(--ol);text-align:center;padding:14px 4px;border-radius:12px;background:linear-gradient(180deg,#e0803a,#c0402a);border:3px solid #4a2a12}
+.rbl{font-family:var(--wf);font-size:.72rem;font-weight:700;color:#ffeccb;opacity:.85}
+.rbm{font-family:var(--wf);font-size:1.15rem;font-weight:800;color:var(--tx);text-shadow:var(--ol);margin-bottom:6px}
+.rbps{display:flex;gap:8px;flex-wrap:wrap}
+.rbp{position:relative;width:58px;height:58px;border:3px solid #4a2a12;border-radius:12px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center}
+.rbp.empty{border-style:dashed;border-color:rgba(255,236,203,.35)}
+.rbp img{max-width:100%;max-height:100%}
+.rbp b{position:absolute;right:2px;bottom:0;font-size:.8rem;color:#fff;text-shadow:var(--ol)}
+.rbrw{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.rbx2{font-family:var(--wf);font-size:1.5rem;font-weight:800;color:#ffd23a;text-shadow:var(--ol)}
+.rbl2{font-family:var(--wf);font-size:.72rem;color:#ffeccb;opacity:.85}
+.sbox .rbclaim{margin-top:6px;padding:7px 18px;font-size:.9rem;opacity:.55;cursor:default}
+.rbwarn{grid-column:1/-1;font-family:var(--wf);font-size:.7rem;color:#ffc9a8;opacity:.9;border-top:2px solid rgba(74,42,18,.6);padding-top:6px}
+@media(max-width:620px){.rbrow{grid-template-columns:1fr;text-align:center}.rbps{justify-content:center}.rbn{padding:8px}}
+body.mob #reb{padding:6px}
 </style>
 </head>
 <body>
@@ -396,6 +419,12 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
   <div class="finfo" id="fInfo"></div>
   <div class="sbody"><div class="dgrid" id="dGrid"></div></div>
   <div class="sfoot">Compra una vez y úsalo cuando quieras: toca un artículo comprado para equiparlo o quitarlo · <kbd>E</kbd> o <kbd>Esc</kbd> para cerrar</div>
+</div></div>
+<div id="reb"><div class="sbox rbbox">
+  <div class="shead"><div class="stitle">REBIRTH</div><button id="rebX" aria-label="Cerrar">&times;</button></div>
+  <div class="stabs"><span class="on">Niveles</span></div>
+  <div class="sbody"><div id="rebList"></div></div>
+  <div class="sfoot"><kbd>E</kbd> o <kbd>Esc</kbd> para cerrar</div>
 </div></div>
 <button id="gear" aria-label="Ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>Ajustes</button>
 <button id="skinBtn" aria-label="Skins"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Skins</button>
@@ -925,7 +954,7 @@ addEventListener('wheel',e=>{
   else if(dy<0){camT*=Math.exp(dy*.0016);if(camT<1.3)camT=.4}
 },{passive:false});
 /* tienda junto al extremo de la cinta */
-const SHOP_P={x:90.2,z:BELT_Z+4.2},shopG=new THREE.Group();shopG.position.set(94,0,BELT_Z+4.2);shopG.rotation.y=-Math.PI/2;scene.add(shopG);
+const SHOP_X=100,SHOP_DZ=8,SHOP_P={x:SHOP_X-3.8,z:BELT_Z+SHOP_DZ},shopG=new THREE.Group();shopG.position.set(SHOP_X,0,BELT_Z+SHOP_DZ);shopG.rotation.y=-Math.PI/2;scene.add(shopG);
 {
  const mk=(draw,w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t};
  const woodT=mk(x=>{x.fillStyle='#b27a45';x.fillRect(0,0,128,128);for(let i=0;i<22;i++){x.strokeStyle=i%3?'rgba(110,65,25,.35)':'rgba(70,38,12,.5)';x.lineWidth=1+Math.random()*1.5;const y=Math.random()*128;x.beginPath();x.moveTo(0,y);x.lineTo(128,y+Math.random()*4-2);x.stroke()}x.strokeStyle='rgba(60,30,10,.6)';x.lineWidth=2;for(let i=0;i<=128;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,128);x.stroke()}},128,128);
@@ -944,9 +973,9 @@ const SHOP_P={x:90.2,z:BELT_Z+4.2},shopG=new THREE.Group();shopG.position.set(94
  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,fog:false}));sp.scale.set(3.4,1.28,1);sp.position.set(0,6.2,0);shopG.add(sp);
  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{x.clearRect(0,0,256,96);x.fillStyle='#38b24a';x.beginPath();x.roundRect?x.roundRect(8,8,240,80,18):x.rect(8,8,240,80);x.fill();x.lineWidth=5;x.strokeStyle='#fff';x.stroke();x.fillStyle='#fff';x.font='800 42px Orbitron,sans-serif';x.fillText('Tienda',128,50);sp.material.map.needsUpdate=true});
 }
-SOL.push([91.5,BELT_Z+4.2-3.7,97.4,BELT_Z+4.2+3.7]);
+SOL.push([SHOP_X-2.5,BELT_Z+SHOP_DZ-3.7,SHOP_X+3.4,BELT_Z+SHOP_DZ+3.7]);
 /* puesto de REBIRTH: junto a la tienda, a su lado; el par queda centrado con la cinta. Solo diseno por ahora */
-const REB_P={x:90.2,z:BELT_Z-4.2},rebG=new THREE.Group();rebG.position.set(94,0,BELT_Z-4.2);rebG.rotation.y=-Math.PI/2;scene.add(rebG);
+const REB_P={x:SHOP_X-3.8,z:BELT_Z-SHOP_DZ},rebG=new THREE.Group();rebG.position.set(SHOP_X,0,BELT_Z-SHOP_DZ);rebG.rotation.y=-Math.PI/2;scene.add(rebG);
 {
  const mk=(draw,w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t};
  const woodT=mk(x=>{x.fillStyle='#a8683a';x.fillRect(0,0,128,128);for(let i=0;i<22;i++){x.strokeStyle=i%3?'rgba(100,50,20,.35)':'rgba(70,30,10,.5)';x.lineWidth=1+Math.random()*1.5;const y=Math.random()*128;x.beginPath();x.moveTo(0,y);x.lineTo(128,y+Math.random()*4-2);x.stroke()}x.strokeStyle='rgba(60,25,8,.6)';x.lineWidth=2;for(let i=0;i<=128;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,128);x.stroke()}},128,128);
@@ -968,9 +997,21 @@ const REB_P={x:90.2,z:BELT_Z-4.2},rebG=new THREE.Group();rebG.position.set(94,0,
  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,fog:false}));sp.scale.set(3.4,1.28,1);sp.position.set(0,6.2,0);rebG.add(sp);
  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{drawSign();sp.material.map.needsUpdate=true});
 }
-SOL.push([91.5,BELT_Z-4.2-3.7,97.4,BELT_Z-4.2+3.7]);
+SOL.push([SHOP_X-2.5,BELT_Z-SHOP_DZ-3.7,SHOP_X+3.4,BELT_Z-SHOP_DZ+3.7]);
+/* ===== Rebirth: por ahora solo la interfaz (los datos de cada nivel se llenan despues) ===== */
+const REB_LV=Array.from({length:10},(_,i)=>({n:i+1,money:null,papus:[],mult:null}));
+function renderReb(){
+  $('rebList').innerHTML=REB_LV.map(L=>{
+    const slots=[0,1,2].map(k=>{const q=L.papus[k];return q?'<div class="rbp"><img alt="" src="'+q.img+'"><b>'+(q.n>1?'x'+q.n:'')+'</b></div>':'<div class="rbp empty"></div>'}).join('');
+    return '<div class="rbrow"><div class="rbn">Nivel '+L.n+'</div>'
+      +'<div class="rbmid"><div class="rbl">Dinero necesario</div><div class="rbm">'+(L.money==null?'$ ———':fmtM(L.money))+'</div>'
+      +'<div class="rbl">Papus necesarios en tu base</div><div class="rbps">'+slots+'</div></div>'
+      +'<div class="rbrw"><div class="rbl">Recompensa</div><div class="rbx2">'+(L.mult==null?'× ——':'×'+L.mult)+'</div><div class="rbl2">de dinero</div>'
+      +'<button class="rbclaim" disabled>Reclamar</button></div>'
+      +'<div class="rbwarn">Al reclamar pierdes todo (los Papus de tu base y tu dinero), excepto los objetos exclusivos.</div></div>'}).join('')}
+function openReb(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('reb').style.display='flex';renderReb()}
 function openShop(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('shop').style.display='flex';renderShop()}
-function closeShop(){shopOpen=false;$('shop').style.display='none';$('conf').style.display='none';pendingAct=null}
+function closeShop(){shopOpen=false;$('shop').style.display='none';$('reb').style.display='none';$('conf').style.display='none';pendingAct=null}
 /* ===== tienda: Decoración ===== */
 const fmtM=n=>'$'+Math.round(n).toLocaleString('es-MX');
 const myDeco=()=>{const d=ACC.st&&ACC.st.deco;return d?{o:d.o||[],c:d.c|0,f:d.f?1:0,n:d.n>=1?d.n|0:1}:{o:[],c:0,f:0,n:1}};
@@ -1055,7 +1096,8 @@ function updPrompt(){
   const p=player.position;tipPos=null;tipHtml='';
   if(running&&!shopOpen&&!setOpen&&stunT<=0&&mode!=='air'&&mode!=='spin'&&mode!=='slam'){
     const key='<span class="k">E</span>';
-    if(Math.hypot(p.x-SHOP_P.x,p.z-SHOP_P.z)<4.5){tipPos=[94,2.6,BELT_Z+4.2];tipHtml=key+'<b>Abrir tienda</b>'}
+    if(Math.hypot(p.x-SHOP_P.x,p.z-SHOP_P.z)<4.5){tipPos=[SHOP_X,2.6,BELT_Z+SHOP_DZ];tipHtml=key+'<b>Abrir tienda</b>'}
+    else if(Math.hypot(p.x-REB_P.x,p.z-REB_P.z)<4.5){tipPos=[SHOP_X,2.6,BELT_Z-SHOP_DZ];tipHtml=key+'<b>Abrir Rebirth</b>'}
     else if(Math.hypot(p.x-myBase.btn.x,p.z-myBase.btn.z)<2.4&&Math.abs(p.y-BH)<4){tipPos=[myBase.btn.x,BH+.9,myBase.btn.z];tipHtml=key+'<b>'+(myBase.barrierOn?'Desactivar':'Activar')+' barreras de seguridad</b>'}
     else if(!held){
       const nr=findNear();
@@ -1110,13 +1152,14 @@ $('confYes').onclick=()=>{
   toast(k==='all'?'Cuenta reiniciada desde cero: sin Papus, pisos, decoración ni objetos, y dinero en $50':'Base limpia: tu dinero sigue igual');
 };
 /* teletransporte rapido: Tienda / mi Base */
-function tpTo(x,z,h){
+function tpTo(x,z,h,face){
   if(!running||shopOpen||setOpen||stunT>0||(mode!=='ground'&&mode!=='land'))return;
   if(held){toast('Suelta tu Papu para teletransportarte');return}
   if(DNL.on)stopDance();cancelSteal();
-  player.position.x=x;player.position.z=z;gY=groundY(x,z,2);camG=gY;yaw=h;heading=h;pitch=.28;camT=camD=17.5;speed=0;carryT=0;py=0;vy=0;
+  player.position.x=x;player.position.z=z;gY=groundY(x,z,2);camG=gY;yaw=h;heading=face?h+Math.PI:h;pitch=.28;camT=camD=17.5;speed=0;carryT=0;py=0;vy=0;
 }
-$('tpShop').onclick=()=>{$('tpShop').blur();tpTo(SHOP_P.x-1,BELT_Z,-Math.PI/2)};   /* de frente y en medio de las dos tiendas */
+$('rebX').onclick=closeShop;
+$('tpShop').onclick=()=>{$('tpShop').blur();tpTo(SHOP_X-8,BELT_Z,-Math.PI/2,true)};   /* en medio de las dos tiendas y mirando hacia ellas */
 $('tpBase').onclick=()=>{$('tpBase').blur();const sp=myBase.W(0,BZ0-3);tpTo(sp[0],sp[1],myBase.dir>0?0:Math.PI)};
 /* catalogo (bitacora de Papus conseguidos, guardada en el servidor) */
 const CAT_ORDER=[5,6,13,14,11,12,7,8,9,10,15,16];
@@ -1809,6 +1852,7 @@ function act(){
   if(mode!=='ground'&&mode!=='land')return;
   {const q=player.position;
    if(Math.hypot(q.x-SHOP_P.x,q.z-SHOP_P.z)<4.5){openShop();return}
+   if(Math.hypot(q.x-REB_P.x,q.z-REB_P.z)<4.5){openReb();return}
    if(Math.hypot(q.x-myBase.btn.x,q.z-myBase.btn.z)<2.4&&Math.abs(q.y-BH)<4){toggleBarrier();return}}
   const p=player.position;
   if(!held){
@@ -2577,7 +2621,7 @@ async function pickGround(o){
 function stealTarget(){
   const p=player.position;let best=null,bd=4.5;
   BASES.forEach(b=>{
-    if(b===myBase||b.owner===null||b.barrierOn)return;
+    if(b===myBase||b.owner===null||(b.barrierOn&&!inClosed(b,p.x,p.z)))return;   /* si te encerraron dentro de su base, igual puedes robar */
     {const ow=NET.players[b.owner];if(ow&&ow.gone)return}   /* dueño sin señal: su base no se puede robar (se calcula en vivo, no queda pegado) */
     b.slots.forEach((s,i)=>{if(!s.item||!lvOk(s,p))return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;best={b,i,s}}});
   });
@@ -2594,7 +2638,7 @@ function cancelStealOf(b){if(STL&&STL.b===b)cancelSteal()}
 function updSteal(dt){
   if(!STL)return;
   const s=STL.b.slots[STL.i],p=player.position;
-  if(held||stunT>0||!keys.e||!s||!s.item||STL.b.barrierOn||STL.b.owner===null||(NET.players[STL.b.owner]&&NET.players[STL.b.owner].gone)||Math.hypot(s.x-p.x,s.z-p.z)>5.6||!lvOk(s,p)||mode==='air'){cancelSteal();return}
+  if(held||stunT>0||!keys.e||!s||!s.item||(STL.b.barrierOn&&!inClosed(STL.b,p.x,p.z))||STL.b.owner===null||(NET.players[STL.b.owner]&&NET.players[STL.b.owner].gone)||Math.hypot(s.x-p.x,s.z-p.z)>5.6||!lvOk(s,p)||mode==='air'){cancelSteal();return}
   STL.t+=dt;$('stlFill').style.width=Math.min(100,STL.t/STEAL_T*100)+'%';
   if(STL.t>=STEAL_T){const t=STL;cancelSteal();finishSteal(t)}
 }
