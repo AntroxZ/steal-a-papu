@@ -326,7 +326,8 @@ const actions = {
     await saveRec(r); return { st: view(r) };
   },
   async clear(b) { const r = await userFromTok(b.tok); accrue(r, Date.now()); r.slots = emptySlots(); await saveRec(r); return { st: view(r) }; },
-  async reset(b) { const r = await userFromTok(b.tok); r.fl = 1; r.inv = []; r.dco = { o: [], c: 0, f: 0 }; r.slots = emptySlots(); r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { st: view(r) }; },
+  /* "Reiniciar todo" ya no existe para los jugadores: solo el admin reinicia cuentas (aclear) */
+  async reset(b) { await userFromTok(b.tok); throw new Err('Solo el administrador puede reiniciar cuentas.', 'bad'); },
   async nick(b) {
     const r = await userFromTok(b.tok), n = cleanNick(b.nick);
     if (!n) throw new Err('Escribe un nickname.');
