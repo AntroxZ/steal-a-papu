@@ -191,7 +191,7 @@ const actions = {
   },
   /* la pestaña se cerro o el navegador paso al fondo: se guarda el progreso y se marca fuera de linea al instante (una sola peticion, solo al salir) */
   async away(b) {
-    const r = await userFromTok(b.tok); accrue(r, Date.now()); r.off = 1; await saveRec(r); return { ok: true };
+    const r = await userFromTok(b.tok); accrue(r, Date.now()); r.off = 1; r.mob = b.mob ? 1 : 0; await saveRec(r); return { ok: true };
   },
   async sync(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r);   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
@@ -247,6 +247,8 @@ const actions = {
     const vu = await db('GET', 'a:' + aid);
     const v = vu ? await loadRec(vu) : null;
     if (!v || v.user === r.user) { await saveRec(r); return { ok: false, st: view(r) }; }
+    /* celular con la pantalla apagada: su base ya no esta en la partida, no se le puede robar */
+    if (v.off && v.mob) { await saveRec(r); throw Object.assign(new Err('Ese jugador no está disponible.', 'bad'), { st: view(r) }); }
     accrue(v, Date.now());
     const lvl = v.slots[slot];
     if (lvl == null || lvl < 0) { await saveRec(v); await saveRec(r); return { ok: false, st: view(r) }; }
