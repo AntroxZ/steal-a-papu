@@ -213,7 +213,10 @@ button:hover{background:var(--cy);color:#04060f}
 .vol input[type=range]::-moz-range-progress{height:8px;border-radius:999px;background:#ffd54a}
 .vol input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c4,#f2c230 60%,#b9871a);border:3px solid #4a2a12;box-shadow:0 3px 0 #35200e}
 .vol input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c4,#f2c230 60%,#b9871a);border:3px solid #4a2a12;box-shadow:0 3px 0 #35200e}
-.dcard.poor::after{content:"Dinero\A Insuficiente";white-space:pre;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-24deg);font:900 clamp(.8rem,2.3vw,1.2rem)/1.05 Impact,"Arial Black",Arial,sans-serif;text-transform:uppercase;text-align:center;letter-spacing:.05em;color:rgba(225,28,28,.93);border:4px solid rgba(225,28,28,.93);border-radius:8px;padding:5px 10px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 2px rgba(225,28,28,.35),0 0 0 1px rgba(80,0,0,.25);text-shadow:0 0 1px rgba(60,0,0,.5);pointer-events:none;z-index:3}
+.nomoney{white-space:pre;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-24deg);font:900 clamp(.8rem,2.3vw,1.2rem)/1.05 Impact,"Arial Black",Arial,sans-serif;text-transform:uppercase;text-align:center;letter-spacing:.05em;color:rgba(225,28,28,.93);border:4px solid rgba(225,28,28,.93);border-radius:8px;padding:5px 10px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 2px rgba(225,28,28,.35),0 0 0 1px rgba(80,0,0,.25);text-shadow:0 0 1px rgba(60,0,0,.5);pointer-events:none;z-index:3;animation:nmIn 1s ease-out forwards}
+.shk{animation:shk .42s ease-in-out}
+@keyframes shk{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px)}35%{transform:translateX(7px)}55%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes nmIn{0%{opacity:0;transform:translate(-50%,-50%) rotate(-24deg) scale(1.5)}12%{opacity:1;transform:translate(-50%,-50%) rotate(-24deg) scale(1)}80%{opacity:1}100%{opacity:0}}
 #inv{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);display:none;gap:8px;z-index:6}
 #inv .slot{position:relative;width:64px;height:64px;border-radius:12px;background:rgba(20,12,5,.38);border:3px solid rgba(255,225,170,.55);cursor:pointer;box-shadow:inset 0 0 8px rgba(0,0,0,.35);transition:border-color .12s,box-shadow .12s,background .12s;user-select:none}
 #inv .slot:hover{background:rgba(20,12,5,.5)}
@@ -321,7 +324,7 @@ body.mob #tpRow{top:calc(env(safe-area-inset-top,0px) + 42px);gap:5px}
 body.mob #tpRow button{padding:4px 11px;font-size:.62rem;border-width:2px}
 body.mob.det #tpRow{top:calc(env(safe-area-inset-top,0px) + 82px)}
 body.mob #toast{top:calc(env(safe-area-inset-top,0px) + 58px);left:54px;right:96px;font-size:.75rem}
-body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 84px)}
+body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 70px);padding:2px 12px;border-width:2px;font-size:.62rem;box-shadow:0 2px 0 #35200e,0 0 12px rgba(255,200,40,.8)}
 body.mob .sbox{padding:10px 12px;border-width:4px;border-radius:20px}
 body.mob #shop,body.mob #set,body.mob #conf,body.mob #nm,body.mob #cat,body.mob #skins{padding:6px}
 body.mob .sbox,body.mob #adm .admbox,body.mob #chatL,body.mob #panel,body.mob .admwrap{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
@@ -338,7 +341,7 @@ body.mob .dsw{max-width:74px;font-size:1.8rem}
 body.mob .dn{min-height:2.2em;font-size:.7rem}body.mob .dp{font-size:.72rem}body.mob .dcard button{padding:5px 3px;font-size:.7rem}
 body.mob .dgrid{gap:7px}
 @media(orientation:landscape){body.mob .dgrid{grid-template-columns:repeat(5,1fr)}body.mob .sgrid{grid-template-columns:repeat(5,1fr)}body.mob .skgrid{grid-template-columns:repeat(5,1fr)}body.mob .catgrid{grid-template-columns:repeat(4,1fr)}}
-body.mob .dcard.poor::after{font-size:.62rem}
+body.mob .nomoney{font-size:.62rem}
 
 .sbox.fx{overflow:hidden;display:flex;flex-direction:column}
 .sbox.fx>.sfix{flex:none;display:flex;flex-direction:column;gap:inherit;padding-bottom:8px;border-bottom:3px solid rgba(74,42,18,.55);margin-bottom:6px}
@@ -974,8 +977,11 @@ function renderFloors(){
     const pr=document.createElement('div');pr.className='dp';pr.textContent=own?'Comprado':fmtM(FPR[k]);card.appendChild(pr);
     const bt=document.createElement('button');bt.textContent=own?'Tuyo ✓':next?'Comprar':'Compra el piso '+(k-1)+' primero';
     if(own||!next){bt.disabled=true;bt.style.opacity=own?'1':'.55'}
-    bt.onclick=e=>{e.stopPropagation();bt.blur();if(next)askBuyFloor(k)};card.appendChild(bt);
+    bt.onclick=e=>{e.stopPropagation();bt.blur();if(next){if(money<FPR[k])noMoney(card,bt);else askBuyFloor(k)}};card.appendChild(bt);
     g.appendChild(card)}}
+function noMoney(card,bt){
+  try{bt.classList.remove('shk');void bt.offsetWidth;bt.classList.add('shk');setTimeout(()=>bt.classList.remove('shk'),450);
+    if(!card.querySelector('.nomoney')){const m=document.createElement('div');m.className='nomoney';m.textContent='Dinero\nInsuficiente';card.appendChild(m);setTimeout(()=>m.remove(),1000)}}catch(e){}}
 function askBuyFloor(k){pendingAct={buyF:k};
   $('confDesc').textContent='¿Comprar el Piso '+k+' por '+fmtM(FPR[k])+'? Tu base tendrá 10 espacios más y una escalera para subir. Es permanente: solo se quita con «Restablecer todo» en Ajustes.';$('conf').style.display='flex'}
 async function buyFloor(k){
@@ -998,7 +1004,7 @@ function renderShop(){
     const pr=document.createElement('div');pr.className='dp';pr.textContent=own?'Comprado':fmtM(d.pr);card.appendChild(pr);
     const bt=document.createElement('button');bt.textContent=own?(eq?'Equipado ✓':'Equipar'):'Comprar';card.appendChild(bt);
     if(own)card.onclick=()=>equipDeco(d.id);
-    bt.onclick=e=>{e.stopPropagation();bt.blur();own?equipDeco(d.id):askBuyDeco(d.id)};
+    bt.onclick=e=>{e.stopPropagation();bt.blur();own?equipDeco(d.id):(money<d.pr?noMoney(card,bt):askBuyDeco(d.id))};
     g.appendChild(card)})}
 function askBuyDeco(id){const d=DECO[id];pendingAct={buy:id};
   $('confDesc').textContent='¿Comprar «'+d.n+'» por '+fmtM(d.pr)+'? Se descuenta de tu dinero y es tuyo para siempre: lo equipas o quitas cuando quieras.';$('conf').style.display='flex'}
@@ -1696,13 +1702,14 @@ let gY=0,camG=0;const GROUND=[],keys={};let stunT=0,slamCd=0,STL=null,picking=fa
 function toast(m){if(MOB)m=mobTxt(m);const e=$('toast');e.textContent=m;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,1600)}
 /* Papu Golden Time: evento en vivo de 2 minutos (lo inicia el admin) con los Papus más raros */
 const WGT_GT=[0,0,0,0,0,0,0,14,18,20,18,6,9,0,3,9,3];
+let gtP2PT=-1e9;
 const GT={end:0,on:false,last:-1},gtActive=()=>performance.now()<GT.end;
 function setGT(left){GT.end=left>0?performance.now()+left:0}
 function updGT(){
   const a=gtActive(),el=$('gt');
   if(a){const sc=Math.ceil((GT.end-performance.now())/1000);
-    if(!GT.on){GT.on=true;el.style.display='block';toast('¡PAPU GOLDEN TIME! Salen los Papus más raros')}
-    if(sc!==GT.last){GT.last=sc;el.textContent='⚡ PAPU GOLDEN TIME ⚡  '+Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0')}}
+    if(!GT.on){GT.on=true;el.style.display='block';toast(MOB?'¡GOLDEN TIME!':'¡PAPU GOLDEN TIME! Salen los Papus más raros')}
+    if(sc!==GT.last){GT.last=sc;el.textContent=(MOB?'⚡ GOLDEN TIME ':'⚡ PAPU GOLDEN TIME ⚡  ')+Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0')}}
   else if(GT.on){GT.on=false;GT.last=-1;el.style.display='none';toast('Terminó el Papu Golden Time')}
 }
 function pick(){const W=gtActive()?WGT_GT:WGT,T=W.reduce((a,b)=>a+b,0);let r=Math.random()*T;for(let i=0;i<W.length;i++){if(!W[i])continue;r-=W[i];if(r<=0)return i}return 5}
@@ -1947,7 +1954,7 @@ function dropPlayer(pid){
   const p=NET.players[pid];if(!p)return;
   if(running&&pid!==NET.pid)srvMsg(p.name+' abandonó Papulandia.');
   if(p.av)scene.remove(p.av.g);
-  freeBaseObj(BASES[p.base]);
+  if(BASES[p.base])freeBaseObj(BASES[p.base]);
   delete NET.players[pid];delete NET.conns[pid];delete NET.uc[pid];for(const k in NET.byPeer)if(NET.byPeer[k]==pid)delete NET.byPeer[k];
   if(NET.host)bcast({t:'leave',pid});
   updRoom();
@@ -1959,6 +1966,7 @@ function applyEvt(pid,m){
   if(m.t==='srv'){if(running&&NAMES[m.l|0])srvMsg('Admin spawneó '+NAMES[m.l|0]+'.');return}
   if(m.t==='dl'){if(m.to===NET.pid&&DNL.on)DGUESTS.add(pid);return}
   if(m.t==='dx'){if(DHOST===pid&&DNL.on)stopDance();return}
+  if(m.t==='adm'&&typeof m.gt==='number'){gtP2PT=performance.now();setGT(Math.max(0,Math.min(120000,m.gt)));return}
   if(m.t==='adm'){if(m.u==='*'||(m.u&&m.u===myAid()))liveSync();return}
   if(m.t==='sfx'){sfxPlay('jump',1.2*sfxVol(m.x,m.z));return}
   if(m.t==='slam'){sfxPlay('slam',.8*sfxVol(m.x,m.z));shockwave(m.x,m.z);if(running&&stunT<=0&&Math.hypot(player.position.x-m.x,player.position.z-m.z)<=SLAM_R)stunMe();return}
@@ -2172,26 +2180,27 @@ function leaveNow(){
   }catch(e){}
 }
 addEventListener('pagehide',leaveNow);addEventListener('beforeunload',leaveNow);
+let pingTog=false;
 setInterval(()=>{
-  if(!NET.on)return;const now=performance.now();
+  if(!NET.on)return;const now=performance.now();pingTog=!pingTog;
   {const me=myAid();if(me)for(const id in NET.players){if(+id!==NET.pid&&NET.players[id].aid===me)dropPlayer(+id)}}   /* nunca verte a ti mismo como otro jugador */
   {let ch=false;const alive=document.hidden?false:true;
    for(const id in NET.players){const p=NET.players[id];if(!alive)break;
-     const last=NET.host?p.seen:p.sT,gone=last!=null&&now-last>4500&&(NET.host||now-(NET.hseen||0)<4000);
+     const last=NET.host?p.seen:p.sT,gone=last!=null&&now-last>3000&&(NET.host||now-(NET.hseen||0)<4000);
      if(!!p.gone!==gone){p.gone=gone;ch=true}
-     if(!NET.host&&last!=null&&now-last>9000&&now-(NET.hseen||0)<4000)dropPlayer(+id)}   /* el anfitrion ya no lo reenvia: se fue */
+     if(!NET.host&&last!=null&&now-last>6500&&now-(NET.hseen||0)<4000)dropPlayer(+id)}   /* el anfitrion ya no lo reenvia: se fue */
    if(ch)updRoom()}
   if(NET.host){
-    bcast({t:'ping'});
+    if(pingTog)bcast({t:'ping'});
     for(const id in NET.players){const p=NET.players[id];if(p.seen==null)p.seen=now;const c0=NET.conns[id],pc=c0&&c0.peerConnection,ic=pc&&pc.iceConnectionState;
       if(ic==='disconnected'){if(!p.dcT)p.dcT=now}else p.dcT=0;
-      if(now-p.seen>9000||ic==='failed'||ic==='closed'||(p.dcT&&now-p.dcT>3500)||(c0&&c0.open===false&&now-p.seen>3000)){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
+      if(now-p.seen>6000||ic==='failed'||ic==='closed'||(p.dcT&&now-p.dcT>3500)||(c0&&c0.open===false&&now-p.seen>3000)){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
   }else{
-    if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'ping',ts:performance.now()});
+    if(pingTog&&NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'ping',ts:performance.now()});
     if(NET.hseen==null)NET.hseen=now;
     if(now-NET.hseen>12000)onHostGone();
   }
-},2000);
+},1000);
 function cleanupNet(){try{NET.peer&&NET.peer.destroy()}catch(e){}NET.peer=null;NET.ucon=null;NET.uc={};NET.byPeer={};NET.on=false;NET.host=true;NET.hostConn=null;NET.pid=0;NET.code='';updRoom()}
 /* pestaña oculta: el navegador congela el juego, asi que se avisa a todos de inmediato (sin baile, quieto) y se sigue retransmitiendo con poco trafico */
 function hideState(){
@@ -2216,7 +2225,7 @@ function netTick(dt,now){
   const pp=player.position,o=[+pp.x.toFixed(2),+pp.y.toFixed(2),+pp.z.toFixed(2),+heading.toFixed(3),+speed.toFixed(2),DNL.on?'dance':mode,+vy.toFixed(1),+flipA.toFixed(2),held?held.userData.lvl:-1,stunT>0?1:0,slamCd>0?Math.ceil(slamCd*10):0,DNL.on?+DNL.t.toFixed(2):0];
   if(NET.host){
     const l=[[NET.pid].concat(o)];
-    for(const id in NET.players){const pl=NET.players[id],t=pl.tgt;if(t&&!(pl.seen&&now-pl.seen>4500))l.push([+id,t.x,t.y,t.z,t.h,t.sp,t.m,t.vy,t.fa,t.hl,t.st|0,t.sc|0,t.dt||0])}
+    for(const id in NET.players){const pl=NET.players[id],t=pl.tgt;if(t&&!(pl.seen&&now-pl.seen>3000))l.push([+id,t.x,t.y,t.z,t.h,t.sp,t.m,t.vy,t.fa,t.hl,t.st|0,t.sc|0,t.dt||0])}
     const msg={t:'S',l};for(const id in NET.conns){const u=NET.uc[id],c=(u&&u.open)?u:NET.conns[id];if(c&&c.open)c.send(msg)}
   }else{const c=(NET.ucon&&NET.ucon.open)?NET.ucon:NET.hostConn;if(c&&c.open)c.send({t:'st',a:o})}
 }
@@ -2361,7 +2370,8 @@ function admBarOn(u){
 async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},body));if(r.code==='auth'){admLogout();return null}if(r.err){toast(r.err);return null}
   if(a==='aclose'){emit({t:'adm',u:'*'});liveSync()}
   if(a==='asummon'){emit({t:'srv',l:body.lvl|0});if(running&&NAMES[body.lvl|0])srvMsg('Admin spawneó '+NAMES[body.lvl|0]+'.')}
-  if(a==='asummon'||a==='aev'){emit({t:'adm',u:'*'});liveSync()}
+  if(a==='asummon'){emit({t:'adm',u:'*'});liveSync()}
+  else if(a==='aev'){const g=Math.max(0,r.ev|0);gtP2PT=performance.now();setGT(g);emit({t:'adm',u:'*',gt:g})}
   else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'||a==='abar'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
   return r}
 let admTab='u',evEnd=0;
@@ -2682,7 +2692,7 @@ function spawnSummon(lvl){const iid=++NET.iid;spawnItem(lvl,-BELT_L/2+2,iid);if(
 const SM_SEEN=new Set();
 function gotSrv(r,quiet){
   if(r.now)SRV_OFF=r.now-Date.now();
-  if(r.ev!=null)setGT(r.ev);
+  if(r.ev!=null&&!(performance.now()-gtP2PT<6000&&(r.ev>0)!==gtActive()))setGT(r.ev);   /* un sync viejo no pisa el aviso que acaba de llegar por la sala */
   if(r.sm)r.sm.forEach(m=>{if(SM_SEEN.has(m.id))return;SM_SEEN.add(m.id);if(quiet||m.age>12000)return;toast('¡Invocaron a '+NAMES[m.lvl]+'!');if(NET.host&&running)spawnSummon(m.lvl)});
 }
 /* reloj en segundo plano: spawn de la cinta y red siguen aunque la pestaña esté oculta o el juego vaya a pocos FPS */
@@ -2888,7 +2898,7 @@ function renderObjs(){
     const ds=document.createElement('div');ds.className='odesc';ds.textContent=d.d;card.appendChild(ds);
     const pr=document.createElement('div');pr.className='dp';pr.textContent=own?'Comprado':fmtM(d.pr);card.appendChild(pr);
     const bt=document.createElement('button');bt.textContent=own?'Tuyo ✓':'Comprar';if(own){bt.disabled=true}
-    bt.onclick=e=>{e.stopPropagation();bt.blur();if(!own)askBuyObj(id)};card.appendChild(bt);
+    bt.onclick=e=>{e.stopPropagation();bt.blur();if(!own){if(money<d.pr)noMoney(card,bt);else askBuyObj(id)}};card.appendChild(bt);
     g.appendChild(card)})}
 function askBuyObj(id){const d=OBJ[id];pendingAct={buyO:id};
   $('confDesc').textContent='¿Comprar «'+d.n+'» por '+fmtM(d.pr)+'? Es tuyo para siempre'+(d.cat?': siempre estará equipado y lo bailas con '+(MOB?'el botón Bailar.':'la tecla B.'):': aparece en tu inventario y lo equipas '+(MOB?'tocándolo en tu inventario.':'con la tecla 1.'));$('conf').style.display='flex'}
