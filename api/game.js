@@ -23,8 +23,13 @@ async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
 const DPRICE = [0, 4000, 45000, 600000, 6000000, 11000000, 15000000, 82000000, 25000000, 38000000, 65000000, 380000000];
 /* pisos de la base: se empieza con 1 (10 espacios) y se pueden comprar hasta 5; precio del piso numero n */
+/* BASE 001 (guardada): Papus nuevos 17..51, mismos valores que el cliente. Solo el admin puede invocarlos en la cinta. */
+[[5, 10], [5, 25], [7, 10], [7, 25], [9, 10], [9, 25], [11, 10], [11, 25], [13, 10], [13, 25]].forEach(([b, m]) => { INC.push(INC[b] * m); PRICE.push(PRICE[b] * m); });
+INC.push(INC[16] * 10); PRICE.push(PRICE[16] * 10);
+[[18, 1000], [26, 1700], [35, 2500], [600, 650000], [2100, 3600000], [4000, 7200000]].forEach(([i, p]) => [1, 4, 10, 25].forEach(m => { INC.push(i * m); PRICE.push(p * m); }));
+const MAXLVL = INC.length - 1;
 const FPRICE = [0, 0, 12000000, 29000000, 70000000, 78000000], MAXF = 5, SLOTF = 10;
-const OPRICE = { bat: 3300000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 5, TOKEN_DAYS = 30, MAX_DT = 12000;
+const OPRICE = { bat: 3300000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 11, TOKEN_DAYS = 30, MAX_DT = 12000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -203,7 +208,7 @@ const actions = {
   async buy(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const lvl = b.lvl;
-    if (!Number.isInteger(lvl) || lvl < 5 || lvl > 16) throw new Err('Jugada no válida.', 'bad');
+    if (!Number.isInteger(lvl) || lvl < 5 || lvl > MAXLVL) throw new Err('Jugada no válida.', 'bad');
     if (r.held >= 0) { await saveRec(r); throw Object.assign(new Err('Ya llevas un Papu.', 'bad'), { st: view(r) }); }
     if (r.money < PRICE[lvl]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
     r.money -= PRICE[lvl]; r.held = lvl; r.hpaid = PRICE[lvl];
@@ -394,7 +399,7 @@ const actions = {
   /* invocar un Papu: aparece asegurado en la cinta para todos */
   async asummon(b) {
     adminFromTok(b.tok);
-    const lvl = b.lvl; if (!Number.isInteger(lvl) || lvl < 5 || lvl > 16) throw new Err('Papu no válido.');
+    const lvl = b.lvl; if (!Number.isInteger(lvl) || lvl < 5 || lvl > MAXLVL) throw new Err('Papu no válido.');
     const now = Date.now(); let list = [];
     try { const v = await db('GET', 'ev:sm'); list = v ? JSON.parse(v) : []; } catch (e) { list = []; }
     list = list.filter(m => now - m.ts < 30000).slice(-9);
