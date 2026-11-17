@@ -256,6 +256,9 @@ const actions = {
     r.held = lvl; r.hpaid = 0; await saveRec(r);
     return { ok: true, lvl, st: view(r) };
   },
+  /* traspaso de anfitrion: el admin pide una prueba corta y el anfitrion actual la verifica (la prueba no sirve para nada mas) */
+  async hproof(b) { adminFromTok(b.tok); return { pr: signTok({ h: 1, exp: Date.now() + 60000 }) }; },
+  async hchk(b) { const t = readTok(b.pr); return { ok: !!(t && t.h === 1) }; },
   /* mover un Papu de tu base: lo levanta a la mano (se coloca con place) */
   async lift(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
