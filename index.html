@@ -324,7 +324,7 @@ body.mob #tpRow{top:calc(env(safe-area-inset-top,0px) + 42px);gap:5px}
 body.mob #tpRow button{padding:4px 11px;font-size:.62rem;border-width:2px}
 body.mob.det #tpRow{top:calc(env(safe-area-inset-top,0px) + 82px)}
 body.mob #toast{top:calc(env(safe-area-inset-top,0px) + 58px);left:54px;right:96px;font-size:.75rem}
-body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 34px);padding:2px 10px;border-width:2px;font-size:.56rem;letter-spacing:0;box-shadow:0 2px 0 #35200e,0 0 12px rgba(255,200,40,.8)}
+body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 56px);padding:2px 10px;border-width:2px;font-size:.56rem;letter-spacing:0;box-shadow:0 2px 0 #35200e,0 0 12px rgba(255,200,40,.8)}
 body.mob .sbox{padding:10px 12px;border-width:4px;border-radius:20px}
 body.mob #shop,body.mob #set,body.mob #conf,body.mob #nm,body.mob #cat,body.mob #skins{padding:6px}
 body.mob .sbox,body.mob #adm .admbox,body.mob #chatL,body.mob #panel,body.mob .admwrap{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
@@ -905,8 +905,8 @@ function buildBase(idx,cx,z0,dir){
 BASE_POS.forEach(([cx,z0,dir],i)=>buildBase(i,cx,z0,dir));
 let myBase=BASES[0],slots=myBase.slots;
 function setMyBase(b){myBase=b;slots=b.slots}
-function assignBase(b,pid,name){b.owner=pid;b.name=name;b.drawSign()}
-function freeBaseObj(b){b.slots.forEach(s=>{if(s.item){scene.remove(s.item);s.item=null}});b.barrierOn=false;b.barEnd=0;b.barCd=0;b.owner=null;b.name='';b.setDeco(0,0);b.setFloors(1);b.drawSign();b.drawBtn()}
+function assignBase(b,pid,name){b.owner=pid;b.name=name;b.ghost=false;b.drawSign()}
+function freeBaseObj(b){b.ghost=false;b.slots.forEach(s=>{if(s.item){scene.remove(s.item);s.item=null}});b.barrierOn=false;b.barEnd=0;b.barCd=0;b.owner=null;b.name='';b.setDeco(0,0);b.setFloors(1);b.drawSign();b.drawBtn()}
 /* colinas lejanas con neblina (diseno propio) */
 {const W=2048,Hh=256,c=document.createElement('canvas');c.width=W;c.height=Hh;const x=c.getContext('2d');
  const layer=(base,amps,col)=>{x.beginPath();x.moveTo(0,Hh);for(let i=0;i<=W;i+=8){let y=base;amps.forEach(([k,a,ph])=>{y-=a*Math.sin(2*Math.PI*k*i/W+ph)});x.lineTo(i,y)}x.lineTo(W,Hh);x.closePath();x.fillStyle=col;x.fill()};
@@ -1708,9 +1708,9 @@ function setGT(left){GT.end=left>0?performance.now()+left:0}
 function updGT(){
   const a=gtActive(),el=$('gt');
   if(a){const sc=Math.ceil((GT.end-performance.now())/1000);
-    if(!GT.on){GT.on=true;el.style.display='block';if(!MOB)toast('¡PAPU GOLDEN TIME! Salen los Papus más raros')}
+    if(!GT.on){GT.on=true;el.style.display='block';}
     if(sc!==GT.last){GT.last=sc;el.textContent=(MOB?'⚡ PAPU GOLDEN TIME ':'⚡ PAPU GOLDEN TIME ⚡  ')+Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0')}}
-  else if(GT.on){GT.on=false;GT.last=-1;el.style.display='none';toast('Terminó el Papu Golden Time')}
+  else if(GT.on){GT.on=false;GT.last=-1;el.style.display='none'}
 }
 function pick(){const W=gtActive()?WGT_GT:WGT,T=W.reduce((a,b)=>a+b,0);let r=Math.random()*T;for(let i=0;i<W.length;i++){if(!W[i])continue;r-=W[i];if(r<=0)return i}return 5}
 function resetWorld(){
@@ -2403,8 +2403,8 @@ $('srvBtn').onclick=async()=>{
   if(srvArm<Date.now()){srvArm=Date.now()+4000;paintSrv();setTimeout(paintSrv,4100);return}
   srvArm=0;const r=await admCall('aclose',{on:true});if(r){srvClosed=!!r.closed;paintSrv();toast('Servidor cerrado: solo tú puedes entrar')}};
 $('evGo').onclick=async()=>{
-  if(evEnd-Date.now()>0){const r=await admCall('aev',{on:false});if(r){evEnd=0;paintEv();toast('Evento detenido')}return}
-  const r=await admCall('aev',{on:true});if(r){evEnd=Date.now()+r.ev;paintEv();toast('Papu Golden Time iniciado')}};
+  if(evEnd-Date.now()>0){const r=await admCall('aev',{on:false});if(r){evEnd=0;paintEv()}return}
+  const r=await admCall('aev',{on:true});if(r){evEnd=Date.now()+r.ev;paintEv()}};
 async function admLoad(){
   const r=await admCall('alist');if(!r)return;evEnd=Date.now()+(r.ev||0);paintEv();srvClosed=!!r.closed;paintSrv();
   r.users.sort((a,b)=>(b.admin?1:0)-(a.admin?1:0));   /* la cuenta de admin siempre primero; el resto sigue igual */
@@ -2522,7 +2522,8 @@ async function pickGround(o){
 function stealTarget(){
   const p=player.position;let best=null,bd=4.5;
   BASES.forEach(b=>{
-    if(b===myBase||b.owner===null||b.barrierOn||b.ghost)return;
+    if(b===myBase||b.owner===null||b.barrierOn)return;
+    {const ow=NET.players[b.owner];if(ow&&ow.gone)return}   /* dueño sin señal: su base no se puede robar (se calcula en vivo, no queda pegado) */
     b.slots.forEach((s,i)=>{if(!s.item||!lvOk(s,p))return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;best={b,i,s}}});
   });
   return best;
@@ -2538,7 +2539,7 @@ function cancelStealOf(b){if(STL&&STL.b===b)cancelSteal()}
 function updSteal(dt){
   if(!STL)return;
   const s=STL.b.slots[STL.i],p=player.position;
-  if(held||stunT>0||!keys.e||!s||!s.item||STL.b.barrierOn||STL.b.ghost||STL.b.owner===null||Math.hypot(s.x-p.x,s.z-p.z)>5.6||!lvOk(s,p)||mode==='air'){cancelSteal();return}
+  if(held||stunT>0||!keys.e||!s||!s.item||STL.b.barrierOn||STL.b.owner===null||(NET.players[STL.b.owner]&&NET.players[STL.b.owner].gone)||Math.hypot(s.x-p.x,s.z-p.z)>5.6||!lvOk(s,p)||mode==='air'){cancelSteal();return}
   STL.t+=dt;$('stlFill').style.width=Math.min(100,STL.t/STEAL_T*100)+'%';
   if(STL.t>=STEAL_T){const t=STL;cancelSteal();finishSteal(t)}
 }
