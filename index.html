@@ -1944,7 +1944,7 @@ function updRemotes(dt){
   }
 }
 /* ====== EN LINEA (PeerJS): una sala = un codigo; el que la crea es el anfitrion ====== */
-const NET={hostPid:0,migrating:false,uc:{},byPeer:{},ucon:null,on:false,host:true,pid:0,code:'',peer:null,conns:{},players:{},nextPid:1,iid:0,hostConn:null,stT:0,pend:null};
+const NET={hostPid:0,pref:null,hq:false,migrating:false,uc:{},byPeer:{},ucon:null,on:false,host:true,pid:0,code:'',peer:null,conns:{},players:{},nextPid:1,iid:0,hostConn:null,stT:0,pend:null};
 const CODE_CH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const genCode=()=>Array.from({length:5},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join('');
 const ICE={iceServers:[
@@ -2035,6 +2035,7 @@ function hostMsg(conn,m){
   if(pid==null)return;
   {const pl=NET.players[pid];if(pl)pl.seen=performance.now()}
   if(m.t==='ping'){if(m.ts!=null)conn.send({t:'pong',ts:m.ts});return}
+  if(m.t==='hreq'){hostHandover(pid,m.pr);return}
   if(m.t==='bye'){dropPlayer(pid);try{conn.close()}catch(e){}return}
   if(m.t==='st'){const p=NET.players[pid];if(p&&m.a){setTgt(p,m.a);relayHidden()}}
   else if(m.t==='buy'){
@@ -2096,6 +2097,7 @@ function clientMsg(m){
     case 'ping':break;
     case 'pong':NET.rtt=Math.round(performance.now()-m.ts);updRoom();break;
     case 'bye':onHostGone();break;
+    case 'hand':NET.pref=m.pid;NET.hq=true;break;   /* traspaso: el admin sera el nuevo anfitrion */
     case 'join':{const had=!!NET.players[m.p.pid];addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false,m.p.aid,m.p.dc);if(!had&&running)srvMsg(String(m.p.name||'Jugador').slice(0,14)+' se ha unido a Papulandia.');break}
     case 'leave':dropPlayer(m.pid);break;
     case 'S':{const nw=performance.now();m.l.forEach(a=>{const p=NET.players[a[0]];if(p){setTgt(p,a.slice(1));p.sT=nw}});break}
@@ -2117,14 +2119,40 @@ function applyRejoin(m){
   if(myBase.barrierOn)emit({t:'bar',on:true});
   NET.pend=null;NET.hseen=performance.now();updRoom();
 }
+/* ====== traspaso al admin: cuando entra la cuenta de admin, el anfitrion le pasa la sala al instante ====== */
+let hov=false;
+async function reqHandover(){
+  if(!ACC.adm||!ACC.tok||!NET.on||NET.host||!NET.hostConn||!NET.hostConn.open)return;
+  const r=await api('hproof',{tok:ACC.tok});
+  if(r&&r.pr&&NET.on&&!NET.host&&NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'hreq',pr:r.pr});
+}
+async function hostHandover(admPid,pr){
+  if(hov||!NET.host||ACC.adm||admPid==null||!pr||!NET.conns[admPid])return;
+  hov=true;
+  let ok=false;try{const r=await api('hchk',{pr});ok=!!(r&&r.ok)}catch(e){}
+  if(!ok||!NET.host||!NET.conns[admPid]){hov=false;return}
+  doHandover(admPid);
+}
+function doHandover(admPid){
+  const myPid=NET.pid,others=Object.keys(NET.players).length;
+  NET.pref=admPid;NET.hq=true;bcast({t:'hand',pid:admPid});
+  setTimeout(()=>{
+    for(const id in NET.conns){try{NET.conns[id].close()}catch(e){}}
+    try{NET.peer&&NET.peer.destroy()}catch(e){}
+    NET.peer=null;NET.conns={};NET.byPeer={};NET.uc={};NET.ucon=null;NET.hostConn=null;NET.host=false;NET.hostPid=admPid;NET.pend=null;
+    NET.migrating=true;hov=false;
+    setTimeout(()=>migAttempt(0,myPid),400+others*1800);   /* el anfitrion anterior entra de ultimo, como invitado */
+  },250);
+}
 function becomeHost(peer,oldHost){
+  NET.pref=null;NET.hq=false;{const n=performance.now();for(const id in NET.players)NET.players[id].seen=n}
   NET.peer=peer;NET.host=true;NET.hostConn=null;NET.hostPid=NET.pid;NET.conns={};NET.byPeer={};NET.uc={};NET.ucon=null;
   peer.on('connection',onGuest);peer.on('error',e=>console.warn('peer',e.type));
   let mx=Math.max(NET.pid,oldHost||0);for(const id in NET.players)mx=Math.max(mx,+id);NET.nextPid=mx+1;
   let mi=0;items.forEach(o=>mi=Math.max(mi,o.iid||0));NET.iid=Math.max(NET.iid,mi);
   bgSpawn=0;NET.migrating=false;NET.pend=null;updRoom();toast('Ahora tú eres el anfitrión de la sala');
 }
-function migFail(){NET.migrating=false;NET.on=false;running=false;toast('Se perdió la sala. Reconectando…');setTimeout(()=>location.reload(),1200)}
+function migFail(){NET.pref=null;NET.hq=false;NET.migrating=false;NET.on=false;running=false;toast('Se perdió la sala. Reconectando…');setTimeout(()=>location.reload(),1200)}
 function migAttempt(n,oldHost){
   if(n>8)return migFail();
   loadPeer(ok=>{
@@ -2150,7 +2178,7 @@ function migJoin(n,oldHost){
       if(m.t==='welcome'&&!ok&&!fin){
         ok=true;fin=true;NET.peer=peer;NET.hostConn=c;NET.host=false;NET.migrating=false;
         if(m.rj)applyRejoin(m);else{NET.hostPid=m.hostPid;NET.pid=m.pid;NET.hseen=performance.now()}
-        openFast(peer,MAIN_CODE);toast('Reconectado a la sala');return}
+        openFast(peer,MAIN_CODE);if(!NET.hq)toast('Reconectado a la sala');NET.pref=null;NET.hq=false;if(ACC.adm)setTimeout(reqHandover,1500);return}
       if(m.t==='full'){fin=true;migFail();return}
       if(ok)clientMsg(m);
     });
@@ -2160,12 +2188,14 @@ function migJoin(n,oldHost){
 }
 function onHostGone(){
   if(!NET.on||NET.host||NET.migrating)return;
-  NET.migrating=true;toast('El anfitrión se fue. Reconectando…');
+  const pref=NET.pref!=null?NET.pref:null;
+  NET.migrating=true;if(pref==null)toast('El anfitrión se fue. Reconectando…');
   const oldHost=NET.hostPid;
   try{NET.peer&&NET.peer.destroy()}catch(e){}
   NET.peer=null;NET.hostConn=null;NET.ucon=null;NET.pend=null;
-  dropPlayer(oldHost);
-  const cand=[NET.pid].concat(Object.keys(NET.players).map(Number)).sort((a,b)=>a-b);
+  if(pref==null)dropPlayer(oldHost);   /* en un traspaso el anfitrion anterior sigue en la sala */
+  let cand=[NET.pid].concat(Object.keys(NET.players).map(Number)).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+  if(pref!=null){cand=cand.filter(x=>x!==pref&&x!==oldHost);cand.unshift(pref);cand.push(oldHost)}   /* el admin primero, el anfitrion anterior al final */
   const rank=Math.max(0,cand.indexOf(NET.pid));
   setTimeout(()=>migAttempt(0,oldHost),400+rank*1800);
 }
@@ -2341,7 +2371,7 @@ function enterGame(st,retry,tries){
   $('chatL').textContent='';const n=st.nick;ACC.st=st;volDone=false;volFromSt(st);lobbyBusy(true);lobbyMsg('Entrando a la sala…');
   setUserName(n);useRig(st.skin|0);renderSkins();
   joinRoom(n,MAIN_CODE,err=>{
-    if(!err){applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay();return}
+    if(!err){applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay();if(ACC.adm)setTimeout(reqHandover,800);return}
     if(err!=='NOROOM'){
       if(/respondió|conexión/.test(err)&&tries<2){lobbyMsg('Reintentando conexión…');cleanupNet();setTimeout(()=>enterGame(st,retry,tries+1),600);return}
       enterFail(err);return}
