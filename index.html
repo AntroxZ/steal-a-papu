@@ -324,7 +324,7 @@ body.mob #tpRow{top:calc(env(safe-area-inset-top,0px) + 42px);gap:5px}
 body.mob #tpRow button{padding:4px 11px;font-size:.62rem;border-width:2px}
 body.mob.det #tpRow{top:calc(env(safe-area-inset-top,0px) + 82px)}
 body.mob #toast{top:calc(env(safe-area-inset-top,0px) + 58px);left:54px;right:96px;font-size:.75rem}
-body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 70px);padding:2px 10px;border-width:2px;font-size:.56rem;letter-spacing:0;box-shadow:0 2px 0 #35200e,0 0 12px rgba(255,200,40,.8)}
+body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 34px);padding:2px 10px;border-width:2px;font-size:.56rem;letter-spacing:0;box-shadow:0 2px 0 #35200e,0 0 12px rgba(255,200,40,.8)}
 body.mob .sbox{padding:10px 12px;border-width:4px;border-radius:20px}
 body.mob #shop,body.mob #set,body.mob #conf,body.mob #nm,body.mob #cat,body.mob #skins{padding:6px}
 body.mob .sbox,body.mob #adm .admbox,body.mob #chatL,body.mob #panel,body.mob .admwrap{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
@@ -471,7 +471,7 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
     <div class="evcard"><h3>⚡ Papu Golden Time</h3>
       <p>Evento en vivo de 2 minutos: en la cinta solo salen los Papus más raros. Les llega a todos los jugadores conectados en unos segundos y termina solo.</p>
       <div id="evSt">Inactivo</div>
-      <button id="evGo" class="wbtn2">Iniciar Papu Golden Time</button><button id="evStop" class="wbtn2 dng">Detener</button>
+      <button id="evGo" class="wbtn2">Iniciar Papu Golden Time</button>
     </div>
     <div class="evcard wide"><h3>✨ Invocar un Papu</h3>
       <p>Toca un Papu y aparece al instante en la cinta, asegurado, para todos los jugadores conectados (les llega en unos segundos).</p>
@@ -1476,7 +1476,7 @@ function dlinkTick(now){
   const q=NET.players[DHOST];
   if(!q||(q.av&&q.av.mode!=='dance')){stopDance()}}
 function syncDance(){
-  if(!running||!hasDance()){if(running)toast('Necesitas comprar el baile Scenario para bailar o sincronizar');return}
+  if(!running||!hasDance())return;
   if(shopOpen||setOpen||stunT>0)return;
   if(held){toast('Suelta tu Papu para bailar');return}
   if(mode!=='ground'&&mode!=='land'){return}
@@ -1708,7 +1708,7 @@ function setGT(left){GT.end=left>0?performance.now()+left:0}
 function updGT(){
   const a=gtActive(),el=$('gt');
   if(a){const sc=Math.ceil((GT.end-performance.now())/1000);
-    if(!GT.on){GT.on=true;el.style.display='block';toast(MOB?'¡PAPU GOLDEN TIME!':'¡PAPU GOLDEN TIME! Salen los Papus más raros')}
+    if(!GT.on){GT.on=true;el.style.display='block';if(!MOB)toast('¡PAPU GOLDEN TIME! Salen los Papus más raros')}
     if(sc!==GT.last){GT.last=sc;el.textContent=(MOB?'⚡ PAPU GOLDEN TIME ':'⚡ PAPU GOLDEN TIME ⚡  ')+Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0')}}
   else if(GT.on){GT.on=false;GT.last=-1;el.style.display='none';toast('Terminó el Papu Golden Time')}
 }
@@ -2391,7 +2391,8 @@ function renderSummon(){
   });
 }
 function showAdmTab(k){admTab=k;if(k==='e')renderSummon();$('admUsers').style.display=k==='u'?'':'none';$('admEv').style.display=k==='e'?'':'none';$('admTabU').classList.toggle('sel',k==='u');$('admTabE').classList.toggle('sel',k==='e');paintEv()}
-function paintEv(){const left=evEnd-Date.now(),on=left>0,e=$('evSt');e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo'}
+function paintEv(){const left=evEnd-Date.now(),on=left>0,e=$('evSt');e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo';
+  const g=$('evGo');if(g){const tx=on?'Detener':'Iniciar Papu Golden Time',cl='wbtn2'+(on?' dng':'');if(g.textContent!==tx)g.textContent=tx;if(g.className!==cl)g.className=cl}}
 setInterval(()=>{if($('adm').style.display==='flex')paintEv()},500);
 $('admTabU').onclick=()=>showAdmTab('u');$('admTabE').onclick=()=>showAdmTab('e');
 let srvClosed=false,srvArm=0;
@@ -2401,10 +2402,12 @@ $('srvBtn').onclick=async()=>{
   if(srvClosed){const r=await admCall('aclose',{on:false});if(r){srvClosed=!!r.closed;paintSrv();toast('Servidor abierto: todos pueden entrar')}return}
   if(srvArm<Date.now()){srvArm=Date.now()+4000;paintSrv();setTimeout(paintSrv,4100);return}
   srvArm=0;const r=await admCall('aclose',{on:true});if(r){srvClosed=!!r.closed;paintSrv();toast('Servidor cerrado: solo tú puedes entrar')}};
-$('evGo').onclick=async()=>{const r=await admCall('aev',{on:true});if(r){evEnd=Date.now()+r.ev;paintEv();toast('Papu Golden Time iniciado')}};
-$('evStop').onclick=async()=>{const r=await admCall('aev',{on:false});if(r){evEnd=0;paintEv();toast('Evento detenido')}};
+$('evGo').onclick=async()=>{
+  if(evEnd-Date.now()>0){const r=await admCall('aev',{on:false});if(r){evEnd=0;paintEv();toast('Evento detenido')}return}
+  const r=await admCall('aev',{on:true});if(r){evEnd=Date.now()+r.ev;paintEv();toast('Papu Golden Time iniciado')}};
 async function admLoad(){
   const r=await admCall('alist');if(!r)return;evEnd=Date.now()+(r.ev||0);paintEv();srvClosed=!!r.closed;paintSrv();
+  r.users.sort((a,b)=>(b.admin?1:0)-(a.admin?1:0));   /* la cuenta de admin siempre primero; el resto sigue igual */
   r.users.forEach(u=>{ADM_AID[u.user]=u.aid||null});const B=$('admB');B.textContent='';$('admEmpty').style.display=r.users.length?'none':'block';
   $('admInfo').textContent=r.users.length+' cuenta'+(r.users.length===1?'':'s')+' · '+r.users.filter(u=>u.online).length+' en línea';
   r.users.forEach(u=>{
