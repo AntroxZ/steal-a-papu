@@ -1152,14 +1152,14 @@ $('confYes').onclick=()=>{
   toast(k==='all'?'Cuenta reiniciada desde cero: sin Papus, pisos, decoración ni objetos, y dinero en $50':'Base limpia: tu dinero sigue igual');
 };
 /* teletransporte rapido: Tienda / mi Base */
-function tpTo(x,z,h,face){
+function tpTo(x,z,h,face,pit){
   if(!running||shopOpen||setOpen||stunT>0||(mode!=='ground'&&mode!=='land'))return;
   if(held){toast('Suelta tu Papu para teletransportarte');return}
   if(DNL.on)stopDance();cancelSteal();
-  player.position.x=x;player.position.z=z;gY=groundY(x,z,2);camG=gY;yaw=h;heading=face?h+Math.PI:h;pitch=.28;camT=camD=17.5;speed=0;carryT=0;py=0;vy=0;
+  player.position.x=x;player.position.z=z;gY=groundY(x,z,2);camG=gY;yaw=h;heading=face?h+Math.PI:h;pitch=pit||.28;camT=camD=17.5;speed=0;carryT=0;py=0;vy=0;
 }
 $('rebX').onclick=closeShop;
-$('tpShop').onclick=()=>{$('tpShop').blur();tpTo(SHOP_X-8,BELT_Z,-Math.PI/2,true)};   /* en medio de las dos tiendas y mirando hacia ellas */
+$('tpShop').onclick=()=>{$('tpShop').blur();tpTo(SHOP_X-8,BELT_Z,-Math.PI/2,true,.58)};   /* en medio de las dos tiendas y mirando hacia ellas */
 $('tpBase').onclick=()=>{$('tpBase').blur();const sp=myBase.W(0,BZ0-3);tpTo(sp[0],sp[1],myBase.dir>0?0:Math.PI)};
 /* catalogo (bitacora de Papus conseguidos, guardada en el servidor) */
 const CAT_ORDER=[5,6,13,14,11,12,7,8,9,10,15,16];
@@ -2918,7 +2918,7 @@ function batPose(o,t0,now){
   add(BI.RightArm,a);add(BI.RightForeArm,fa);
   if(o.batG)o.batG.rotation.z=BAT_BASEZ+(B-45+a+fa)*Math.PI/180}
 function updInv(){
-  const el=$('inv');if(!el)return;const ui=['shop','set','conf','cat','skins','nm','adm','panel'].some(i=>{const e=$(i);return e&&e.style.display&&e.style.display!=='none'});
+  const el=$('inv');if(!el)return;const ui=['shop','reb','set','conf','cat','skins','nm','adm','panel'].some(i=>{const e=$(i);return e&&e.style.display&&e.style.display!=='none'});
   const own=hasBat()&&running&&!ui;
   el.style.display=own?'flex':'none';$('invBat').classList.toggle('on',myEq)}
 function setEq(v){if(myEq===v)return;myEq=v;if(!v)batSw=null;emit({t:'eq',v:v?1:0});updInv()}
