@@ -495,7 +495,7 @@ const RAR_OF=l=>l===16?4:isGold(l)?3:(l===7||l===9||l===15)?2:l===11?1:0;
 const RAR_N=['COMÚN','ÉPICO','LEGENDARIO','DORADO','ULTRA'],RAR_C=['#b8bcc4','#b36bff','#ff8a1f','#ffd23a','#ff2a2a'];
 const fm=n=>(n<10&&n%1?+n.toFixed(1):Math.floor(n)).toLocaleString('es-MX'),fc=n=>n>=1e6?+(n/1e6).toFixed(2)+'M':n>=1e3?+(n/1e3).toFixed(1)+'K':String(n);
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
-const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=7,GROUND_LIFE=10000,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
+const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=5,GROUND_LIFE=10000,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
 const SPAWN=3,BELT_V=3.2,MAXB=50,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
@@ -2727,7 +2727,7 @@ function loop(now){
     t+=dt;spawnT+=dt;
     for(let i=items.length-1;i>=0;i--){const o=items[i];o.g.position.x=itemX(o,now);o.g.children[0].position.y=bobY(o.g.userData.lvl)+Math.sin(now/300+o.ph)*.2;if(o.g.position.x>BELT_L/2-1){scene.remove(o.g);items.splice(i,1)}}
     const jy=joy.on?joy.y:0,jx=joy.on?joy.x:0,cl1=v=>Math.max(-1,Math.min(1,v)),f=(shopOpen||setOpen||stunT>0)?0:cl1((keys.w?1:0)-(keys.s?1:0)+jy),r=(shopOpen||setOpen||stunT>0)?0:cl1((keys.d?1:0)-(keys.a?1:0)+jx);
-    if(DNL.on&&(f||r||mode!=='ground'||held||stunT>0||shopOpen||setOpen||DNL.t>=30||WA.ownEnded||(danceAudio&&danceAudio.ended)))stopDance();
+    if(DNL.on&&(f||r||mode!=='ground'||held||stunT>0||DNL.t>=30||WA.ownEnded||(danceAudio&&danceAudio.ended)))stopDance();
     let dx=f*-Math.sin(yaw)+r*Math.cos(yaw),dz=f*-Math.cos(yaw)+r*-Math.sin(yaw);
     mobTick();physics(dt);
     const L=Math.hypot(dx,dz),pp=player.position,lock=mode==='spin'||mode==='slam'||mode==='sit'||mode==='get',ac=mode==='air'?.45:1;
