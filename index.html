@@ -1819,7 +1819,8 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='e'||e.key==='E')cancelSteal();keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 let pitch=1.15;
 addEventListener('contextmenu',e=>e.preventDefault());
-addEventListener('pointermove',e=>{if(e.buttons&2){yaw-=e.movementX*.006;pitch=Math.max(camD<1.8?-1.35:.05,Math.min(1.45,pitch+e.movementY*.005))}});
+let CD=null;/* arrastre de camara con clic normal: solo si empieza sobre el mundo (canvas), no sobre botones ni menus */
+addEventListener('pointermove',e=>{if(CD&&e.pointerId===CD.id){CD.d+=Math.abs(e.movementX)+Math.abs(e.movementY);if(!(e.buttons&1))CD=null}if((e.buttons&2)||(CD&&CD.d>5)){yaw-=e.movementX*.006;pitch=Math.max(camD<1.8?-1.35:.05,Math.min(1.45,pitch+e.movementY*.005))}});
 let userName='';
 function makeNameSprite(name,op){
   const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');
@@ -2912,7 +2913,9 @@ async function buyObj(id){const d=OBJ[id];
   const r=await srv('obuy',{id});
   if(r&&!r.err)toast(d.cat?'¡Compraste el baile '+d.n+'! '+(MOB?'Usa el botón Bailar':'Presiona B para bailar'):'¡Compraste el '+d.n+'! '+(MOB?'Tócalo abajo para equiparlo':'Presiona 1 para equiparlo'))}
 $('invBat').addEventListener('pointerdown',e=>{e.preventDefault();$('invBat').blur();toggleBat()});   /* pointerdown: funciona aunque el otro dedo este en el joystick */
-addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'&&e.button===0&&e.target&&e.target.tagName==='CANVAS')swingBat()});
+addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'&&e.button===0&&e.target&&e.target.tagName==='CANVAS'&&!shopOpen&&!setOpen)CD={id:e.pointerId,d:0}});
+addEventListener('pointerup',e=>{if(CD&&e.pointerId===CD.id){const c=CD;CD=null;if(e.button===0&&c.d<=5&&e.target&&e.target.tagName==='CANVAS')swingBat()}});
+addEventListener('pointercancel',()=>{CD=null});addEventListener('blur',()=>{CD=null});
 
 /* ====== chat de la partida ====== */
 const CHAT_COL=['#4aa8ff','#ffd84a','#ff5a5a','#ff9a3c','#b07aff','#ff8ec7'],CHAT_MAX=20,CHAT_LEN=120;
