@@ -427,7 +427,6 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
   <div class="opt vol"><label for="volM">Música <b id="volMv">50%</b></label><input type="range" id="volM" min="0" max="100" step="1" value="50"><p>La música principal del juego.</p></div>
   <div class="opt vol"><label for="volF">Efectos <b id="volFv">15%</b></label><input type="range" id="volF" min="0" max="100" step="1" value="15"><p>Saltos, sentones, baile y todo lo que no sea la música principal.</p></div>
   <div class="opt"><button id="volReset" class="vreset">Restablecer a predeterminado</button></div>
-  <div class="opt"><button id="optReset" class="big danger">Reiniciar todo</button><p>Reinicia tu cuenta desde cero: quita Papus, pisos, decoración y objetos comprados, y tu dinero vuelve a $50.</p></div>
   <div class="opt"><button id="optClean" class="big">Limpiar base</button><p>Quita todos los Papus de tu base. Tu dinero NO se reinicia.</p></div>
   <div class="opt"><button id="optName" class="big">Cambiar nombre</button><p>Cambia el nombre que aparece sobre tu personaje. Puedes hacerlo cuando quieras.</p></div>
 </div></div>
@@ -946,6 +945,30 @@ const SHOP_P={x:90.2,z:BELT_Z-1},shopG=new THREE.Group();shopG.position.set(94,0
  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{x.clearRect(0,0,256,96);x.fillStyle='#38b24a';x.beginPath();x.roundRect?x.roundRect(8,8,240,80,18):x.rect(8,8,240,80);x.fill();x.lineWidth=5;x.strokeStyle='#fff';x.stroke();x.fillStyle='#fff';x.font='800 42px Orbitron,sans-serif';x.fillText('Tienda',128,50);sp.material.map.needsUpdate=true});
 }
 SOL.push([91.5,BELT_Z-4.7,97.4,BELT_Z+2.7]);
+/* puesto de REBIRTH: al otro extremo de la cinta, junto al arco de entrada. Solo diseno por ahora */
+const REB_P={x:-90.2,z:BELT_Z-1},rebG=new THREE.Group();rebG.position.set(-94,0,BELT_Z-1);rebG.rotation.y=Math.PI/2;scene.add(rebG);
+{
+ const mk=(draw,w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t};
+ const woodT=mk(x=>{x.fillStyle='#a8683a';x.fillRect(0,0,128,128);for(let i=0;i<22;i++){x.strokeStyle=i%3?'rgba(100,50,20,.35)':'rgba(70,30,10,.5)';x.lineWidth=1+Math.random()*1.5;const y=Math.random()*128;x.beginPath();x.moveTo(0,y);x.lineTo(128,y+Math.random()*4-2);x.stroke()}x.strokeStyle='rgba(60,25,8,.6)';x.lineWidth=2;for(let i=0;i<=128;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,128);x.stroke()}},128,128);
+ const stripeT=mk(x=>{for(let i=0;i<8;i++){x.fillStyle=i%2?'#ff8a1f':'#d42b2b';x.fillRect(i*32,0,32,64)}},256,64);
+ const sh=(w,h,d,x,y,z,hex,map)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),boxMats(map||null,hex));m.position.set(x,y,z);rebG.add(m);return m};
+ sh(7.4,.1,6.4,0,.05,0,0xb9bdc4);
+ [[-3,-2.4],[3,-2.4],[-3,2.4],[3,2.4]].forEach(([x,z])=>sh(.38,4.2,.38,x,2.3,z,0x8a3a22));
+ sh(6.4,3.4,.25,0,1.9,-2.5,0xffffff,woodT);
+ sh(6.2,.18,1,0,2.2,-2.1,0x7a3a1c);sh(6.2,.18,1,0,3.2,-2.1,0x7a3a1c);
+ sh(6.4,1.15,1.2,0,.68,2,0xffffff,woodT);sh(6.8,.18,1.5,0,1.35,2,0xe0803a);
+ const aw=sh(7.6,.18,6.8,0,4.6,0,0xffffff,stripeT);aw.rotation.x=.16;
+ sh(7.4,.08,.08,0,4.0,3.3,0xff7a1a);
+ /* simbolo de renacer sobre el mostrador: dos anillos de fuego */
+ const rm=(r,t,c,y)=>{const m=new THREE.Mesh(new THREE.TorusGeometry(r,t,10,28),new THREE.MeshBasicMaterial({color:c}));m.position.set(0,y,2);rebG.add(m);return m};
+ rm(.5,.1,0xff5a1a,2.1);rm(.28,.07,0xffd23a,2.1);
+ const c=document.createElement('canvas');c.width=256;c.height=96;const x=c.getContext('2d');
+ const drawSign=()=>{x.clearRect(0,0,256,96);const g=x.createLinearGradient(0,0,256,0);g.addColorStop(0,'#ff8a1f');g.addColorStop(1,'#d42b2b');x.fillStyle=g;x.beginPath();x.roundRect?x.roundRect(8,8,240,80,18):x.rect(8,8,240,80);x.fill();x.lineWidth=5;x.strokeStyle='#fff';x.stroke();x.fillStyle='#fff';x.font='800 36px Orbitron,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('Rebirth',128,50)};
+ drawSign();
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,fog:false}));sp.scale.set(3.4,1.28,1);sp.position.set(0,6.2,0);rebG.add(sp);
+ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{drawSign();sp.material.map.needsUpdate=true});
+}
+SOL.push([-97.4,BELT_Z-4.7,-91.5,BELT_Z+2.7]);
 function openShop(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('shop').style.display='flex';renderShop()}
 function closeShop(){shopOpen=false;$('shop').style.display='none';$('conf').style.display='none';pendingAct=null}
 /* ===== tienda: Decoración ===== */
@@ -967,7 +990,7 @@ function floorSvg(k){let r='';const H=15;
   return '<svg viewBox="0 0 100 100" width="86%" height="86%">'+r+'</svg>'}
 function renderFloors(){
   const g=$('dGrid');g.textContent='';const D=myDeco(),n=D.n;shopSig=sigNow();
-  $('fInfo').textContent='Tu base tiene '+n+' de 5 pisos · cada piso tiene 10 espacios y una escalera exterior · las compras son permanentes (solo "Restablecer todo" en Ajustes las quita)';
+  $('fInfo').textContent='Tu base tiene '+n+' de 5 pisos · cada piso tiene 10 espacios y una escalera exterior · las compras son permanentes (solo el administrador puede quitarlas)';
   for(let k=2;k<=MAXF;k++){
     const own=n>=k,next=k===n+1;
     const card=document.createElement('div');card.className='dcard'+(own?' own eq':'');if(!own){card.dataset.pr=FPR[k];if(money<FPR[k])card.classList.add('poor')}
@@ -983,7 +1006,7 @@ function noMoney(card,bt){
   try{bt.classList.remove('shk');void bt.offsetWidth;bt.classList.add('shk');setTimeout(()=>bt.classList.remove('shk'),450);
     if(!card.querySelector('.nomoney')){const m=document.createElement('div');m.className='nomoney';m.textContent='Dinero\nInsuficiente';card.appendChild(m);setTimeout(()=>m.remove(),1000)}}catch(e){}}
 function askBuyFloor(k){pendingAct={buyF:k};
-  $('confDesc').textContent='¿Comprar el Piso '+k+' por '+fmtM(FPR[k])+'? Tu base tendrá 10 espacios más y una escalera para subir. Es permanente: solo se quita con «Restablecer todo» en Ajustes.';$('conf').style.display='flex'}
+  $('confDesc').textContent='¿Comprar el Piso '+k+' por '+fmtM(FPR[k])+'? Tu base tendrá 10 espacios más y una escalera para subir. Es permanente: solo el administrador puede quitarlo.';$('conf').style.display='flex'}
 async function buyFloor(k){
   if(money<FPR[k]){toast('No te alcanza el dinero para el Piso '+k);return}
   const r=await srv('fbuy',{n:k});
@@ -1075,7 +1098,7 @@ function openNm(){$('nmIn').value=userName;$('nm').style.display='flex';setTimeo
 function closeNm(){$('nm').style.display='none';$('nmIn').blur()}
 $('optName').onclick=openNm;$('nmNo').onclick=closeNm;
 $('nmYes').onclick=()=>{const n=$('nmIn').value.trim();if(!n){const u=$('nmIn');u.classList.remove('bad');void u.offsetWidth;u.classList.add('bad');u.focus();return}setUserName(n);emit({t:'name',name:n});srv('nick',{nick:n});closeNm();closeSet();toast('Ahora te llamas '+n)};
-$('optReset').onclick=()=>askConfirm('all');$('optClean').onclick=()=>askConfirm('base');
+$('optClean').onclick=()=>askConfirm('base');
 $('confNo').onclick=()=>{pendingAct=null;$('conf').style.display='none'};
 $('confYes').onclick=()=>{
   const k=pendingAct;pendingAct=null;
