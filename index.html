@@ -324,7 +324,7 @@ body.mob #tpRow{top:calc(env(safe-area-inset-top,0px) + 42px);gap:5px}
 body.mob #tpRow button{padding:4px 11px;font-size:.62rem;border-width:2px}
 body.mob.det #tpRow{top:calc(env(safe-area-inset-top,0px) + 82px)}
 body.mob #toast{top:calc(env(safe-area-inset-top,0px) + 58px);left:54px;right:96px;font-size:.75rem}
-body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 70px);padding:2px 12px;border-width:2px;font-size:.62rem;box-shadow:0 2px 0 #35200e,0 0 12px rgba(255,200,40,.8)}
+body.mob #gt{top:calc(env(safe-area-inset-top,0px) + 70px);padding:2px 10px;border-width:2px;font-size:.56rem;letter-spacing:0;box-shadow:0 2px 0 #35200e,0 0 12px rgba(255,200,40,.8)}
 body.mob .sbox{padding:10px 12px;border-width:4px;border-radius:20px}
 body.mob #shop,body.mob #set,body.mob #conf,body.mob #nm,body.mob #cat,body.mob #skins{padding:6px}
 body.mob .sbox,body.mob #adm .admbox,body.mob #chatL,body.mob #panel,body.mob .admwrap{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
@@ -1041,7 +1041,7 @@ function updPrompt(){
         tipHtml=key+'<b>Comprar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="'+(ok?'ok':'no')+'">$'+fm(PRICE[l])+(ok?'':' · te faltan $'+fm(Math.ceil(PRICE[l]-money)))+'</i>'}
       else if(nr&&nr.k==='ground'){const o=nr.o;tipPos=[o.g.position.x,o.g.position.y+2.1,o.g.position.z];tipHtml=key+'<b>Agarrar '+NAMES[o.lvl]+'</b>'+rarTag(o.lvl)+'<i class="ok">¡del suelo!</i>'}
       else if(nr&&nr.k==='steal'&&!STL){const q=nr.o,l=q.s.item.userData.lvl;tipPos=[q.s.x,(q.s.y||BH)+2.2,q.s.z];tipHtml=key+'<b>Mantén E para robar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="ok">'+STEAL_T+' s</i>'}
-      if(!tipHtml&&!MOB){const nd=nearDancer();if(nd&&syncGap(nd)>.8){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+6.6,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
+      if(!tipHtml&&!MOB&&hasDance()){const nd=nearDancer();if(nd&&syncGap(nd)>.8){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+6.6,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
       if(!tipHtml){const on=ownSlotNear();if(on){tipPos=[on.s.x,(on.s.y||BH)+2.2,on.s.z];tipHtml='<span class="k">F</span><b>Mover</b> &nbsp;<span class="k">H</span><b>Eliminar</b>'}}
     }else{
       let bd=5,bs=null;slots.forEach(s=>{if(!lvOk(s,p))return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;bs=s}});
@@ -1708,8 +1708,8 @@ function setGT(left){GT.end=left>0?performance.now()+left:0}
 function updGT(){
   const a=gtActive(),el=$('gt');
   if(a){const sc=Math.ceil((GT.end-performance.now())/1000);
-    if(!GT.on){GT.on=true;el.style.display='block';toast(MOB?'¡GOLDEN TIME!':'¡PAPU GOLDEN TIME! Salen los Papus más raros')}
-    if(sc!==GT.last){GT.last=sc;el.textContent=(MOB?'⚡ GOLDEN TIME ':'⚡ PAPU GOLDEN TIME ⚡  ')+Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0')}}
+    if(!GT.on){GT.on=true;el.style.display='block';toast(MOB?'¡PAPU GOLDEN TIME!':'¡PAPU GOLDEN TIME! Salen los Papus más raros')}
+    if(sc!==GT.last){GT.last=sc;el.textContent=(MOB?'⚡ PAPU GOLDEN TIME ':'⚡ PAPU GOLDEN TIME ⚡  ')+Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0')}}
   else if(GT.on){GT.on=false;GT.last=-1;el.style.display='none';toast('Terminó el Papu Golden Time')}
 }
 function pick(){const W=gtActive()?WGT_GT:WGT,T=W.reduce((a,b)=>a+b,0);let r=Math.random()*T;for(let i=0;i<W.length;i++){if(!W[i])continue;r-=W[i];if(r<=0)return i}return 5}
@@ -2176,7 +2176,7 @@ function leaveNow(){
   try{
     if(!NET.on)return;
     if(NET.host)bcast({t:'bye'});else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'bye'});
-    NET.peer&&NET.peer.destroy();
+    const pe=NET.peer;setTimeout(()=>{try{pe&&pe.destroy()}catch(e){}},400);   /* un instante para que el aviso salga antes de cerrar */
   }catch(e){}
 }
 addEventListener('pagehide',leaveNow);addEventListener('beforeunload',leaveNow);
@@ -2187,7 +2187,7 @@ setInterval(()=>{
   {let ch=false;const alive=document.hidden?false:true;
    for(const id in NET.players){const p=NET.players[id];if(!alive)break;
      const last=NET.host?p.seen:p.sT,gone=last!=null&&now-last>3000&&(NET.host||now-(NET.hseen||0)<4000);
-     if(!!p.gone!==gone){p.gone=gone;ch=true}
+     if(!!p.gone!==gone){p.gone=gone;ch=true;const bb=BASES[p.base];if(bb){bb.ghost=gone;if(gone)cancelStealOf(bb);bb.slots.forEach(s=>{if(s.item)s.item.visible=!gone})}}   /* sin señal: su base desaparece igual que su personaje */
      if(!NET.host&&last!=null&&now-last>6500&&now-(NET.hseen||0)<4000)dropPlayer(+id)}   /* el anfitrion ya no lo reenvia: se fue */
    if(ch)updRoom()}
   if(NET.host){
@@ -2210,7 +2210,7 @@ function hideState(){
 let snapRem=false,mobLeft=false;
 document.addEventListener('visibilitychange',()=>{
   if(MOB&&running&&ACC.tok){
-    if(document.hidden){hideState();mobLeft=true;try{leaveNow()}catch(e){}NET.on=false;return}   /* pantalla apagada: todos lo ven irse de inmediato */
+    if(document.hidden){mobLeft=true;try{leaveNow()}catch(e){}NET.on=false;hideState();return}   /* pantalla apagada: todos lo ven irse de inmediato */
     if(mobLeft){mobLeft=false;location.reload();return}   /* al volver, entra otra vez limpio con su cuenta */
   }
   if(document.hidden)hideState();
@@ -2306,7 +2306,7 @@ setInterval(syncNow,5000);
 /* el admin avisa por la sala: el afectado (o todos) sincroniza al instante, sin esperar el ciclo */
 function liveSync(){if(performance.now()-syncAt>1500)syncNow()}
 /* al cerrar la pestaña o mandar el navegador al fondo (celular), el servidor lo marca fuera de línea al instante; al volver se sincroniza de nuevo. Un solo aviso, sin aumentar las peticiones normales */
-function awayBeacon(){if(ACC.tok&&running){try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'away',tok:ACC.tok})],{type:'application/json'}))}catch(e){}}}
+function awayBeacon(){if(ACC.tok&&running){try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'away',tok:ACC.tok,mob:MOB?1:0})],{type:'application/json'}))}catch(e){}}}
 addEventListener('pagehide',awayBeacon);document.addEventListener('freeze',awayBeacon);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)awayBeacon();else if(running&&ACC.tok)syncNow()});
 function beginPlay(){$('chatBtn').style.display='flex';sfxInit();$('panel').style.display='none';$('tpRow').style.display='flex';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
@@ -2519,7 +2519,7 @@ async function pickGround(o){
 function stealTarget(){
   const p=player.position;let best=null,bd=4.5;
   BASES.forEach(b=>{
-    if(b===myBase||b.owner===null||b.barrierOn)return;
+    if(b===myBase||b.owner===null||b.barrierOn||b.ghost)return;
     b.slots.forEach((s,i)=>{if(!s.item||!lvOk(s,p))return;const d=Math.hypot(s.x-p.x,s.z-p.z);if(d<bd){bd=d;best={b,i,s}}});
   });
   return best;
@@ -2531,10 +2531,11 @@ function startSteal(tg){
   $('stlLbl').textContent='Robando '+NAMES[tg.s.item.userData.lvl]+'…';$('stlFill').style.width='0%';$('stl').style.display='block';
 }
 function cancelSteal(){if(STL){STL=null;$('stl').style.display='none'}}
+function cancelStealOf(b){if(STL&&STL.b===b)cancelSteal()}
 function updSteal(dt){
   if(!STL)return;
   const s=STL.b.slots[STL.i],p=player.position;
-  if(held||stunT>0||!keys.e||!s||!s.item||STL.b.barrierOn||STL.b.owner===null||Math.hypot(s.x-p.x,s.z-p.z)>5.6||!lvOk(s,p)||mode==='air'){cancelSteal();return}
+  if(held||stunT>0||!keys.e||!s||!s.item||STL.b.barrierOn||STL.b.ghost||STL.b.owner===null||Math.hypot(s.x-p.x,s.z-p.z)>5.6||!lvOk(s,p)||mode==='air'){cancelSteal();return}
   STL.t+=dt;$('stlFill').style.width=Math.min(100,STL.t/STEAL_T*100)+'%';
   if(STL.t>=STEAL_T){const t=STL;cancelSteal();finishSteal(t)}
 }
