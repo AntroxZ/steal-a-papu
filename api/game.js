@@ -83,7 +83,8 @@ class Err extends Error { constructor(msg, code) { super(msg); this.code = code 
 
 /* ---- ingresos: el servidor calcula el dinero, el cliente no puede inventarlo ---- */
 function accrue(r, now) {
-  const dt = Math.min(Math.max(now - (r.t || now), 0), MAX_DT) / 1000;
+  const dms = Math.min(Math.max(now - (r.t || now), 0), MAX_DT), dt = dms / 1000;
+  r.pt = (r.pt || 0) + dms;   /* tiempo jugado (ms), para la tabla de clasificación */
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
   r.money = Math.min(MAXM, r.money + inc * dt); r.t = now; r.seen = now; r.off = 0;
 }
@@ -155,6 +156,25 @@ const isClosed = async () => !!(await db('GET', 'srv:closed'));
 const checkUser = u => /^[A-Za-z0-9_]{3,16}$/.test(u);
 const cleanNick = n => String(n || '').trim().replace(/\s+/g, ' ').slice(0, 14);
 
+/* ---- TABLA DE CLASIFICACIÓN: un solo registro 'lb' con el top 5 de cada categoría (m dinero, p tiempo jugado en s, s robos).
+   Se actualiza dentro del sync que ya existe (sin peticiones nuevas) y se lee una sola vez al abrir la tabla ---- */
+const LBN = 5;
+function lbApply(lb, r) {
+  if (isAdminUser(r.user) || !r.aid) return false;
+  const vals = { m: Math.floor(r.money), p: Math.floor((r.pt || 0) / 1000), s: r.sc | 0 };
+  let structural = false, changed = false;
+  for (const k of ['m', 'p', 's']) {
+    const a = lb[k] || (lb[k] = []), v = vals[k], before = a.map(e => e[0]).join();
+    const i = a.findIndex(e => e[0] === r.aid);
+    if (i >= 0) { if (v <= 0) { a.splice(i, 1); changed = true; } else if (a[i][2] !== v || a[i][1] !== r.nick) { a[i][2] = v; a[i][1] = r.nick; changed = true; } }
+    else if (v > 0 && (a.length < LBN || v > a[a.length - 1][2])) { a.push([r.aid, r.nick, v]); changed = true; }
+    a.sort((x, y) => y[2] - x[2]); if (a.length > LBN) a.length = LBN;
+    if (a.map(e => e[0]).join() !== before) structural = true;
+  }
+  return changed ? (structural ? 2 : 1) : 0;   /* 2 = cambió el puesto de alguien, 1 = solo cambiaron números */
+}
+const lbParse = s => { try { const o = s ? JSON.parse(s) : {}; return { m: o.m || [], p: o.p || [], s: o.s || [], t: o.t || 0 }; } catch (e) { return { m: [], p: [], s: [], t: 0 }; } };
+
 const actions = {
   async register(b) {
     if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
@@ -206,8 +226,12 @@ const actions = {
     const r = await userFromTok(b.tok); accrue(r, Date.now()); r.off = 1; r.mob = b.mob ? 1 : 0; await saveRec(r); return { ok: true };
   },
   async sync(b) {
-    const [r, info] = await Promise.all([userFromTok(b.tok), evInfo()]);   /* en paralelo: menos tiempo de funcion */
-    accrue(r, Date.now()); await saveRec(r);   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
+    const [r, info, lbs] = await Promise.all([userFromTok(b.tok), evInfo(), db('GET', 'lb')]);   /* en paralelo: menos tiempo de funcion */
+    accrue(r, Date.now());
+    const lb = lbParse(lbs), ch = lbApply(lb, r), nowT = Date.now();
+    const jobs = [saveRec(r)];   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
+    if (ch === 2 || (ch === 1 && nowT - lb.t > 25000)) { lb.t = nowT; jobs.push(db('SET', 'lb', JSON.stringify(lb))); }
+    await Promise.all(jobs);
     const t = readTok(b.tok);
     if (info.closed && !(t && t.adm)) throw new Err('El servidor se cerró. Tu progreso se guardó.', 'closed');
     return { st: view(r), ...info };
@@ -266,10 +290,16 @@ const actions = {
     const lvl = v.slots[slot];
     if (lvl == null || lvl < 0) { await saveRec(v); await saveRec(r); return { ok: false, st: view(r) }; }
     v.slots[slot] = -1; await saveRec(v);
-    r.held = lvl; r.hpaid = 0; await saveRec(r);
+    r.held = lvl; r.hpaid = 0; r.sc = (r.sc || 0) + 1; await saveRec(r);   /* un robo más para la tabla de clasificación */
     return { ok: true, lvl, st: view(r) };
   },
   /* traspaso de anfitrion: el admin pide una prueba corta y el anfitrion actual la verifica (la prueba no sirve para nada mas) */
+  /* tabla de clasificación: una sola lectura, sin recorrer cuentas */
+  async top(b) {
+    if (!readTok(b.tok)) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
+    const lb = lbParse(await db('GET', 'lb'));
+    return { lb: { m: lb.m, p: lb.p, s: lb.s } };
+  },
   async hproof(b) { adminFromTok(b.tok); return { pr: signTok({ h: 1, exp: Date.now() + 60000 }) }; },
   async hchk(b) { const t = readTok(b.pr); return { ok: !!(t && t.h === 1) }; },
   /* mover un Papu de tu base: lo levanta a la mano (se coloca con place) */
@@ -423,7 +453,9 @@ const actions = {
   },
   async adel(b) {
     adminFromTok(b.tok);
-    const u = String(b.user || ''); if (isAdminUser(u)) throw new Err('La cuenta de administrador no se puede borrar.'); await db('DEL', ukey(u)); await db('SREM', 'users', u.toLowerCase()); return { ok: true };
+    const u = String(b.user || ''); if (isAdminUser(u)) throw new Err('La cuenta de administrador no se puede borrar.');
+    { const d = await loadRec(u); if (d && d.aid) { const lb = lbParse(await db('GET', 'lb')); let c = false; for (const k of ['m', 'p', 's']) { const n = lb[k].filter(e => e[0] !== d.aid); if (n.length !== lb[k].length) { lb[k] = n; c = true; } } if (c) await db('SET', 'lb', JSON.stringify(lb)); } }
+    await db('DEL', ukey(u)); await db('SREM', 'users', u.toLowerCase()); return { ok: true };
   }
 };
 
