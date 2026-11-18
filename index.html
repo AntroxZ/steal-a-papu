@@ -2538,7 +2538,7 @@ function loadPeer(cb){
 }
 let detOpen=false;
 function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';const n=Object.values(NET.players).filter(q=>!q.gone).length+1;
-  e.textContent=detOpen?(MOB?'Sala principal\n'+n+(n>1?' jugadores':' jugador')+'\n':'Sala principal · '+n+(n>1?' jugadores':' jugador')+'\n')+FPS+' FPS'+(NET.host||NET.rtt==null?'':' · '+NET.rtt+' ms'):'Detalles';
+  e.textContent=detOpen?(MOB?'Sala '+(NET.code||'')+'\n'+n+(n>1?' jugadores':' jugador')+'\n':'Sala '+(NET.code||'')+' · '+n+(n>1?' jugadores':' jugador')+'\n')+FPS+' FPS'+(NET.host||NET.rtt==null?'':' · '+NET.rtt+' ms'):'Detalles';
   e.classList.toggle('open',detOpen);document.body.classList.toggle('det',detOpen)}
 function bcast(m,except){for(const id in NET.conns){if(+id===except)continue;const c=NET.conns[id];if(c&&c.open)c.send(m)}}
 function emit(m){if(!NET.on)return;if(NET.host)bcast(Object.assign({pid:NET.pid},m));else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send(m)}
@@ -2957,7 +2957,7 @@ function srv(a,body){
 let syncAt=0;
 function syncNow(){
   if(!running||!ACC.tok||document.hidden)return;   /* oculto/bloqueado: no pedir nada (asi no se vuelve a marcar en linea) */syncAt=performance.now();const v=ACC.ver;
-  ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok,hc:(NET.on&&NET.host&&NET.code)?NET.code:undefined});if(r.code==='auth'||r.code==='closed'){kicked(r.err);return}gotSrv(r);
+  ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok,cv:3,hc:(NET.on&&NET.host&&NET.code)?NET.code:undefined});if(r.code==='auth'||r.code==='closed'){kicked(r.err);return}gotSrv(r);
     if(r.rc&&NET.on&&NET.code&&r.rc!==NET.code&&!NET.yielding&&!NET.migrating){NET.yielding=true;toast('Cambiando a la sala principal…');try{leaveNow()}catch(e){}setTimeout(()=>location.reload(),900)}   /* si estás en otra sala, pasas a la que el servidor marca como principal */
     if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
 }
