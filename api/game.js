@@ -29,7 +29,7 @@ INC.push(INC[16] * 10); PRICE.push(PRICE[16] * 10);
 [[18, 1000], [26, 1700], [35, 2500], [600, 650000], [2100, 3600000], [4000, 7200000]].forEach(([i, p]) => [1, 4, 10, 25].forEach(m => { INC.push(i * m); PRICE.push(p * m); }));
 const MAXLVL = INC.length - 1;
 /* SALA ACTIVA: el servidor guarda el código de la sala (clave 'rm', caduca en 35 s si el anfitrión no la renueva). Así nunca hay dos salas ni una sala fantasma. */
-const RM_TTL = 35, okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
+const RM_TTL = 50, okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
 const CV = 3;
 const FPRICE = [0, 0, 12000000, 29000000, 70000000, 78000000], MAXF = 5, SLOTF = 10;
@@ -271,7 +271,7 @@ const actions = {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const gid = String(b.gid || '');
     if (!/^[a-z0-9]{4,12}$/.test(gid)) throw new Err('Jugada no válida.', 'bad');
-    if (r.held >= 0) { await db('SET', 'g:' + gid, String(r.held), 'EX', b.q ? 4 : 14); r.held = -1; r.hpaid = 0; }
+    if (r.held >= 0) { await db('SET', 'g:' + gid, String(r.held), 'EX', b.p ? 86400 : b.q ? 4 : 14);   /* b.p: Papu sacado de una base y soltado por un ladrón: se queda en el suelo hasta que alguien lo agarre */ r.held = -1; r.hpaid = 0; }
     await saveRec(r); return { st: view(r) };
   },
   async pick(b) {
