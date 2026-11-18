@@ -124,7 +124,7 @@ button:hover{background:var(--cy);color:#04060f}
 #admT .catrow .y{color:#c8ff9a}#admT .catrow .n{opacity:.6}
 #skins{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(25,14,5,.6);backdrop-filter:blur(3px);padding:12px}
 .skhint{margin:0;font-size:.9rem;font-weight:600;color:#fff2d6;text-shadow:0 1px 0 #3a200b,0 0 3px #3a200b}
-.skgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}@media(max-width:860px){.skgrid{grid-template-columns:repeat(3,1fr)}}@media(max-width:620px){.skgrid{grid-template-columns:repeat(2,1fr)}}
+.skgrid{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding:4px 2px 12px;-webkit-overflow-scrolling:touch;touch-action:pan-x;overscroll-behavior-x:contain;cursor:grab}.skgrid:active{cursor:grabbing}.skgrid .skcard{flex:0 0 160px;scroll-snap-align:start}.skgrid::-webkit-scrollbar{height:10px}.skgrid::-webkit-scrollbar-thumb{background:#8a5a2b;border-radius:6px}.skgrid::-webkit-scrollbar-track{background:rgba(0,0,0,.25);border-radius:6px}
 #skins .sbox.sm{width:min(960px,96vw);max-height:94vh;overflow:auto}
 .skname{font-size:.9rem}
 .skcard{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px;border:3px solid #4a2a12;border-radius:18px;background:rgba(60,30,10,.4);box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}
@@ -342,7 +342,7 @@ body.mob .dcard{padding:6px 5px 7px;gap:3px}
 body.mob .dsw{max-width:74px;font-size:1.8rem}
 body.mob .dn{min-height:2.2em;font-size:.7rem}body.mob .dp{font-size:.72rem}body.mob .dcard button{padding:5px 3px;font-size:.7rem}
 body.mob .dgrid{gap:7px}
-@media(orientation:landscape){body.mob .dgrid{grid-template-columns:repeat(5,1fr)}body.mob .sgrid{grid-template-columns:repeat(5,1fr)}body.mob .skgrid{grid-template-columns:repeat(5,1fr)}body.mob .catgrid{grid-template-columns:repeat(4,1fr)}}
+@media(orientation:landscape){body.mob .dgrid{grid-template-columns:repeat(5,1fr)}body.mob .sgrid{grid-template-columns:repeat(5,1fr)}body.mob .skgrid .skcard{flex-basis:130px}body.mob .catgrid{grid-template-columns:repeat(4,1fr)}}
 body.mob .nomoney{font-size:.62rem}
 
 .sbox.fx{overflow:hidden;display:flex;flex-direction:column}
@@ -371,7 +371,7 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
 .rbbox .sbody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-right:4px}
 #rebList{display:flex;flex-direction:column;gap:10px}
 .sbox #rebX{width:42px;height:42px;font-size:1.6rem;border-radius:50%;padding:0;margin:0;color:var(--tx);background:linear-gradient(180deg,#c2603f,#a4472b 55%,#8a361e);border:3px solid #4a2a12}
-.rbrow{display:grid;grid-template-columns:110px 1fr 160px;gap:6px 14px;align-items:center;padding:10px 14px;border:3px solid #4a2a12;border-radius:16px;background:rgba(60,30,10,.4);box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}
+.rbrow{display:grid;grid-template-columns:96px 1fr 150px;gap:6px 14px;align-items:center;padding:10px 14px;border:3px solid #4a2a12;border-radius:16px;background:rgba(60,30,10,.4);box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}
 .rbn{font-family:var(--wf);font-size:1.25rem;font-weight:800;color:var(--tx);text-shadow:var(--ol);text-align:center;padding:14px 4px;border-radius:12px;background:linear-gradient(180deg,#e0803a,#c0402a);border:3px solid #4a2a12}
 .rbl{font-family:var(--wf);font-size:.72rem;font-weight:700;color:#ffeccb;opacity:.85}
 .rbm{font-family:var(--wf);font-size:1.15rem;font-weight:800;color:var(--tx);text-shadow:var(--ol);margin-bottom:6px}
@@ -384,6 +384,15 @@ body.mob ::-webkit-scrollbar{width:7px;height:7px}
 .rbx2{font-family:var(--wf);font-size:1.5rem;font-weight:800;color:#ffd23a;text-shadow:var(--ol)}
 .rbl2{font-family:var(--wf);font-size:.72rem;color:#ffeccb;opacity:.85}
 .sbox .rbclaim{margin-top:6px;padding:7px 18px;font-size:.9rem;opacity:.55;cursor:default}
+.rbmid{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rbreq{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.rbitem{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border:3px solid #4a2a12;border-radius:14px;background:rgba(0,0,0,.3);min-width:0}
+.rbimg{flex:0 0 58px;height:58px;border-radius:10px;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.rbimg img{max-width:100%;max-height:100%}
+.rbt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 auto}
+.rbname{font-family:var(--wf);font-size:.85rem;font-weight:800;color:#fff;line-height:1.15;text-shadow:var(--ol);word-break:break-word}
+.rbcat{font-size:.62rem;font-weight:800;letter-spacing:.12em}
+.rbq{font-family:var(--wf);font-size:1.25rem;font-weight:800;color:#ffd23a;text-shadow:var(--ol);flex:0 0 auto}
 .rbwarn{grid-column:1/-1;font-family:var(--wf);font-size:.7rem;color:#ffc9a8;opacity:.9;border-top:2px solid rgba(74,42,18,.6);padding-top:6px}
 @media(max-width:620px){.rbrow{grid-template-columns:1fr;text-align:center}.rbps{justify-content:center}.rbn{padding:8px}}
 body.mob #reb{padding:6px}
@@ -443,7 +452,7 @@ body.mob #reb{padding:6px}
 </div></div>
 <div id="skins"><div class="sbox sm">
   <div class="shead"><div class="stitle">SKINS</div><button id="skinX" aria-label="Cerrar">&times;</button></div>
-  <p class="skhint">Elige con qué personaje juegas. ¡Ya tienes los once desbloqueados! (Los cubos grises son Papus que aún no tienen modelo 3D.)</p>
+  <p class="skhint">Elige con qué personaje juegas. Desliza hacia la derecha para ver más skins →  (los cubos grises son Papus que aún no tienen modelo 3D)</p>
   <div class="skgrid">
     <div class="skcard" id="skcard0"><canvas id="skc0" width="180" height="230"></canvas><div class="skname">Sansini Danini</div><button class="skbtn" data-k="0">Elegir</button></div>
     <div class="skcard" id="skcard1"><canvas id="skc1" width="180" height="230"></canvas><div class="skname">Andriksini Lunini</div><button class="skbtn" data-k="1">Elegir</button></div>
@@ -530,7 +539,12 @@ const MODEL=[0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],NAMES=[,,,,,'Sansini Danini','Sa
 /* 5 categorias: 0 comun (gris) · 1 epico (morado) · 2 legendario (naranja) · 3 dorado (amarillo) · 4 ultra (rojo) */
 const RAR_OF=l=>(l===16||l===27)?4:VAR[l]===1?3:VAR[l]===2?5:VAR[l]===3?6:l>=28?LRAR[l]:(l===7||l===9||l===15)?2:l===11?1:0;
 const RAR_N=['COMÚN','ÉPICO','LEGENDARIO','DORADO','ULTRA','DIAMANTE','RAINBOW'],RAR_C=['#b8bcc4','#b36bff','#ff8a1f','#ffd23a','#ff2a2a','#4db8ff','#ff6ad5'];
-const fm=n=>(n<10&&n%1?+n.toFixed(1):Math.floor(n)).toLocaleString('es-MX'),fc=n=>n>=1e6?+(n/1e6).toFixed(2)+'M':n>=1e3?+(n/1e3).toFixed(1)+'K':String(n);
+/* cantidades grandes con letras: K mil · M millón · B mil millones · T billón · Q cuatrillón ... */
+const ABB=['','K','M','B','T','Q','Qi','Sx','Sp','Oc','No','Dc'];
+const abb=n=>{n=Math.floor(+n)||0;if(n<1000)return n.toLocaleString('es-MX');let e=Math.min(Math.floor(Math.log10(n)/3),ABB.length-1),v=n/Math.pow(10,3*e);if(+v.toFixed(2)>=1000&&e<ABB.length-1){e++;v/=1000}return +v.toFixed(2)+ABB[e]};
+const fm=n=>n>=1000?abb(n):(n<10&&n%1?+n.toFixed(1):Math.floor(n)).toLocaleString('es-MX'),fc=n=>n>=1000?abb(n):String(n);
+/* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar el progreso ni al hacer Rebirth (misma lista en el servidor) */
+const EXCLUSIVO=['bat','dance'];
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
 const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=5,GROUND_LIFE=10000,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
@@ -1030,15 +1044,15 @@ const REB_LV=[
  {n:8,money:230e9,mult:5,papus:[[21,2],[43,1]]},
  {n:9,money:600e9,mult:5.5,papus:[[47,2],[16,1]]},
  {n:10,money:900e9,mult:6,papus:[[51,1],[22,1],[43,1],[47,1],[16,1],[27,1]]}];
-const rbMoney=n=>'$'+(n>=1e9?+(n/1e9).toFixed(2)+'B':n>=1e6?+(n/1e6).toFixed(2)+'M':n.toLocaleString('es-MX'));
+const rbMoney=n=>'$'+abb(n);
 function renderReb(){
   catThumbs();
   $('rebList').innerHTML=REB_LV.map(L=>{
-    const slots=L.papus.map(([l,q])=>{const th=catImgs&&catImgs[l];return '<div class="rbp" title="'+NAMES[l]+'" style="border-color:'+RAR_C[RAR_OF(l)]+'">'+(th&&th.full?'<img alt="" src="'+th.full+'">':'<span>?</span>')+'<b>'+(q>1?'x'+q:'')+'</b></div>'}).join('');
-    const nm=L.papus.map(([l,q])=>(q>1?q+'× ':'')+NAMES[l]).join(' · ');
+    const req=L.papus.map(([l,q])=>{const th=catImgs&&catImgs[l],rc=RAR_C[RAR_OF(l)];
+      return '<div class="rbitem" style="border-color:'+rc+'aa"><div class="rbimg">'+(th&&th.full?'<img alt="" src="'+th.full+'">':'<span>?</span>')+'</div><div class="rbt"><div class="rbname">'+NAMES[l]+'</div><div class="rbcat" style="color:'+rc+'">'+catKind(l).toUpperCase()+' · '+RAR_N[RAR_OF(l)]+'</div></div><div class="rbq">×'+q+'</div></div>'}).join('');
     return '<div class="rbrow"><div class="rbn">Nivel '+L.n+'</div>'
-      +'<div class="rbmid"><div class="rbl">Dinero necesario</div><div class="rbm">'+rbMoney(L.money)+'</div>'
-      +'<div class="rbl">Papus necesarios en tu base</div><div class="rbps">'+slots+'</div><div class="rbl2">'+nm+'</div></div>'
+      +'<div class="rbmid"><div><div class="rbl">Dinero necesario</div><div class="rbm">'+rbMoney(L.money)+'</div></div>'
+      +'<div class="rbl">Papus necesarios en tu base</div><div class="rbreq">'+req+'</div></div>'
       +'<div class="rbrw"><div class="rbl">Recompensa</div><div class="rbx2">×'+L.mult+'</div><div class="rbl2">de dinero</div>'
       +'<button class="rbclaim" disabled title="Próximamente">Reclamar</button></div>'
       +'<div class="rbwarn">Al reclamar pierdes todo (los Papus de tu base y tu dinero), excepto los objetos exclusivos.</div></div>'}).join('')}
@@ -1046,7 +1060,7 @@ function openReb(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('
 function openShop(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('shop').style.display='flex';renderShop()}
 function closeShop(){shopOpen=false;$('shop').style.display='none';$('reb').style.display='none';$('conf').style.display='none';pendingAct=null}
 /* ===== tienda: Decoración ===== */
-const fmtM=n=>'$'+Math.round(n).toLocaleString('es-MX');
+const fmtM=n=>'$'+abb(Math.round(n));
 const myDeco=()=>{const d=ACC.st&&ACC.st.deco;return d?{o:d.o||[],c:d.c|0,f:d.f?1:0,n:d.n>=1?d.n|0:1}:{o:[],c:0,f:0,n:1}};
 function swatchOf(d){
   if(d.fire)return 'radial-gradient(circle at 50% 80%,#ff7a1a,#c4120c 55%,#2a0505)';
@@ -1180,7 +1194,7 @@ $('confYes').onclick=()=>{
   if(k&&k.buy){$('conf').style.display='none';buyDeco(k.buy);return}
   if(k&&k.buyF){$('conf').style.display='none';buyFloor(k.buyF);return}
   if(k&&k.buyO){$('conf').style.display='none';buyObj(k.buyO);return}
-  if(k==='all'){resetMe(false);const nd={o:[],c:0,f:0,n:1};ACC.st=Object.assign({},ACC.st,{deco:nd,inv:[]});applyMyDeco(nd);setEq(false);updInv();srv('reset')}else if(k==='base'){clearBase();srv('clear')}
+  if(k==='all'){resetMe(false);const nd={o:[],c:0,f:0,n:1};ACC.st=Object.assign({},ACC.st,{deco:nd,inv:((ACC.st&&ACC.st.inv)||[]).filter(i=>EXCLUSIVO.includes(i))});applyMyDeco(nd);setEq(false);updInv();srv('reset')}else if(k==='base'){clearBase();srv('clear')}
   $('conf').style.display='none';closeSet();
   toast(k==='all'?'Cuenta reiniciada desde cero: sin Papus, pisos, decoración ni objetos, y dinero en $50':'Base limpia: tu dinero sigue igual');
 };
@@ -1195,9 +1209,9 @@ $('rebX').onclick=closeShop;
 $('tpShop').onclick=()=>{$('tpShop').blur();tpTo(SHOP_X-8,BELT_Z,-Math.PI/2,true,.58)};   /* en medio de las dos tiendas y mirando hacia ellas */
 $('tpBase').onclick=()=>{$('tpBase').blur();const sp=myBase.W(0,BZ0-3);tpTo(sp[0],sp[1],myBase.dir>0?0:Math.PI)};
 /* catalogo (bitacora de Papus conseguidos, guardada en el servidor) */
-const CAT_ORDER=[5,6,17,18,13,14,25,26,28,29,30,31,32,33,34,35,36,37,38,39,11,12,23,24,7,8,19,20,40,41,42,43,9,10,21,22,44,45,46,47,48,49,50,51,15,16,27];
+const CAT_ORDER=[5,6,17,18,13,14,25,26,11,12,23,24,7,8,19,20,28,29,30,31,36,37,38,39,32,33,34,35,40,41,42,43,9,10,21,22,44,45,46,47,48,49,50,51,15,16,27];   /* de lo mas comun a lo mas raro; por Papu: normal, dorado, diamante, rainbow */
 let catR=null,catImgs=null,catSel=-1;
-const catKind=l=>(l===16||l===27)?'Ultra':VAR[l]===1?'Dorado':VAR[l]===2?'Diamante':VAR[l]===3?'Rainbow':'Normal',catCls=l=>(l===16||l===27)?'u':VAR[l]===1?'d':VAR[l]===2?'di':VAR[l]===3?'rb':'n',AVAIL=l=>WGT[l]>0;
+const catKind=l=>l===27?'Ultra Rainbow':l===16?'Ultra':VAR[l]===1?'Dorado':VAR[l]===2?'Diamante':VAR[l]===3?'Rainbow':'Normal',catCls=l=>l===27?'rb':l===16?'u':VAR[l]===1?'d':VAR[l]===2?'di':VAR[l]===3?'rb':'n',AVAIL=l=>WGT[l]>0;
 const catProb=l=>{if(!AVAIL(l))return 'aún no disponible';const T=WGT.reduce((a,b)=>a+b,0),p=WGT[l]/T*100;return (p>=10?Math.round(p):+p.toFixed(1))+' %'};
 const catDate=ts=>new Date(+ts).toLocaleString('es-MX',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
 function catThumbs(){
@@ -1266,6 +1280,13 @@ function openSkins(){if(!running||shopOpen||setOpen)return;setOpen=true;skinOpen
 function selectSkin(k){if(k===curSkin)return;useRig(k);emit({t:'skin',k});srv('skin',{k});renderSkins();toast('Ahora juegas con '+SKINS[k].name)}
 $('skinBtn').onclick=()=>{$('skinBtn').blur();openSkins()};$('skinX').onclick=closeSet;
 document.querySelectorAll('.skbtn').forEach(b=>b.onclick=()=>selectSkin(+b.dataset.k));
+{const g=document.querySelector('.skgrid');
+ g.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){g.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
+ let dx=null,sl=0,mv=0;
+ g.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button===0){dx=e.clientX;sl=g.scrollLeft;mv=0}});
+ addEventListener('pointermove',e=>{if(dx!=null){const d=e.clientX-dx;if(Math.abs(d)>4)mv=1;g.scrollLeft=sl-d}});
+ addEventListener('pointerup',()=>{dx=null});
+ g.addEventListener('click',e=>{if(mv){e.stopPropagation();e.preventDefault();mv=0}},true)}
 /* texturas */
 const IMG=[],faceT=[],labT=[];
 function cover(ctx,im,r){const k=Math.max(2*r/im.width,2*r/im.height),w=im.width*k,h=im.height*k;ctx.drawImage(im,128-w/2,128-h/2,w,h)}
@@ -2501,7 +2522,7 @@ function syncNow(){
   if(!running||!ACC.tok||document.hidden)return;   /* oculto/bloqueado: no pedir nada (asi no se vuelve a marcar en linea) */syncAt=performance.now();const v=ACC.ver;
   ACC.q=ACC.q.then(async()=>{const r=await api('sync',{tok:ACC.tok});if(r.code==='auth'||r.code==='closed'){kicked(r.err);return}gotSrv(r);if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
 }
-setInterval(syncNow,5000);
+setInterval(syncNow,10000);   /* antes 5 s: la mitad de llamadas a Vercel; el servidor acepta hasta 25 s de ingreso por llamada */
 /* el admin avisa por la sala: el afectado (o todos) sincroniza al instante, sin esperar el ciclo */
 function liveSync(){if(performance.now()-syncAt>1500)syncNow()}
 /* al cerrar la pestaña o mandar el navegador al fondo (celular), el servidor lo marca fuera de línea al instante; al volver se sincroniza de nuevo. Un solo aviso, sin aumentar las peticiones normales */
@@ -2951,10 +2972,10 @@ function loop(now){
     syncBat(BATL,RG,myEq&&!DNL.on);if(myEq&&batSw)batPose(BATL,batSw.t0,performance.now());
     let inc=0,n=0;slots.forEach(s=>{if(s.item){inc+=INC[s.item.userData.lvl];n++;s.item.children[0].position.y=bobY(s.item.userData.lvl)+Math.sin(now/400+s.x)*.15}});
     money=Math.min(1e27,money+inc*dt);
-    if(now-hudLast>120){hudLast=now;const mt=Math.floor(money).toLocaleString('es-MX')+'$';if(mt!==hudM){hudM=mt;const me=$('money');me.textContent=mt;me.style.fontSize=mt.length>22?'.62rem':mt.length>16?'.8rem':''}const it=fm(inc)+' $/s';if(it!==hudI){hudI=it;$('inc').textContent=it}const ct=n+'/'+slots.length;if(ct!==hudC){hudC=ct;$('cnt').textContent=ct}}
+    if(now-hudLast>120){hudLast=now;const mt=abb(money)+'$';if(mt!==hudM){hudM=mt;const me=$('money');me.textContent=mt;me.style.fontSize=mt.length>22?'.62rem':mt.length>16?'.8rem':''}const it=fm(inc)+' $/s';if(it!==hudI){hudI=it;$('inc').textContent=it}const ct=n+'/'+slots.length;if(ct!==hudC){hudC=ct;$('cnt').textContent=ct}}
     gameTick(dt,now);
   }
-  batTick(performance.now());updWaves(dt);updBarrier(dt,now);if(now-promptLast>66){promptLast=now;updPrompt()}if(NET.on)updRemotes(dt);if(shopOpen){$('shopMoney').textContent='$'+Math.floor(money).toLocaleString('es-MX');if(now-poorLast>200){poorLast=now;document.querySelectorAll('#dGrid .dcard[data-pr]').forEach(c=>c.classList.toggle('poor',money<+c.dataset.pr))}}
+  batTick(performance.now());updWaves(dt);updBarrier(dt,now);if(now-promptLast>66){promptLast=now;updPrompt()}if(NET.on)updRemotes(dt);if(shopOpen){$('shopMoney').textContent='$'+abb(money);if(now-poorLast>200){poorLast=now;document.querySelectorAll('#dGrid .dcard[data-pr]').forEach(c=>c.classList.toggle('poor',money<+c.dataset.pr))}}
   const p=player.position,cgT=gY+py-.5*Math.min(py,4);camG+=(cgT-camG)*Math.min(1,dt*(cgT<camG?10:8));const ly=1.1+camG;
   shadow.position.set(p.x,gY+.06,p.z);shadow.scale.setScalar(Math.max(.4,1-py/9));shadow.material.opacity=Math.max(.25,1-py/6);
   {const c0=cam.position;ROOFS.forEach(r=>{const ddx=Math.max(Math.abs(c0.x-r.x)-(BW/2+.8),0),ddy=Math.max(Math.abs(c0.y-r.y)-.55,0),ddz=Math.max(Math.abs(c0.z-r.z)-(BD/2+.8),0),dist=Math.hypot(ddx,ddy,ddz),tgt=Math.min(1,Math.max(.12,(dist-.8)/2.2));if(Math.abs(tgt-r.a)>.003){r.a+=(tgt-r.a)*Math.min(1,dt*10);r.mats.forEach(m=>m.opacity=r.a)}})}
