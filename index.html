@@ -864,7 +864,7 @@ const fm=n=>n>=1e9?abb(n):(n<10&&n%1?+n.toFixed(1):Math.floor(n)).toLocaleString
 /* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar el progreso ni al hacer Rebirth (misma lista en el servidor) */
 const EXCLUSIVO=['dance'];
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
-const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=5,GROUND_LIFE=10000,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
+const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=5,GROUND_LIFE=10000,PERSIST=1e12,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
 
 /* ===== BASE 001 (guardada, aún NO activa): Papus nuevos ya dentro del juego pero con peso 0 en la cinta (solo el admin puede invocarlos). La economía actual no cambia. ===== */
@@ -2297,7 +2297,7 @@ function stopDance(){
   if(WA.own){waStop(WA.own);WA.own=null;WA.ownEnded=false}
   try{if(danceAudio){danceAudio.pause();danceAudio.currentTime=0}}catch(e){}
 }
-function dropQ(){if(running&&held&&stunT<=0&&!shopOpen&&!setOpen){cancelSteal();dropHeld(3000);toast('Soltaste el Papu: se pierde en 3 s si nadie lo agarra')}}
+function dropQ(){if(running&&held&&stunT<=0&&!shopOpen&&!setOpen){cancelSteal();const per=dropPersists(held);dropHeld(3000);toast(per?'Soltaste el Papu: se queda en el suelo hasta que alguien lo agarre':'Soltaste el Papu: se pierde en 3 s si nadie lo agarra')}}
 function spacePress(){
   if(!running||shopOpen||setOpen||stunT>0)return;
   if(mode==='ground'||mode==='land'){vy=JV;mode='air';airT=0;py=.001;sfxPlay('jump',1.2);if(NET.on)emit({t:'sfx',k:'j',x:+player.position.x.toFixed(1),z:+player.position.z.toFixed(1)})}
@@ -2634,11 +2634,13 @@ function dropPlayer(pid,silent){
   if(p.av)scene.remove(p.av.g);
   if(BASES[p.base])freeBaseObj(BASES[p.base]);
   delete NET.players[pid];delete NET.conns[pid];delete NET.uc[pid];for(const k in NET.byPeer)if(NET.byPeer[k]==pid)delete NET.byPeer[k];
+  if(p.aid&&!Object.values(NET.players).some(o=>o.aid===p.aid))purgeGroundOf(p.aid);   /* se desconectó el dueño: sus Papus tirados desaparecen */
   if(NET.host)bcast({t:'leave',pid});
   updRoom();
 }
 function applyEvt(pid,m){
-  if(m.t==='gd'){addGround(m.gid,m.lvl,m.x,m.z,null,3.5,m.y,m.lf>0&&m.lf<=5000?m.lf|0:0);return}
+  if(m.t==='gd'){const ow=(typeof m.ow==='string'&&/^[A-Za-z0-9_-]{4,16}$/.test(m.ow))?m.ow:null;if(ow&&!ownerHere(ow))return;   /* su dueño ya no está: el Papu no queda en el suelo */
+    addGround(m.gid,m.lvl,m.x,m.z,null,3.5,m.y,ow?PERSIST:(m.lf>0&&m.lf<=5000?m.lf|0:0),ow);return}
   if(m.t==='gr'){removeGround(m.gid);return}
   if(m.t==='hit'){onHit(m.v,pid);return}
   if(m.t==='srv'){if(running&&NAMES[m.l|0])srvMsg('Admin spawneó '+NAMES[m.l|0]+'.');return}
@@ -2661,6 +2663,7 @@ function applyEvt(pid,m){
   else if(m.t==='sw'){if(p.av)p.av.swT=performance.now()}
 }
 const snapItems=()=>{const n=performance.now();return items.filter(o=>itemX(o,n)<BELT_L/2-1).map(o=>({iid:o.iid,lvl:o.g.userData.lvl,x:+itemX(o,n).toFixed(2)}))};
+const snapGround=()=>GROUND.filter(o=>o.ow&&ownerHere(o.ow)).map(o=>[o.gid,o.lvl,+o.g.position.x.toFixed(2),+o.g.position.z.toFixed(2),+o.gy.toFixed(2),o.ow]);
 function snapSlots(){const l=[];BASES.forEach(b=>b.slots.forEach((s,i)=>{if(s.item)l.push([b.idx,i,s.item.userData.lvl])}));return l}
 function snapPlayers(){
   const l=[{pid:NET.pid,name:userName,skin:curSkin,base:myBase.idx,bar:myBase.barrierOn,aid:myAid(),dc:myDc(),eq:myEq?1:0,tgt:null}];
@@ -2693,7 +2696,7 @@ function hostMsg(conn,m){
     }
     conn._pid=np;NET.conns[np]=conn;NET.byPeer[conn.peer]=np;
     const p=addPlayer(np,String(m.name||'Jugador').slice(0,14),m.skin|0,base,false,m.aid,m.dc);if(!ex)noteJoin(p);   /* quien vuelve tras un cambio de anfitrión no es un jugador nuevo */
-    conn.send({t:'welcome',pid:np,base,code:NET.code,hostPid:NET.pid,rj:!!ex,players:snapPlayers(),slots:snapSlots(),items:snapItems()});
+    conn.send({t:'welcome',pid:np,base,code:NET.code,hostPid:NET.pid,rj:!!ex,players:snapPlayers(),slots:snapSlots(),items:snapItems(),gnd:snapGround()});
     bcast({t:'join',p:{pid:np,name:p.name,skin:p.skin,base,aid:p.aid,dc:p.dc}},np);
     return;
   }
@@ -2755,6 +2758,7 @@ function applyWelcome(m){
   setMyBase(BASES[m.base]);assignBase(BASES[m.base],m.pid,userName);
   m.slots.forEach(([b,i,l])=>{if(b!==m.base)putRemoteSlot(BASES[b],i,l)});
   m.items.forEach(it=>spawnItem(it.lvl,it.x,it.iid));
+  (m.gnd||[]).forEach(q=>{if(Array.isArray(q)&&typeof q[5]==='string'&&ownerHere(q[5]))addGround(q[0],q[1]|0,+q[2],+q[3],null,0,+q[4],PERSIST,q[5])});
   resetMe(true);updRoom();
 }
 function finishBuy(m){
@@ -2853,7 +2857,7 @@ function migJoin(n,oldHost){
       if(m.t==='welcome'&&!ok&&!fin){
         ok=true;fin=true;NET.peer=peer;NET.hostConn=c;NET.host=false;NET.migrating=false;
         if(m.rj)applyRejoin(m);else{NET.hostPid=m.hostPid;NET.pid=m.pid;NET.hseen=performance.now()}
-        openFast(peer,NET.code||RCODE);if(!NET.hq)toast('Reconectado a la sala');NET.pref=null;NET.hq=false;if(ACC.adm)setTimeout(reqHandover,1500);return}
+        openFast(peer,NET.code||RCODE);if(!NET.hq)toast('Reconectado a la sala');NET.pref=null;NET.hq=false;return}
       if(m.t==='full'){fin=true;migFail();return}
       if(ok)clientMsg(m);
     });
@@ -3034,7 +3038,7 @@ function syncNow(){
     if(r.st&&v===ACC.ver&&ACC.pend===0)applyServerState(r.st)});
 }
 setInterval(syncNow,10000);
-setInterval(()=>{if(document.hidden&&running&&ACC.tok&&NET.on&&NET.host&&NET.code)api('hb',{tok:ACC.tok,hc:NET.code})},15000);   /* anfitrión con la pestaña oculta: mantiene viva la sala (solo en ese caso) */   /* antes 5 s: la mitad de llamadas a Vercel; el servidor acepta hasta 25 s de ingreso por llamada */
+/* (el latido de la sala con la pestaña oculta ahora lo dispara el Worker, más abajo) */
 /* el admin avisa por la sala: el afectado (o todos) sincroniza al instante, sin esperar el ciclo */
 function liveSync(){if(performance.now()-syncAt>1500)syncNow()}
 /* al cerrar la pestaña o mandar el navegador al fondo (celular), el servidor lo marca fuera de línea al instante; al volver se sincroniza de nuevo. Un solo aviso, sin aumentar las peticiones normales */
@@ -3049,7 +3053,7 @@ function enterGame(st,retry,tries,rc){
   tries=tries||0;
   $('chatL').textContent='';const n=st.nick;ACC.st=st;volDone=false;volFromSt(st);lobbyBusy(true);lobbyMsg('Entrando a la sala…');
   setUserName(n);useRig(st.skin|0);renderSkins();
-  const done=(code,hosting)=>{RCODE=code;if(hosting)startOwnBase(n);applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay();if(!hosting&&ACC.adm)setTimeout(reqHandover,800)};
+  const done=(code,hosting)=>{RCODE=code;if(hosting)startOwnBase(n);applyServerState(st);lobbyBusy(false);lobbyMsg('');beginPlay()};   /* el admin entra como cualquier invitado: ya NO se traspasa la sala (eso desconectaba a todos y la sala se trababa) */
   const again=(slow)=>{lobbyMsg('Reintentando conexión…');cleanupNet();setTimeout(()=>enterGame(st,true,tries+1,null),slow?3000:700+tries*600)};
   /* crear la sala con el código que el servidor acaba de darme */
   const hostWith=code=>hostRoom(n,e2=>{if(e2){if(tries<3){again();return}enterFail(e2==='RACE'?'No se pudo entrar a la sala. Intenta de nuevo.':e2);return}done(code,true)},code);
@@ -3224,19 +3228,26 @@ function setCdT(sp,tn){
 }
 const myCd=makeCd();player.add(myCd);
 function slamImpact(x,z){if(NET.on)emit({t:'slam',x:+x.toFixed(2),z:+z.toFixed(2)})}
-function addGround(gid,lvl,x,z,g,h0,yr,life){
+function addGround(gid,lvl,x,z,g,h0,yr,life,ow){
   if(GROUND.some(o=>o.gid===gid))return;
   g=g||makeBR(lvl);g.visible=true;g.scale.setScalar(1);
   const gy=groundY(x,z,(yr===undefined?0:yr)+STEPUP);g.position.set(x,gy+(h0||0),z);scene.add(g);
-  GROUND.push({gid,g,lvl,born:performance.now(),vy:0,gy,life:life||GROUND_LIFE});
+  GROUND.push({gid,g,lvl,born:performance.now(),vy:0,gy,life:life||GROUND_LIFE,ow:ow||null});
 }
 function removeGround(gid){const k=GROUND.findIndex(o=>o.gid===gid);if(k>=0){scene.remove(GROUND[k].g);GROUND.splice(k,1)}}
+/* REGLA DEL SUELO: un Papu que NUNCA ha estado en una base (de la cinta) se pierde con la cuenta regresiva.
+   Uno que se sacó de una base y lo suelta quien NO es su dueño se queda en el suelo sin límite: solo desaparece si su dueño se desconecta.
+   Si lo suelta su propio dueño (de su base), sí tiene cuenta regresiva. */
+const ownerHere=aid=>!!aid&&(aid===myAid()||Object.values(NET.players).some(p=>p.aid===aid));
+const dropPersists=g=>{const ow=g&&g.userData&&g.userData.ow;return !!ow&&ow!==myAid()&&ownerHere(ow)};
+function purgeGroundOf(aid){for(let i=GROUND.length-1;i>=0;i--){if(GROUND[i].ow===aid){scene.remove(GROUND[i].g);GROUND.splice(i,1)}}}
 function dropHeld(life){
-  if(!held)return;const g=held,lvl=g.userData.lvl;held=null;uncarry(g);player.remove(g);
+  if(!held)return;const g=held,lvl=g.userData.lvl,per=dropPersists(g),ow=per?g.userData.ow:null;held=null;uncarry(g);player.remove(g);
+  if(per)life=PERSIST;
   const gid=Math.random().toString(36).slice(2,10),x=player.position.x,z=player.position.z;
-  addGround(gid,lvl,x,z,g,3.2,gY,life);
-  emit({t:'gd',gid,lvl,x:+x.toFixed(2),z:+z.toFixed(2),y:+gY.toFixed(2),lf:life||0});
-  srv('drop',{gid,q:life?1:0});
+  addGround(gid,lvl,x,z,g,3.2,gY,life,ow);
+  emit({t:'gd',gid,lvl,x:+x.toFixed(2),z:+z.toFixed(2),y:+gY.toFixed(2),lf:per?0:(life||0),ow:ow||0});
+  srv('drop',{gid,q:(!per&&life)?1:0,p:per?1:0});
 }
 function stunMe(){
   if(stunT>0)return;cancelSteal();
@@ -3257,10 +3268,10 @@ async function pickGround(o){
     for(let k=0;k<4&&GROUND.includes(o);k++){
       const r=await srv('pick',{gid:o.gid});
       if(!r||r.code==='auth')break;
-      if(r.ok){ok=true;removeGround(o.gid);emit({t:'gr',gid:o.gid});if(!held)mkHeld(r.lvl);toast('Agarraste '+NAMES[r.lvl]+': ¡llévalo a tu base!');break}
+      if(r.ok){ok=true;removeGround(o.gid);emit({t:'gr',gid:o.gid});if(!held)mkHeld(r.lvl);if(held)held.userData.ow=o.ow||null;toast('Agarraste '+NAMES[r.lvl]+': ¡llévalo a tu base!');break}
       await new Promise(f=>setTimeout(f,250));
     }
-    if(!ok&&!held)toast('Alguien lo agarró primero');
+    if(!ok&&!held){toast('Alguien lo agarró primero');if(o.ow)removeGround(o.gid)}
   }finally{picking=false}
 }
 /* robar de una base ajena: mantener E 7 s */
@@ -3293,7 +3304,7 @@ async function finishSteal(t){
   if(r&&r.ok){
     const s=t.b.slots[t.i];if(s.item){scene.remove(s.item);s.item=null}
     emit({t:'stl',b:t.b.idx,slot:t.i});
-    if(!held)mkHeld(r.lvl);toast('¡Robaste '+NAMES[r.lvl]+'! Llévalo a tu base');
+    if(!held)mkHeld(r.lvl);if(held)held.userData.ow=t.aid;toast('¡Robaste '+NAMES[r.lvl]+'! Llévalo a tu base');
   }else if(r&&!r.err)toast('Ya no estaba ahí');
 }
 /* barrera: 80 s activa; si termina sola puedes activarla al instante, si la apagas antes hay 20 s de enfriamiento */
@@ -3459,6 +3470,8 @@ function bgTick(){
   if(NET.on)netTick(dt,now);
 }
 (function(){let w=null;try{w=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(1)},50)'],{type:'application/javascript'})));w.onmessage=bgTick}catch(e){w=null}if(!w)setInterval(bgTick,50)})();
+let hbW=0;/* latido de la sala del anfitrión con la pestaña oculta: lo dispara el Worker (los temporizadores normales se frenan) */
+{const hbf=()=>{const n=Date.now();if(document.hidden&&running&&ACC.tok&&NET.on&&NET.host&&NET.code&&n-hbW>14000){hbW=n;api('hb',{tok:ACC.tok,hc:NET.code})}};setInterval(hbf,2000)}
 let last=performance.now(),labLast=0;
 let frameNext=0;const FRAME_MS=1000/60;
 function loop(now){
