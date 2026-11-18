@@ -29,7 +29,7 @@ INC.push(INC[16] * 10); PRICE.push(PRICE[16] * 10);
 [[18, 1000], [26, 1700], [35, 2500], [600, 650000], [2100, 3600000], [4000, 7200000]].forEach(([i, p]) => [1, 4, 10, 25].forEach(m => { INC.push(i * m); PRICE.push(p * m); }));
 const MAXLVL = INC.length - 1;
 const FPRICE = [0, 0, 12000000, 29000000, 70000000, 78000000], MAXF = 5, SLOTF = 10;
-const OPRICE = { bat: 3300000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 11, TOKEN_DAYS = 30, MAX_DT = 12000;
+const OPRICE = { bat: 3300000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 11, TOKEN_DAYS = 30, MAX_DT = 25000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -39,6 +39,13 @@ async function db(...cmd) {
 }
 const ukey = u => 'u:' + u.toLowerCase();
 const emptySlots = () => Array(NSLOT).fill(-1);
+/* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar progreso ni al hacer Rebirth (misma lista que el cliente) */
+const EXCLUSIVO = ['dance'];
+/* reinicio de progreso a cero (reiniciar cuenta o Rebirth): conserva siempre los objetos exclusivos */
+function resetProgress(r) {
+  const keep = (Array.isArray(r.inv) ? r.inv : []).filter(i => EXCLUSIVO.includes(i));
+  r.slots = emptySlots(); r.fl = 1; r.dco = { o: [], c: 0, f: 0 }; r.inv = keep; r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now();
+}
 
 /* ---- cifrado reversible de la contraseña (el admin puede verla; la base de datos sola no la revela) ---- */
 const aesKey = () => crypto.createHash('sha256').update('pw:' + SECRET).digest();
@@ -199,8 +206,9 @@ const actions = {
     const r = await userFromTok(b.tok); accrue(r, Date.now()); r.off = 1; r.mob = b.mob ? 1 : 0; await saveRec(r); return { ok: true };
   },
   async sync(b) {
-    const r = await userFromTok(b.tok); accrue(r, Date.now()); await saveRec(r);   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
-    const info = await evInfo(), t = readTok(b.tok);
+    const [r, info] = await Promise.all([userFromTok(b.tok), evInfo()]);   /* en paralelo: menos tiempo de funcion */
+    accrue(r, Date.now()); await saveRec(r);   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
+    const t = readTok(b.tok);
     if (info.closed && !(t && t.adm)) throw new Err('El servidor se cerró. Tu progreso se guardó.', 'closed');
     return { st: view(r), ...info };
   },
@@ -354,7 +362,7 @@ const actions = {
     for (const n of names) {
       const r = await loadRec(n);
       if (!r) { await db('SREM', 'users', n); continue; }
-      out.push({ lin: r.lin || r.created || 0, aid: r.aid || null, user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: !r.off && Date.now() - r.seen < 12000 });
+      out.push({ lin: r.lin || r.created || 0, aid: r.aid || null, user: r.user, pass: isAdminUser(r.user) ? '(cuenta admin)' : decPass(r.pass), admin: isAdminUser(r.user), nick: r.nick, money: Math.floor(r.money), papus: r.slots.filter(l => l >= 0).length, fl: r.fl || 1, slots: r.slots, cat: r.cat || {}, created: r.created, seen: r.seen, online: !r.off && Date.now() - r.seen < 25000 });
     }
     /* en línea arriba por orden de entrada (el que entró primero, primero); fuera de línea abajo: el que entró más recientemente arriba y el que lleva más tiempo sin entrar hasta abajo */
     out.sort((a, b) => (b.online - a.online) || (a.online ? (a.lin - b.lin) : (b.seen - a.seen)));
@@ -372,7 +380,7 @@ const actions = {
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
     r.cmd = { id: crypto.randomBytes(5).toString('base64url'), on: !!b.on, ts: Date.now() }; await saveRec(r); return { ok: true };
   },
-  /* expulsar: se guarda su progreso, se marca fuera de linea y en su siguiente peticion (<=5 s) se le cierra la sesion */
+  /* expulsar: se guarda su progreso, se marca fuera de linea y en su siguiente peticion (<=10 s) se le cierra la sesion */
   async akick(b) {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
@@ -382,7 +390,7 @@ const actions = {
   async aclear(b) {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
-    r.slots = emptySlots(); r.fl = 1; r.dco = { o: [], c: 0, f: 0 }; r.inv = []; r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now(); await saveRec(r); return { ok: true };
+    resetProgress(r); await saveRec(r); return { ok: true };
   },
   /* eventos: iniciar o detener el Papu Golden Time */
   async aev(b) {
