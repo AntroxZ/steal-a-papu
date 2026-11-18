@@ -693,6 +693,16 @@ body.hudnew #gear,body.hudnew #skinBtn,body.hudnew #catBtn,body.hudnew #admBtn,b
 body.hudnew .hiN{margin:0}
 body.hudnew .hiC{width:42px!important;height:42px!important;fill:none;stroke:none;filter:drop-shadow(0 3px 0 rgba(21,10,69,.45))}
 body.mob.hudnew .hiC{width:30px!important;height:30px!important}
+
+/* dinero que sube / dinero gastado */
+.gainf{position:fixed;z-index:100000;pointer-events:none;transform:translate(-50%,0);white-space:nowrap;font:900 1.2rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#7cf58b;text-shadow:0 2px 0 #0b3a14,0 0 8px rgba(80,255,120,.7),0 0 2px #000;animation:gainUp 1.4s ease-out forwards}
+.gainf.neg{transform:translate(0,-50%);color:#ff5a5a;font-size:1.35rem;text-shadow:0 2px 0 #4a0a0a,0 0 8px rgba(255,60,60,.7),0 0 2px #000;animation:gainDn 1.5s ease-out forwards}
+@keyframes gainUp{0%{opacity:0;transform:translate(-50%,8px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}30%{transform:translate(-50%,-4px) scale(1)}100%{opacity:0;transform:translate(-50%,-38px) scale(1)}}
+@keyframes gainDn{0%{opacity:0;transform:translate(0,-50%) scale(.6)}12%{opacity:1;transform:translate(0,calc(-50% - 4px)) scale(1.2)}30%{transform:translate(0,calc(-50% - 8px)) scale(1)}100%{opacity:0;transform:translate(0,calc(-50% - 44px)) scale(1)}}
+body.hudnew .gainf{font-family:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;font-weight:400;-webkit-text-stroke:5px #150a45;paint-order:stroke fill;text-shadow:none;color:#9bff9f}
+body.hudnew .gainf.neg{color:#ff8a8a}
+body.mob .gainf{font-size:.9rem}body.mob.hudnew .gainf{-webkit-text-stroke:4px #150a45}
+@media (prefers-reduced-motion:reduce){.gainf{animation-duration:.01s!important}}
 </style>
 </head>
 <body>
@@ -1376,7 +1386,7 @@ const LBH={g:null};
     [.05,.37,.68,.97].forEach(f=>{const y=f*h-18,bh=36;x.fillStyle='#7b8189';x.fillRect(0,y,w,bh);for(let j=0;j<bh;j+=5){x.fillStyle='rgba(255,255,255,.2)';x.fillRect(0,y+j,w,1);x.fillStyle='rgba(0,0,0,.25)';x.fillRect(0,y+j+2,w,1)}x.fillStyle='rgba(255,255,255,.35)';x.fillRect(0,y,w,2)});
     const ly=h-58;x.fillStyle='#2a2d33';x.fillRect(0,ly,w,58);for(let i=0;i<w;i+=16){x.fillStyle='#d5dae0';x.fillRect(i+2,ly,8,58);x.fillStyle='rgba(0,0,0,.25)';x.fillRect(i+10,ly,2,58)}
     const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(255,255,255,.18)');g.addColorStop(.5,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(0,0,0,.18)');x.fillStyle=g;x.fillRect(0,0,w,h)});
-  const TW=8,TH=54,dz=6.5;
+  const TW=8,TH=44,dz=6.5;
   const side=(k)=>new THREE.MeshBasicMaterial({map:wallT,color:new THREE.Color(0xffffff).multiplyScalar(k)});
   const top=new THREE.MeshBasicMaterial({color:0x7e848c}),bot=new THREE.MeshBasicMaterial({color:0x50555c});
   [-dz,dz].forEach((z,ti)=>{
@@ -1404,7 +1414,7 @@ const LBH={g:null};
     x.shadowBlur=0;for(let y=4;y<HH;y+=6){x.fillStyle='rgba(0,0,0,.18)';x.globalCompositeOperation='destination-out';x.fillRect(0,y,HW,1.5);x.globalCompositeOperation='source-over'}   /* lineas de escaneo */
     holo.needsUpdate=true;if(LBH.tex2)LBH.tex2.needsUpdate=true};
   drawHolo();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawHolo);
-  const holoR=13.2,holoH=4.2,hy=38;
+  const holoR=13.2,holoH=4.2,hy=26;
   const tex2=holo.clone();tex2.wrapS=THREE.RepeatWrapping;tex2.repeat.x=-1;tex2.offset.x=1;tex2.needsUpdate=true;LBH.tex2=tex2;
   const hm=(map,side)=>new THREE.MeshBasicMaterial({map,transparent:true,side,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false});
   const ring=new THREE.Group();ring.position.set(0,hy,0);G.add(ring);
@@ -1442,6 +1452,19 @@ async function lbLoad(force){
 function openLb(){if(!running||shopOpen||setOpen)return;setOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('lb').style.display='flex';$('lbNote').textContent='Se actualiza cada vez que la abres.';renderLb();lbLoad()}
 $('lbX').onclick=closeSet;
 document.querySelectorAll('#lbTabs span').forEach(e=>e.onclick=()=>{LB.tab=e.dataset.k;renderLb()});
+/* ====== dinero que sube (+$) cada segundo y dinero gastado en rojo (-$) al comprar ====== */
+let LASTBTN=null,INCNOW=0;
+document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#shop .sbox button');if(b){const r=b.getBoundingClientRect();LASTBTN={x:r.right,y:r.top+r.height/2}}},true);
+function floatTxt(txt,x,y,neg){
+  const d=document.createElement('div');d.className='gainf'+(neg?' neg':'');d.textContent=txt;d.style.left=x+'px';d.style.top=y+'px';
+  d.addEventListener('animationend',()=>d.remove());document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function gainFx(v){
+  const c=document.querySelector('#hud .card'),r=c?c.getBoundingClientRect():null;
+  floatTxt('+$'+fm(v),r?r.left+r.width/2:innerWidth/2,r?r.bottom-6:60,false)}
+function spendFx(price){
+  const b=LASTBTN||{x:innerWidth/2,y:innerHeight/2};LASTBTN=null;
+  floatTxt('-$'+fm(price),Math.min(b.x+8,innerWidth-110),b.y,true)}   /* al lado derecho del botón Comprar */
+setInterval(()=>{if(running&&!document.hidden&&!shopOpen&&!setOpen&&INCNOW>0)gainFx(INCNOW)},1000);
 function openReb(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('reb').style.display='flex';renderReb()}
 function openShop(){shopOpen=true;Object.keys(keys).forEach(k=>keys[k]=false);$('shop').style.display='flex';renderShop()}
 function closeShop(){shopOpen=false;$('shop').style.display='none';$('reb').style.display='none';$('conf').style.display='none';pendingAct=null}
@@ -1484,7 +1507,7 @@ function askBuyFloor(k){pendingAct={buyF:k};
 async function buyFloor(k){
   if(money<FPR[k]){toast('No te alcanza el dinero para el Piso '+k);return}
   const r=await srv('fbuy',{n:k});
-  if(r&&!r.err)toast('¡Tu base ahora tiene '+k+' pisos!')}
+  if(r&&!r.err){spendFx(FPR[k]);toast('¡Tu base ahora tiene '+k+' pisos!')}}
 function setShopTab(t){shopTab=t;renderShop()}
 function renderShop(){
   $('tabD').classList.toggle('on',shopTab==='d');$('tabB').classList.toggle('on',shopTab==='b');$('tabO').classList.toggle('on',shopTab==='o');
@@ -1508,7 +1531,7 @@ function askBuyDeco(id){const d=DECO[id];pendingAct={buy:id};
 async function buyDeco(id){const d=DECO[id];
   if(money<d.pr){toast('No te alcanza el dinero para '+d.n);return}
   const r=await srv('dbuy',{id});
-  if(r&&!r.err)toast('¡Compraste '+d.n+'! Toca el artículo para equiparlo')}
+  if(r&&!r.err){spendFx(d.pr);toast('¡Compraste '+d.n+'! Toca el artículo para equiparlo')}}
 function equipDeco(id){const D=myDeco(),d=DECO[id];if(!D.o.includes(id))return;
   const nd=Object.assign({},D);if(d.fire)nd.f=D.f?0:1;else nd.c=D.c===id?0:id;
   ACC.st=Object.assign({},ACC.st,{deco:nd});applyMyDeco(nd);renderShop();
@@ -3423,7 +3446,7 @@ function loop(now){
     animate(speed,dt);
     syncBat(BATL,RG,myEq&&!DNL.on);if(myEq&&batSw)batPose(BATL,batSw.t0,performance.now());
     let inc=0,n=0;slots.forEach(s=>{if(s.item){inc+=INC[s.item.userData.lvl];n++;s.item.children[0].position.y=bobY(s.item.userData.lvl)+Math.sin(now/400+s.x)*.15}});
-    money=Math.min(1e27,money+inc*dt);
+    INCNOW=inc;money=Math.min(1e27,money+inc*dt);
     if(now-hudLast>120){hudLast=now;const mt=abb(money)+'$';if(mt!==hudM){hudM=mt;const me=$('money');me.textContent=mt;me.style.fontSize=mt.length>22?'.62rem':mt.length>16?'.8rem':''}const it=fm(inc)+' $/s';if(it!==hudI){hudI=it;$('inc').textContent=it}const ct=n+'/'+slots.length;if(ct!==hudC){hudC=ct;$('cnt').textContent=ct}}
     gameTick(dt,now);
   }
@@ -3583,6 +3606,7 @@ function askBuyObj(id){const d=OBJ[id];pendingAct={buyO:id};
 async function buyObj(id){const d=OBJ[id];
   if(money<d.pr){toast('No te alcanza el dinero para '+d.n);return}
   const r=await srv('obuy',{id});
+  if(r&&!r.err)spendFx(d.pr);
   if(r&&!r.err)toast(d.cat?'¡Compraste el baile '+d.n+'! '+(MOB?'Usa el botón Bailar':'Presiona B para bailar'):'¡Compraste el '+d.n+'! '+(MOB?'Tócalo abajo para equiparlo':'Presiona 1 para equiparlo'))}
 $('invBat').addEventListener('pointerdown',e=>{e.preventDefault();$('invBat').blur();toggleBat()});   /* pointerdown: funciona aunque el otro dedo este en el joystick */
 addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'&&e.button===0&&e.target&&e.target.tagName==='CANVAS'&&!shopOpen&&!setOpen)CD={id:e.pointerId,d:0}});
