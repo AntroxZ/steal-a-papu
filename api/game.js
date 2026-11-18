@@ -14,10 +14,10 @@ const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 240
 const EV_MS = 120000;
 /* estado de eventos para los jugadores: Golden Time, Papus invocados por el admin y la hora del servidor */
 async function evInfo() {
-  const [gt, sm, cl] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed')) || [];
+  const [gt, sm, cl, rm] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed', 'rm')) || [];
   const now = Date.now(), left = gt ? +gt - now : 0;
   let list = []; try { list = sm ? JSON.parse(sm) : []; } catch (e) { list = []; }
-  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl };
+  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl, rc: rm || null };   /* rc = código de la sala activa (lo decide el servidor) */
 }
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
@@ -28,6 +28,8 @@ const DPRICE = [0, 4000, 45000, 600000, 6000000, 11000000, 15000000, 82000000, 2
 INC.push(INC[16] * 10); PRICE.push(PRICE[16] * 10);
 [[18, 1000], [26, 1700], [35, 2500], [600, 650000], [2100, 3600000], [4000, 7200000]].forEach(([i, p]) => [1, 4, 10, 25].forEach(m => { INC.push(i * m); PRICE.push(p * m); }));
 const MAXLVL = INC.length - 1;
+/* SALA ACTIVA: el servidor guarda el código de la sala (clave 'rm', caduca en 35 s si el anfitrión no la renueva). Así nunca hay dos salas ni una sala fantasma. */
+const RM_TTL = 35, okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 const FPRICE = [0, 0, 12000000, 29000000, 70000000, 78000000], MAXF = 5, SLOTF = 10;
 const OPRICE = { bat: 3300000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 11, TOKEN_DAYS = 30, MAX_DT = 25000;
 
@@ -223,12 +225,15 @@ const actions = {
   },
   /* la pestaña se cerro o el navegador paso al fondo: se guarda el progreso y se marca fuera de linea al instante (una sola peticion, solo al salir) */
   async away(b) {
+    if (okCode(b.hc) && readTok(b.tok) && (await db('GET', 'rm')) === b.hc) await db('DEL', 'rm');   /* el anfitrión se fue solo: la sala queda libre al instante */
     const r = await userFromTok(b.tok); accrue(r, Date.now()); r.off = 1; r.mob = b.mob ? 1 : 0; await saveRec(r); return { ok: true };
   },
   async sync(b) {
     const [r, info, lbs] = await Promise.all([userFromTok(b.tok), evInfo(), db('GET', 'lb')]);   /* en paralelo: menos tiempo de funcion */
     accrue(r, Date.now());
     const lb = lbParse(lbs), ch = lbApply(lb, r), nowT = Date.now();
+    const tk = readTok(b.tok), hc = okCode(b.hc) ? b.hc : null;
+    if (hc && (!info.rc || info.rc === hc || (tk && tk.adm))) { info.rc = hc; await db('SET', 'rm', hc, 'EX', RM_TTL); }   /* el admin siempre manda: su sala reemplaza a cualquier otra */
     const jobs = [saveRec(r)];   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
     if (ch === 2 || (ch === 1 && nowT - lb.t > 25000)) { lb.t = nowT; jobs.push(db('SET', 'lb', JSON.stringify(lb))); }
     await Promise.all(jobs);
@@ -294,6 +299,22 @@ const actions = {
     return { ok: true, lvl, st: view(r) };
   },
   /* traspaso de anfitrion: el admin pide una prueba corta y el anfitrion actual la verifica (la prueba no sirve para nada mas) */
+  /* reclamar la sala: el primero en llegar la crea; los demás reciben el código ganador. El admin puede reemplazar una sala caída. */
+  async claim(b) {
+    const t = readTok(b.tok); if (!t) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
+    if (!okCode(b.code)) throw new Err('Jugada no válida.', 'bad');
+    if (t.adm && b.force) { await db('SET', 'rm', b.code, 'EX', RM_TTL); return { rc: b.code, won: true }; }
+    if ((await db('SET', 'rm', b.code, 'NX', 'EX', RM_TTL)) === 'OK') return { rc: b.code, won: true };
+    const cur = await db('GET', 'rm'); return { rc: cur || b.code, won: !cur };
+  },
+  /* latido del anfitrión cuando su pestaña está oculta (el sync normal no corre oculto) */
+  async hb(b) {
+    const t = readTok(b.tok); if (!t) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
+    if (!okCode(b.hc)) throw new Err('Jugada no válida.', 'bad');
+    const cur = await db('GET', 'rm');
+    if (!cur || cur === b.hc || t.adm) { await db('SET', 'rm', b.hc, 'EX', RM_TTL); return { rc: b.hc }; }
+    return { rc: cur };
+  },
   /* tabla de clasificación: una sola lectura, sin recorrer cuentas */
   async top(b) {
     if (!readTok(b.tok)) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
