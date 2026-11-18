@@ -686,6 +686,13 @@ body.mob.hudnew .rbm,body.mob.hudnew .rbx2{-webkit-text-stroke:4px #150a45;font-
 body.mob.hudnew .lbrow{padding:5px 8px;gap:8px;min-height:40px}body.mob.hudnew .lbmed{width:30px;height:30px;font-size:.95rem}body.mob.hudnew .lbpos{width:30px}
 body.mob.hudnew .lbnm{font-size:.85rem;-webkit-text-stroke:3px #150a45}body.mob.hudnew .lbv{font-size:.8rem;-webkit-text-stroke:3px #150a45}
 body.mob.hudnew #toast{font-size:.95rem;-webkit-text-stroke:4px #150a45}
+
+/* iconos TP centrados y detallados */
+body.hudnew #tpRow button{display:flex!important;align-items:center;justify-content:center;padding:0}
+body.hudnew #gear,body.hudnew #skinBtn,body.hudnew #catBtn,body.hudnew #admBtn,body.hudnew #chatBtn{display:flex;align-items:center;justify-content:center}
+body.hudnew .hiN{margin:0}
+body.hudnew .hiC{width:42px!important;height:42px!important;fill:none;stroke:none;filter:drop-shadow(0 3px 0 rgba(21,10,69,.45))}
+body.mob.hudnew .hiC{width:30px!important;height:30px!important}
 </style>
 </head>
 <body>
@@ -1361,7 +1368,7 @@ const LBH={g:null};
   const G=new THREE.Group();G.position.set(LB_X,0,LB_Z);scene.add(G);
   const mk=(w,h,draw)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;return t};
   /* fachada de metal: columnas finas plateadas con ventanas oscuras, franjas de maquinas y entrada con columnas (como las torres reales) */
-  const wallT=mk(256,1024,(x,w,h)=>{
+  const wallT=mk(256,2048,(x,w,h)=>{
     x.fillStyle='#8f959d';x.fillRect(0,0,w,h);
     for(let i=0;i<w;i+=4){x.fillStyle=(i/4)%2?'#cfd4da':'#b4bac2';x.fillRect(i,0,2,h);x.fillStyle=(i/8)%3?'#5d636b':'#6b7179';x.fillRect(i+2,0,2,h)}
     for(let k=0;k<260;k++){x.fillStyle='rgba(255,255,255,'+(Math.random()*.07)+')';x.fillRect(Math.random()*w,0,1+Math.random()*2,h)}
@@ -1369,7 +1376,7 @@ const LBH={g:null};
     [.05,.37,.68,.97].forEach(f=>{const y=f*h-18,bh=36;x.fillStyle='#7b8189';x.fillRect(0,y,w,bh);for(let j=0;j<bh;j+=5){x.fillStyle='rgba(255,255,255,.2)';x.fillRect(0,y+j,w,1);x.fillStyle='rgba(0,0,0,.25)';x.fillRect(0,y+j+2,w,1)}x.fillStyle='rgba(255,255,255,.35)';x.fillRect(0,y,w,2)});
     const ly=h-58;x.fillStyle='#2a2d33';x.fillRect(0,ly,w,58);for(let i=0;i<w;i+=16){x.fillStyle='#d5dae0';x.fillRect(i+2,ly,8,58);x.fillStyle='rgba(0,0,0,.25)';x.fillRect(i+10,ly,2,58)}
     const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(255,255,255,.18)');g.addColorStop(.5,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(0,0,0,.18)');x.fillStyle=g;x.fillRect(0,0,w,h)});
-  const TW=8,TH=27,dz=6.5;
+  const TW=8,TH=54,dz=6.5;
   const side=(k)=>new THREE.MeshBasicMaterial({map:wallT,color:new THREE.Color(0xffffff).multiplyScalar(k)});
   const top=new THREE.MeshBasicMaterial({color:0x7e848c}),bot=new THREE.MeshBasicMaterial({color:0x50555c});
   [-dz,dz].forEach((z,ti)=>{
@@ -1397,7 +1404,7 @@ const LBH={g:null};
     x.shadowBlur=0;for(let y=4;y<HH;y+=6){x.fillStyle='rgba(0,0,0,.18)';x.globalCompositeOperation='destination-out';x.fillRect(0,y,HW,1.5);x.globalCompositeOperation='source-over'}   /* lineas de escaneo */
     holo.needsUpdate=true;if(LBH.tex2)LBH.tex2.needsUpdate=true};
   drawHolo();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawHolo);
-  const holoR=13.2,holoH=3.6,hy=17;
+  const holoR=13.2,holoH=4.2,hy=38;
   const tex2=holo.clone();tex2.wrapS=THREE.RepeatWrapping;tex2.repeat.x=-1;tex2.offset.x=1;tex2.needsUpdate=true;LBH.tex2=tex2;
   const hm=(map,side)=>new THREE.MeshBasicMaterial({map,transparent:true,side,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false});
   const ring=new THREE.Group();ring.position.set(0,hy,0);G.add(ring);
@@ -3698,12 +3705,18 @@ Promise.all(SRC.map(u=>new Promise(res=>{const i=new Image();i.onload=()=>res(i)
 
 /* ===== HUD OG / HUD NUEVO (solo cambia el diseño; se guarda en este dispositivo, sin peticiones al servidor) ===== */
 (function(){
-  const ICO={gear:'<circle cx="12" cy="12" r="3.4"/><path d="M12 2.5l1.6 2.6 3-.6.6 3 2.6 1.6-1.4 2.7 1.4 2.7-2.6 1.6-.6 3-3-.6L12 21.5l-1.6-2.6-3 .6-.6-3-2.6-1.6L5.6 12 4.2 9.3l2.6-1.6.6-3 3 .6z"/>',
+  let ICO32;const ICO={gear:'<circle cx="12" cy="12" r="3.4"/><path d="M12 2.5l1.6 2.6 3-.6.6 3 2.6 1.6-1.4 2.7 1.4 2.7-2.6 1.6-.6 3-3-.6L12 21.5l-1.6-2.6-3 .6-.6-3-2.6-1.6L5.6 12 4.2 9.3l2.6-1.6.6-3 3 .6z"/>',
    skinBtn:'<circle cx="12" cy="8" r="4.2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/>',
    catBtn:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M9 7.5h6" stroke="#150a45"/>',
    chatBtn:'<path d="M4 5h16v11H9l-5 4z"/>',admBtn:'<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/>',
-   tpShop:'<path d="M3 9l2-5h14l2 5v2H3z"/><path d="M5 11v9h14v-9"/>',tpBase:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10z"/>'};
-  for(const id in ICO){const b=document.getElementById(id);if(!b||b.querySelector('.hiN'))continue;
+   tpShop:'',tpBase:''};
+  /* iconos detallados a color (32x32) para Tienda y Base */
+  const ST='stroke="#150a45" stroke-width="1.5" stroke-linejoin="round"';
+  const awn=[[6,11,3,9.5],[11,16,9.5,16],[16,21,16,22.5],[21,26,22.5,29]].map(([t0,t1,b0,b1],i)=>'<path d="M'+t0+' 4H'+t1+'L'+b1+' 11A3.25 3.2 0 0 1 '+b0+' 11Z" fill="'+(i%2?'#ffffff':'#ff4d5e')+'"/>').join('');
+  ICO32={tpShop:'<g '+ST+'><rect x="5" y="11" width="22" height="16" rx="1.2" fill="#ffe9b8"/>'+awn+'<rect x="13" y="17" width="6" height="10" rx="1" fill="#8a5a2b"/><circle cx="17.5" cy="22.3" r=".7" fill="#ffe66b" stroke="none"/><rect x="7" y="16" width="5" height="5" rx=".8" fill="#7ad6ff"/><rect x="20" y="16" width="5" height="5" rx=".8" fill="#7ad6ff"/><rect x="3" y="27" width="26" height="2.4" rx="1.2" fill="#6a3df0"/><path d="M16 1.6l.9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2-1.4-1.4 2-.3z" fill="#ffe66b" stroke-width="1"/></g>',
+   tpBase:'<g '+ST+'><rect x="22" y="5" width="3.6" height="8" rx=".6" fill="#c0583a"/><rect x="6" y="15" width="20" height="12" rx="1.2" fill="#ffe9b8"/><path d="M2.5 16.5L16 4l13.5 12.5z" fill="#ff4d5e"/><circle cx="16" cy="11" r="2.2" fill="#ffe66b"/><path d="M13 27v-6a3 3 0 0 1 6 0v6z" fill="#8a5a2b"/><circle cx="17.7" cy="23.6" r=".6" fill="#ffe66b" stroke="none"/><rect x="7.6" y="18.5" width="4" height="4" rx=".7" fill="#7ad6ff"/><rect x="20.4" y="18.5" width="4" height="4" rx=".7" fill="#7ad6ff"/><rect x="3" y="27" width="26" height="2.4" rx="1.2" fill="#6a3df0"/></g>'};
+  for(const id in ICO32){const b=document.getElementById(id);if(!b||b.querySelector('.hiN'))continue;b.insertAdjacentHTML('afterbegin','<svg class="hiN hiC" viewBox="0 0 32 32">'+ICO32[id]+'</svg>')}
+  for(const id in ICO){if(!ICO[id])continue;const b=document.getElementById(id);if(!b||b.querySelector('.hiN'))continue;
     b.insertAdjacentHTML('afterbegin','<svg class="hiN" viewBox="0 0 24 24">'+ICO[id]+'</svg>')}
   /* titulo arcoiris animado para pantallas de inicio */
   function mkTitle(host,txt){if(!host||host.querySelector('.rwrap'))return;const w=document.createElement('div');w.className='rwrap';w.setAttribute('aria-hidden','true');
