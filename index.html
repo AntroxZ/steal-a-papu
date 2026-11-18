@@ -1971,6 +1971,18 @@ function faceModels(){
   /* los personajes 2 miran hacia donde avanza la cinta (+X), sin seguir a la camara */
   items.forEach(o=>{const m=o.g.children[0];if(m.userData.isModel)m.rotation.y=Math.PI/2});
 }
+/* base llena: los efectos (auras, halos, chispas) triplican los triangulos y los halos gigantes se pintan unos sobre otros.
+   Solo los 8 Papus con efectos mas cercanos a la camara (y dentro de la vista) los muestran; los demas se ven normales */
+const FXB=8,_fr=(typeof THREE.Frustum==='function')?new THREE.Frustum():null,_pm=new THREE.Matrix4();let fxBT=0;
+function fxBudget(now){
+  if(now-fxBT<250||!_fr)return;fxBT=now;
+  const L=[],add=g=>{if(!g||!g.userData||!(g.userData.lvl>=0))return;const m=g.children[0];if(m&&m.userData&&m.userData.isModel&&m.children.length>1)L.push(g)};
+  BASES.forEach(b=>b.slots.forEach(q=>q.item&&add(q.item)));items.forEach(o=>add(o.g));GROUND.forEach(o=>add(o.g));
+  if(L.length<=FXB){L.forEach(g=>{const m=g.children[0];for(let k=1;k<m.children.length;k++)m.children[k].visible=true});return}
+  cam.updateMatrixWorld();_pm.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);_fr.setFromProjectionMatrix(_pm);
+  const cp=cam.position,D=L.map(g=>({g,d:g.visible?((_fr.containsPoint?_fr.containsPoint(g.position):true)?Math.hypot(g.position.x-cp.x,g.position.y-cp.y,g.position.z-cp.z):1e9):1e9}));
+  D.sort((a,b)=>a.d-b.d);
+  D.forEach((e,i)=>{const on=i<FXB,m=e.g.children[0];for(let k=1;k<m.children.length;k++)m.children[k].visible=on})}
 function fxSet(){const S=new Set(),f=l=>{if(l>=0&&isFx(l))S.add(l)};items.forEach(o=>f(o.g.userData.lvl));GROUND.forEach(o=>f(o.lvl));BASES.forEach(b=>b.slots.forEach(q=>q.item&&f(q.item.userData.lvl)));if(held)f(held.userData.lvl);Object.values(NET.players).forEach(p=>p.av&&p.av.hl>=0&&f(p.av.hl));return S}
 /* jugador: escaneo con esqueleto */
 const player=new THREE.Group();
@@ -3499,7 +3511,7 @@ function loop(now){
   if(now<frameNext-1.5){requestAnimationFrame(loop);return}
   frameNext=(now-frameNext>FRAME_MS*3)?now+FRAME_MS:frameNext+FRAME_MS;
   const dt=Math.min((now-last)/1000,.05);last=now;perfTick(now);
-  beltTex.offset.x-=dt*BELT_V/7.2;
+  beltTex.offset.x-=dt*BELT_V/7.2;try{fxBudget(now)}catch(e){}
   clouds.forEach(s=>{s.position.x+=dt*2;if(s.position.x>400)s.position.x=-400});
   if(running){
     t+=dt;spawnT+=dt;
@@ -3640,7 +3652,7 @@ function swingBat(){
   if(!running||!myEq||shopOpen||setOpen||stunT>0||held)return;
   const now=performance.now();if(now-batLast<SW_MS+90)return;
   if(mode==='sit'||mode==='slam'||mode==='spin'||mode==='get')return;
-  if(myTool==='push'){const w=PUSH_CD-(now-pushLast);if(w>0){if(now-pushMsgT>1200){pushMsgT=now;toast('EmpujaPapus recargando: '+Math.ceil(w/1000)+' s')}return}pushLast=now}
+  if(myTool==='push'){const w=PUSH_CD-(now-pushLast);if(w>0){if(now-pushMsgT>1200){pushMsgT=now;toast('EmpujaPapus recargando: '+Math.ceil(w/1000)+' s')}return}}   /* la espera de 15 s empieza solo si le das a alguien */
   batLast=now;batSw={t0:now,h:0};if(DNL.on)stopDance();emit({t:'sw'});
   /* punteria asistida: el personaje se voltea hacia el rival mas cercano a su alcance (en PC y celular el personaje no siempre mira al rival) */
   {const p=player.position;let bq=null,bd=BAT_RANGE;
@@ -3660,14 +3672,15 @@ function batHit(){
     if(!ok||Math.abs(a.g.position.y-p.y)>4)continue;if(!best||d<bestD){bestD=d;best=q}}
   if(!best)return false;
   if(myTool==='push'){const a=best.av;let ddx=a.g.position.x-p.x,ddz=a.g.position.z-p.z;if(Math.hypot(ddx,ddz)<.05){ddx=fx;ddz=fz}
-    emit({t:'push',v:best.pid,dx:+ddx.toFixed(2),dz:+ddz.toFixed(2)});toast('¡Empujaste a '+best.name+'!');try{sfxPlay('slam',.5)}catch(e){}return true}
+    pushLast=performance.now();emit({t:'push',v:best.pid,dx:+ddx.toFixed(2),dz:+ddz.toFixed(2)});toast('¡Empujaste a '+best.name+'!');try{sfxPlay('slam',.5)}catch(e){}return true}
   onHit(best.pid,NET.pid);emit({t:'hit',v:best.pid});return true}
 /* el empujon lo aplica el propio jugador golpeado: sale disparado y no controla el movimiento un momento */
 function applyPush(dx,dz){
+  const had=!!held;
   const L=Math.hypot(dx,dz)||1;kbx=dx/L*PUSH_V;kbz=dz/L*PUSH_V;kbT=.8;speed=0;
-  if(DNL.on)stopDance();cancelSteal();
+  if(DNL.on)stopDance();cancelSteal();if(held)dropHeld();
   if(stunT<=0&&(mode==='ground'||mode==='land')){mode='air';vy=7;airT=0;py=.001}
-  shake=Math.max(shake,.5);try{sfxPlay('slam',.7)}catch(e){}toast('¡Te empujaron muy lejos!')}
+  shake=Math.max(shake,.5);try{sfxPlay('slam',.7)}catch(e){}toast(had?'¡Te empujaron y soltaste tu Papu!':'¡Te empujaron muy lejos!')}
 /* golpes: 3 en 15 s mandan al rival a su base; cada cliente lleva la misma cuenta */
 function onHit(v,from){
   const now=performance.now(),st=HPS[v]||(HPS[v]={n:0,t0:0,show:0});
