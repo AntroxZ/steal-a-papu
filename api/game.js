@@ -33,7 +33,7 @@ const RM_TTL = 50, okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
 const CV = 3;
 const FPRICE = [0, 0, 12000000, 29000000, 70000000, 78000000], MAXF = 5, SLOTF = 10;
-const OPRICE = { bat: 3300000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
+const OPRICE = { bat: 3300000, push: 6600000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
