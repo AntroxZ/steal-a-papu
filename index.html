@@ -544,7 +544,7 @@ const ABB=['','K','M','B','T','Q','Qi','Sx','Sp','Oc','No','Dc'];
 const abb=n=>{n=Math.floor(+n)||0;if(n<1000)return n.toLocaleString('es-MX');let e=Math.min(Math.floor(Math.log10(n)/3),ABB.length-1),v=n/Math.pow(10,3*e);if(+v.toFixed(2)>=1000&&e<ABB.length-1){e++;v/=1000}return +v.toFixed(2)+ABB[e]};
 const fm=n=>n>=1000?abb(n):(n<10&&n%1?+n.toFixed(1):Math.floor(n)).toLocaleString('es-MX'),fc=n=>n>=1000?abb(n):String(n);
 /* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar el progreso ni al hacer Rebirth (misma lista en el servidor) */
-const EXCLUSIVO=['bat','dance'];
+const EXCLUSIVO=['dance'];
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
 const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=5,GROUND_LIFE=10000,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
 const START=50,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
