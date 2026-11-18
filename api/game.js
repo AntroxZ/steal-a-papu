@@ -162,7 +162,7 @@ const cleanNick = n => String(n || '').trim().replace(/\s+/g, ' ').slice(0, 14);
    Se actualiza dentro del sync que ya existe (sin peticiones nuevas) y se lee una sola vez al abrir la tabla ---- */
 const LBN = 5;
 function lbApply(lb, r) {
-  if (isAdminUser(r.user) || !r.aid) return false;
+  if (!r.aid) return false;   /* el admin también aparece en la tabla */
   const vals = { m: Math.floor(r.money), p: Math.floor((r.pt || 0) / 1000), s: r.sc | 0 };
   let structural = false, changed = false;
   for (const k of ['m', 'p', 's']) {
