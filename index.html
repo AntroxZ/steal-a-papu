@@ -2538,7 +2538,7 @@ function loadPeer(cb){
 }
 let detOpen=false;
 function updRoom(){const e=$('room');if(!e)return;e.style.display=NET.on?'flex':'none';const n=Object.values(NET.players).filter(q=>!q.gone).length+1;
-  e.textContent=detOpen?(MOB?'Sala '+(NET.code||'')+'\n'+n+(n>1?' jugadores':' jugador')+'\n':'Sala '+(NET.code||'')+' · '+n+(n>1?' jugadores':' jugador')+'\n')+FPS+' FPS'+(NET.host||NET.rtt==null?'':' · '+NET.rtt+' ms'):'Detalles';
+  e.textContent=detOpen?(MOB?'Sala principal\n'+n+(n>1?' jugadores':' jugador')+'\n':'Sala principal · '+n+(n>1?' jugadores':' jugador')+'\n')+FPS+' FPS'+(NET.host||NET.rtt==null?'':' · '+NET.rtt+' ms'):'Detalles';
   e.classList.toggle('open',detOpen);document.body.classList.toggle('det',detOpen)}
 function bcast(m,except){for(const id in NET.conns){if(+id===except)continue;const c=NET.conns[id];if(c&&c.open)c.send(m)}}
 function emit(m){if(!NET.on)return;if(NET.host)bcast(Object.assign({pid:NET.pid},m));else if(NET.hostConn&&NET.hostConn.open)NET.hostConn.send(m)}
@@ -2966,7 +2966,8 @@ setInterval(()=>{if(document.hidden&&running&&ACC.tok&&NET.on&&NET.host&&NET.cod
 /* el admin avisa por la sala: el afectado (o todos) sincroniza al instante, sin esperar el ciclo */
 function liveSync(){if(performance.now()-syncAt>1500)syncNow()}
 /* al cerrar la pestaña o mandar el navegador al fondo (celular), el servidor lo marca fuera de línea al instante; al volver se sincroniza de nuevo. Un solo aviso, sin aumentar las peticiones normales */
-function awayBeacon(){if(ACC.tok&&running){try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'away',tok:ACC.tok,mob:MOB?1:0,hc:(NET.on&&NET.host&&NET.code&&!Object.keys(NET.players).length)?NET.code:undefined})],{type:'application/json'}))}catch(e){}}}
+function awayBeacon(e){if(ACC.tok&&running){const fin=!!(e&&e.type==='pagehide'&&!e.persisted);   /* la sala solo se libera al CERRAR la pestaña de verdad; si solo cambias de pestaña (oculta) la sala sigue viva */
+  try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'away',tok:ACC.tok,mob:MOB?1:0,hc:(fin&&NET.on&&NET.host&&NET.code&&!Object.keys(NET.players).length)?NET.code:undefined})],{type:'application/json'}))}catch(x){}}}
 addEventListener('pagehide',awayBeacon);document.addEventListener('freeze',awayBeacon);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)awayBeacon();else if(running&&ACC.tok)syncNow()});
 function beginPlay(){$('chatBtn').style.display='flex';sfxInit();$('panel').style.display='none';$('tpRow').style.display='flex';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
