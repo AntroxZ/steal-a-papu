@@ -170,6 +170,8 @@ function lbApply(lb, r) {
   for (const k of ['m', 'p', 's']) {
     const a = lb[k] || (lb[k] = []), v = vals[k], before = a.map(e => e[0]).join();
     const i = a.findIndex(e => e[0] === r.aid);
+    /* el admin solo aparece en dinero; la cuenta de pruebas (usuario 1234) no aparece en ninguna tabla */
+    if (String(r.user) === '1234' || (k !== 'm' && isAdminUser(r.user))) { if (i >= 0) { a.splice(i, 1); changed = true; } if (a.map(e => e[0]).join() !== before) structural = true; continue; }
     if (i >= 0) { if (v <= 0) { a.splice(i, 1); changed = true; } else if (a[i][2] !== v || a[i][1] !== r.nick) { a[i][2] = v; a[i][1] = r.nick; changed = true; } }
     else if (v > 0 && (a.length < LBN || v > a[a.length - 1][2])) { a.push([r.aid, r.nick, v]); changed = true; }
     a.sort((x, y) => y[2] - x[2]); if (a.length > LBN) a.length = LBN;
