@@ -30,6 +30,8 @@ INC.push(INC[16] * 10); PRICE.push(PRICE[16] * 10);
 const MAXLVL = INC.length - 1;
 /* SALA ACTIVA: el servidor guarda el código de la sala (clave 'rm', caduca en 35 s si el anfitrión no la renueva). Así nunca hay dos salas ni una sala fantasma. */
 const RM_TTL = 35, okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
+/* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
+const CV = 3;
 const FPRICE = [0, 0, 12000000, 29000000, 70000000, 78000000], MAXF = 5, SLOTF = 10;
 const OPRICE = { bat: 3300000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 11, TOKEN_DAYS = 30, MAX_DT = 25000;
 
@@ -229,6 +231,7 @@ const actions = {
     const r = await userFromTok(b.tok); accrue(r, Date.now()); r.off = 1; r.mob = b.mob ? 1 : 0; await saveRec(r); return { ok: true };
   },
   async sync(b) {
+    if (b.cv !== CV && !process.env.NO_CV_CHECK) throw new Err('Hay una versión nueva del juego. Recargando…', 'auth');
     const [r, info, lbs] = await Promise.all([userFromTok(b.tok), evInfo(), db('GET', 'lb')]);   /* en paralelo: menos tiempo de funcion */
     accrue(r, Date.now());
     const lb = lbParse(lbs), ch = lbApply(lb, r), nowT = Date.now();
