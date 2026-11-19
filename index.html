@@ -900,19 +900,25 @@ const FXL=[],LABN=[5,7,9,11,13];NAMES.forEach((_,l)=>{if(isFx(l))FXL.push(l);if(
 const SPAWN=3,BELT_V=3.2,MAXB=50,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
 const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:devicePixelRatio<1.5,powerPreference:'high-performance'});R.toneMapping=THREE.LinearToneMapping;R.toneMappingExposure=1;
-const PRMAX=Math.min(devicePixelRatio,(matchMedia&&matchMedia('(pointer:coarse)').matches)?1.25:1.5);let PR=PRMAX,FPS=60,fpsN=0,fpsT=performance.now(),goodN=0;R.setPixelRatio(PR);
+const COARSE=!!(matchMedia&&matchMedia('(pointer:coarse)').matches),PRMAX=COARSE?Math.min(devicePixelRatio,1.75):Math.max(1.5,Math.min(devicePixelRatio,2));
+/* RESOLUCION DINAMICA: empieza en 1 y sube sola mientras se mantengan 60 FPS; si el equipo se atrasa (portatil sin cargador, celular caliente) baja de inmediato y recuerda hasta donde llegó */
+let PR=Math.min(PRMAX,COARSE?.85:1),PRLIM=PRMAX,FPS=60,fpsN=0,fpsT=performance.now(),ftEma=16.7,lastPf=0,drsT=performance.now(),okT=0,probeT=0,limT=performance.now();R.setPixelRatio(PR);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xbfe3ff);scene.fog=new THREE.Fog(0xbfe3ff,150,450);
 const cam=new THREE.PerspectiveCamera(55,1,.1,1200);
 function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
 function perfTick(now){
-  fpsN++;if(now-fpsT<2000)return;
-  FPS=Math.round(fpsN*1000/(now-fpsT));fpsN=0;fpsT=now;
-  if(running&&!document.hidden){
-    if(FPS<45&&PR>.75){PR=Math.max(.75,PR-.25);R.setPixelRatio(PR);resize();goodN=0}   /* PC/celular lento: baja la resolución para ganar FPS */
-    else if(FPS>=58&&PR<PRMAX){if(++goodN>=8){goodN=0;PR=Math.min(PRMAX,PR+.25);R.setPixelRatio(PR);resize()}}else goodN=0   /* ya va fluido de forma estable (16 s): sube de nuevo la calidad poco a poco */
-  }
-  updRoom();
+  fpsN++;if(lastPf){const ft=Math.min(now-lastPf,40);ftEma=ftEma*.88+ft*.12}lastPf=now;
+  if(now-fpsT>=2000){FPS=Math.round(fpsN*1000/(now-fpsT));fpsN=0;fpsT=now}
+  if(!running||document.hidden){okT=0;return}
+  if(now-limT>90000){limT=now;PRLIM=PRMAX}   /* cada 90 s vuelve a probar subir (por si conectaron el cargador) */
+  if(now-drsT<1200)return;
+  if(ftEma>19.5&&PR>.6){   /* menos de ~51 FPS: baja la resolución ya */
+    PR=Math.max(.6,PR-.125);if(now-probeT<5000)PRLIM=Math.max(.6,PR);   /* si recién había subido y se atrasó, ese nivel es el techo */
+    R.setPixelRatio(PR);resize();drsT=now;okT=0}
+  else if(ftEma<17.4&&PR<PRLIM){   /* aguanta 60 con holgura: sube poco a poco */
+    if(!okT)okT=now;else if(now-okT>4000){PR=Math.min(PRLIM,PR+.0625);R.setPixelRatio(PR);resize();drsT=now;okT=now;probeT=now}}
+  else if(ftEma>=17.4)okT=0
 }
 const B=(c,o={})=>new THREE.MeshBasicMaterial(Object.assign({color:c},o));
 let ROOT=scene;
@@ -3572,7 +3578,7 @@ function bgTick(){
 (function(){let w=null;try{w=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(1)},50)'],{type:'application/javascript'})));w.onmessage=bgTick}catch(e){w=null}if(!w)setInterval(bgTick,50)})();
 let hbW=0;/* latido de la sala del anfitrión con la pestaña oculta: lo dispara el Worker (los temporizadores normales se frenan) */
 {const hbf=()=>{const n=Date.now();if(document.hidden&&running&&ACC.tok&&NET.on&&NET.host&&NET.code&&n-hbW>14000){hbW=n;api('hb',{tok:ACC.tok,hc:NET.code})}};setInterval(hbf,2000)}
-let last=performance.now(),labLast=0;
+let last=performance.now(),labLast=0,labRR=0;
 let frameNext=0;const FRAME_MS=1000/60;
 function loop(now){
   /* tope de 60 FPS: en pantallas de 120/144 Hz se salta el cuadro sobrante */
@@ -3632,7 +3638,7 @@ function loop(now){
     const kk=Math.max(camCT,Math.min(1,1.2/Math.max(D,.01)));
     cam.position.set(p.x+ox*kk+(Math.random()-.5)*shake,ly+oy*kk+(Math.random()-.5)*shake,p.z+oz*kk);cam.lookAt(p.x,ly,p.z)}
   faceModels();updGT();
-  {if(now-fxLast>150){fxLast=now;fxCache=fxSet()}const fs=fxCache;if(fs.size){if(now-labLast>50){labLast=now;drawGold(now,fs)}auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1);fxAnim(now)}updFire(now);updParty(dt,now);updLegSign(now)}
+  {if(now-fxLast>150){fxLast=now;fxCache=fxSet()}const fs=fxCache;if(fs.size){if(now-labLast>50){labLast=now;if(fs.size<=3)drawGold(now,fs);else{const a=[...fs];labRR=(labRR+3)%a.length;drawGold(now,new Set([a[labRR%a.length],a[(labRR+1)%a.length],a[(labRR+2)%a.length]]))}}auraMat.opacity=.42+.22*Math.sin(now/220);haloMat.opacity=.75+.25*Math.sin(now/300+1);redAuraMat.opacity=.5+.25*Math.sin(now/130);redHaloMat.opacity=.8+.2*Math.sin(now/170+1);fxAnim(now)}updFire(now);updParty(dt,now);updLegSign(now)}
   updBgm(dt,now);updFarDance(now);dlinkTick(now);updDanceFx(ME_FX,DNL.on,now);
   placeTip();R.render(scene,cam);requestAnimationFrame(loop);
 }
