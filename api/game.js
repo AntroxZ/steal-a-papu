@@ -21,19 +21,25 @@ async function evInfo() {
 }
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
-const DPRICE = [0, 4000, 45000, 600000, 6000000, 11000000, 15000000, 82000000, 25000000, 38000000, 65000000, 380000000];
+const DPRICE = [0, 2500000, 56000000, 1600000000, 3200000000, 5900000000, 12000000000, 320000000000, 28000000000, 47000000000, 90000000000, 2200000000000];
 /* pisos de la base: se empieza con 1 (10 espacios) y se pueden comprar hasta 5; precio del piso numero n */
 /* BASE 001 (guardada): Papus nuevos 17..51, mismos valores que el cliente. Solo el admin puede invocarlos en la cinta. */
 [[5, 10], [5, 25], [7, 10], [7, 25], [9, 10], [9, 25], [11, 10], [11, 25], [13, 10], [13, 25]].forEach(([b, m]) => { INC.push(INC[b] * m); PRICE.push(PRICE[b] * m); });
 INC.push(INC[16] * 10); PRICE.push(PRICE[16] * 10);
 [[18, 1000], [26, 1700], [35, 2500], [600, 650000], [2100, 3600000], [4000, 7200000]].forEach(([i, p]) => [1, 4, 10, 25].forEach(m => { INC.push(i * m); PRICE.push(p * m); }));
 const MAXLVL = INC.length - 1;
+/* BASE 001 ACTIVA: ingresos y precios finales de los Papus 5..51 (mismos valores que el cliente) */
+const B1_INC = [2500, 10000, 250000, 1000000, 1500000, 6000000, 80000, 320000, 12000, 48000, 120000000, 500000000, 25000, 62500, 2500000, 6250000, 15000000, 37500000, 800000, 2000000, 120000, 300000, 5000000000, 18000, 72000, 180000, 450000, 26000, 104000, 260000, 650000, 35000, 140000, 350000, 875000, 600000, 2400000, 6000000, 15000000, 2100000, 8400000, 21000000, 52500000, 4000000, 16000000, 40000000, 100000000], B1_PR = [50000, 200000, 180000000, 720000000, 2400000000, 9600000000, 9000000, 36000000, 500000, 2000000, 120000000000, 500000000000, 500000, 1250000, 1800000000, 4500000000, 24000000000, 60000000000, 90000000, 225000000, 5000000, 12500000, 2000000000000, 1000000, 4000000, 10000000, 25000000, 1700000, 6800000, 17000000, 42500000, 2500000, 10000000, 25000000, 62500000, 650000000, 2600000000, 6500000000, 16250000000, 3600000000, 14400000000, 36000000000, 90000000000, 7200000000, 28800000000, 72000000000, 180000000000];
+B1_INC.forEach((v, i) => { INC[5 + i] = v; PRICE[5 + i] = B1_PR[i]; });
+/* Rebirth: dinero, multiplicador y Papus (nivel del Papu, cantidad) que debes tener en tu base. Reiniciar todo menos lo exclusivo */
+const REB = [{"n": 1, "money": 5000000000, "mult": 1.5, "papus": [[29, 1]]}, {"n": 2, "money": 30000000000, "mult": 2, "papus": [[37, 1], [12, 1]]}, {"n": 3, "money": 600000000000, "mult": 2.5, "papus": [[41, 1], [8, 1]]}, {"n": 4, "money": 10000000000000, "mult": 3, "papus": [[19, 1], [34, 1]]}, {"n": 5, "money": 50000000000000, "mult": 3.5, "papus": [[21, 1], [42, 1], [31, 1]]}, {"n": 6, "money": 150000000000000, "mult": 4, "papus": [[46, 2], [35, 1]]}, {"n": 7, "money": 450000000000000, "mult": 4.5, "papus": [[50, 1], [22, 1], [43, 1], [46, 1]]}, {"n": 8, "money": 1200000000000000, "mult": 5, "papus": [[47, 2], [16, 1]]}, {"n": 9, "money": 3000000000000000, "mult": 5.5, "papus": [[51, 1], [22, 1], [47, 1], [16, 2]]}, {"n": 10, "money": 8000000000000000, "mult": 6, "papus": [[51, 2], [16, 2], [27, 1], [47, 1]]}];
+const REBM = [1].concat(REB.map(x => x.mult));
 /* SALA ACTIVA: el servidor guarda el código de la sala (clave 'rm', caduca en 35 s si el anfitrión no la renueva). Así nunca hay dos salas ni una sala fantasma. */
 const RM_TTL = 50, okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
 const CV = 3;
-const FPRICE = [0, 0, 12000000, 29000000, 70000000, 78000000], MAXF = 5, SLOTF = 10;
-const OPRICE = { bat: 3300000, push: 6600000, dance: 650000000 }, MAXM = 1e27, START = 50, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
+const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000], MAXF = 5, SLOTF = 10;
+const OPRICE = { bat: 870000000, push: 1740000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -44,12 +50,14 @@ async function db(...cmd) {
 const ukey = u => 'u:' + u.toLowerCase();
 const emptySlots = () => Array(NSLOT).fill(-1);
 /* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar progreso ni al hacer Rebirth (misma lista que el cliente) */
-const EXCLUSIVO = ['dance'];
+const EXCLUSIVO = ['dance', 'freddy'];
 /* reinicio de progreso a cero (reiniciar cuenta o Rebirth): conserva siempre los objetos exclusivos */
 function resetProgress(r) {
   const keep = (Array.isArray(r.inv) ? r.inv : []).filter(i => EXCLUSIVO.includes(i));
   r.slots = emptySlots(); r.fl = 1; r.dco = { o: [], c: 0, f: 0 }; r.inv = keep; r.held = -1; r.hpaid = 0; r.money = START; r.t = Date.now();
 }
+/* mult de Rebirth: nivel r.rb (0..10) */
+const rbMult = r => REBM[Math.max(0, Math.min(10, r.rb | 0))] || 1;
 
 /* ---- cifrado reversible de la contraseña (el admin puede verla; la base de datos sola no la revela) ---- */
 const aesKey = () => crypto.createHash('sha256').update('pw:' + SECRET).digest();
@@ -90,9 +98,9 @@ function accrue(r, now) {
   const dms = Math.min(Math.max(now - (r.t || now), 0), MAX_DT), dt = dms / 1000;
   r.pt = (r.pt || 0) + dms;   /* tiempo jugado (ms), para la tabla de clasificación */
   let inc = 0; r.slots.forEach(l => { if (l >= 0) inc += INC[l] || 0; });
-  r.money = Math.min(MAXM, r.money + inc * dt); r.t = now; r.seen = now; r.off = 0;
+  r.money = Math.min(MAXM, r.money + inc * rbMult(r) * dt); r.t = now; r.seen = now; r.off = 0;
 }
-const view = r => ({ nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r), inv: Array.isArray(r.inv) ? r.inv : [], vol: r.vol || null, cmd: (r.cmd && Date.now() - r.cmd.ts < 90000) ? { id: r.cmd.id, on: r.cmd.on, age: Date.now() - r.cmd.ts } : null });
+const view = r => ({ rb: r.rb | 0, nick: r.nick, skin: r.skin, money: Math.round(r.money * 100) / 100, slots: r.slots, aid: r.aid, held: r.held == null ? -1 : r.held, cat: r.cat || {}, deco: decoView(r), inv: Array.isArray(r.inv) ? r.inv : [], vol: r.vol || null, cmd: (r.cmd && Date.now() - r.cmd.ts < 90000) ? { id: r.cmd.id, on: r.cmd.on, age: Date.now() - r.cmd.ts } : null });
 function decoView(r) { const d = r.dco || {}; return { o: Array.isArray(d.o) ? d.o : [], c: d.c | 0, f: d.f ? 1 : 0, n: r.fl || 1 }; }
 /* catálogo (bitácora): primera vez que colocaste cada Papu en tu base. Los Papus que ya tenías puestos antes del catálogo se anotan una sola vez */
 function touchCat(r) {
@@ -397,6 +405,19 @@ const actions = {
     r.money -= FPRICE[n + 1]; r.fl = n + 1;
     await saveRec(r); return { st: view(r) };
   },
+  /* REBIRTH: necesitas el dinero y los Papus del siguiente nivel en tu base; se reinicia todo menos lo exclusivo y subes el multiplicador */
+  async rebirth(b) {
+    const r = await userFromTok(b.tok); accrue(r, Date.now());
+    const n = (r.rb | 0) + 1;
+    if (n > REB.length) { await saveRec(r); throw Object.assign(new Err('Ya completaste todos los Rebirth.', 'bad'), { st: view(r) }); }
+    if (Number.isInteger(b.n) && b.n !== n) { await saveRec(r); throw Object.assign(new Err('Haz los Rebirth en orden.', 'bad'), { st: view(r) }); }
+    const L = REB[n - 1];
+    if (r.money < L.money) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero para el Rebirth.', 'bad'), { st: view(r) }); }
+    const cnt = {}; r.slots.forEach(l => { if (l >= 0) cnt[l] = (cnt[l] || 0) + 1; });
+    if (!L.papus.every(([l, q]) => (cnt[l] || 0) >= q)) { await saveRec(r); throw Object.assign(new Err('Te faltan Papus en tu base para este Rebirth.', 'bad'), { st: view(r) }); }
+    settleHeld(r); resetProgress(r); r.rb = n; r.rbt = Date.now();
+    await saveRec(r); return { st: view(r) };
+  },
   async clear(b) { const r = await userFromTok(b.tok); accrue(r, Date.now()); r.slots = emptySlots(); await saveRec(r); return { st: view(r) }; },
   /* "Reiniciar todo" ya no existe para los jugadores: solo el admin reinicia cuentas (aclear) */
   async reset(b) { await userFromTok(b.tok); throw new Err('Solo el administrador puede reiniciar cuentas.', 'bad'); },
@@ -408,7 +429,7 @@ const actions = {
   async skin(b) {
     const r = await userFromTok(b.tok), k = b.k;
     if (!Number.isInteger(k) || k < 0 || k >= NSKIN) throw new Err('Skin no válida.');
-    if (k === 11 && !isAdminUser(r.user)) throw new Err('Esa skin es exclusiva y todavía no está disponible.', 'bad');   /* Freddy Papu: solo el admin */
+    if (k === 11 && !isAdminUser(r.user) && !(Array.isArray(r.inv) && r.inv.includes('freddy'))) throw new Err('Primero compra la skin Freddy Papu en la tienda.', 'bad');   /* Freddy Papu: exclusiva de tienda (o admin) */
     r.skin = k; await saveRec(r); return { st: view(r) };
   },
 
@@ -447,7 +468,7 @@ const actions = {
   async aclear(b) {
     adminFromTok(b.tok);
     const r = await loadRec(String(b.user || '')); if (!r) throw new Err('Ese usuario no existe.');
-    resetProgress(r); await saveRec(r); return { ok: true };
+    resetProgress(r); r.rb = 0; await saveRec(r); return { ok: true };
   },
   /* eventos: iniciar o detener el Papu Golden Time */
   async aev(b) {
