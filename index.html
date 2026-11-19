@@ -669,9 +669,7 @@ body.mob.hudnew #inv{padding:5px 6px;gap:5px;border-width:2px;border-radius:12px
 body.mob.hudnew #inv .slot{width:40px;height:40px;border-width:2px;border-radius:10px}
 body.mob.hudnew #inv .slot kbd{display:none}
 body.mob.hudnew #inv .slot.on{transform:translateY(-5px) scale(1.08)}
-body.mob.hudnew #mob .mb{width:44px;height:44px;border-width:3px;font-size:.55rem;box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 3px 0 #0b0630}
-body.mob.hudnew #mob .mb span{font-size:1.05rem}body.mob.hudnew #mob .mb b{font-size:.5rem}
-body.mob.hudnew #mbJump{width:56px;height:56px}body.mob.hudnew #mbAct{width:48px;height:48px}
+body.mob.hudnew #mob .mb{border-width:3px;box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 3px 0 #0b0630}
 body.mob.hudnew #joyB{width:92px;height:92px;margin:-46px 0 0 -46px;border-width:3px}
 body.mob.hudnew #joyK{width:40px;height:40px;margin:-20px 0 0 -20px;border-width:3px}
 body.mob.hudnew .sbox{padding:8px 10px;border-width:3px;border-radius:18px}
@@ -701,7 +699,8 @@ body.mob.hudnew .hiC{width:30px!important;height:30px!important}
 @keyframes gainDn{0%{opacity:0;transform:translate(0,-50%) scale(.6)}12%{opacity:1;transform:translate(0,calc(-50% - 4px)) scale(1.2)}30%{transform:translate(0,calc(-50% - 8px)) scale(1)}100%{opacity:0;transform:translate(0,calc(-50% - 44px)) scale(1)}}
 body.hudnew .gainf{font-family:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;font-weight:400;-webkit-text-stroke:5px #150a45;paint-order:stroke fill;text-shadow:none;color:#9bff9f}
 body.hudnew .gainf.neg{color:#ff8a8a}
-body.mob .gainf{font-size:.9rem}body.mob.hudnew .gainf{-webkit-text-stroke:4px #150a45}
+body.hudnew .gainf{font-size:1.55rem;-webkit-text-stroke:6px #150a45;color:#b6ffb9;filter:drop-shadow(0 0 6px rgba(120,255,140,.8))}body.hudnew .gainf.neg{color:#ffa0a0;filter:drop-shadow(0 0 6px rgba(255,90,90,.8))}
+body.mob .gainf{font-size:.9rem}body.mob.hudnew .gainf{font-size:1.15rem}body.mob.hudnew .gainf{-webkit-text-stroke:4px #150a45}
 #hud .card:nth-child(2){display:none!important}
 .dcard.soon{opacity:.92;cursor:default}.dcard.soon .dsw img{object-fit:contain;padding:8px}.dcard.soon .dn{letter-spacing:.04em}
 @media (prefers-reduced-motion:reduce){.gainf{animation-duration:.01s!important}}
@@ -710,28 +709,15 @@ body.mob .gainf{font-size:.9rem}body.mob.hudnew .gainf{-webkit-text-stroke:4px #
 .menuLogo{height:min(170px,26vh);width:auto;max-width:86vw;display:block;margin:0 auto;filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)) drop-shadow(0 0 18px rgba(255,255,255,.25));-webkit-user-drag:none;user-select:none;pointer-events:none}
 /* movil: el cuadro que aparece al acercarte tambien se toca (igual que el boton Accion) */
 body.mob #tip{pointer-events:auto;touch-action:none;padding:10px 20px 11px;cursor:pointer}
-/* movil, HUD nuevo: botones mas grandes y comodos, sin tapar la pantalla */
-body.mob.hudnew #mob .mb{width:56px;height:56px;border-width:3px}
-body.mob.hudnew #mob .mb span{font-size:1.35rem}body.mob.hudnew #mob .mb b{font-size:.62rem}
-body.mob.hudnew #mbJump{width:92px;height:92px;right:calc(env(safe-area-inset-right,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
-body.mob.hudnew #mbJump b{font-size:.9rem}
-body.mob.hudnew #mbAct{width:66px;height:66px;right:calc(env(safe-area-inset-right,0px) + 114px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
-body.mob.hudnew #mbDance{width:60px;height:60px;right:calc(env(safe-area-inset-right,0px) + 188px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
-body.mob.hudnew #mbSync{width:58px!important;height:58px!important;right:calc(env(safe-area-inset-right,0px) + 256px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
-body.mob.hudnew #mbSync span{font-size:1.2rem}body.mob.hudnew #mbSync b{font-size:.52rem}
-body.mob.hudnew #mbSwing{right:calc(env(safe-area-inset-right,0px) + 26px);bottom:calc(env(safe-area-inset-bottom,0px) + 114px)}
-body.mob.hudnew #mbDrop{right:calc(env(safe-area-inset-right,0px) + 92px);bottom:calc(env(safe-area-inset-bottom,0px) + 114px)}
-body.mob.hudnew #mbLift{right:calc(env(safe-area-inset-right,0px) + 158px);bottom:calc(env(safe-area-inset-bottom,0px) + 114px)}
-body.mob.hudnew #mbDel{right:calc(env(safe-area-inset-right,0px) + 224px);bottom:calc(env(safe-area-inset-bottom,0px) + 114px)}
-/* HUD clasico en movil: tambien Saltar mas grande, los demas se acomodan */
-body.mob:not(.hudnew) #mbJump{width:90px;height:90px}
-body.mob:not(.hudnew) #mbAct{right:calc(env(safe-area-inset-right,0px) + 116px)}
-body.mob:not(.hudnew) #mbDance{right:calc(env(safe-area-inset-right,0px) + 188px)}
-body.mob:not(.hudnew) #mbSync{right:calc(env(safe-area-inset-right,0px) + 248px)}
-body.mob:not(.hudnew) #mbSwing{bottom:calc(env(safe-area-inset-bottom,0px) + 118px)}
-body.mob:not(.hudnew) #mbDrop{right:calc(env(safe-area-inset-right,0px) + 100px);bottom:calc(env(safe-area-inset-bottom,0px) + 118px)}
-body.mob:not(.hudnew) #mbLift{right:calc(env(safe-area-inset-right,0px) + 172px);bottom:calc(env(safe-area-inset-bottom,0px) + 118px)}
-body.mob:not(.hudnew) #mbDel{right:calc(env(safe-area-inset-right,0px) + 172px);bottom:calc(env(safe-area-inset-bottom,0px) + 178px)}
+/* movil (ambos HUD, mismas proporciones): Saltar mas grande, los demas se acomodan */
+body.mob #mbJump{width:90px;height:90px}
+body.mob #mbAct{right:calc(env(safe-area-inset-right,0px) + 116px)}
+body.mob #mbDance{right:calc(env(safe-area-inset-right,0px) + 188px)}
+body.mob #mbSync{right:calc(env(safe-area-inset-right,0px) + 248px)}
+body.mob #mbSwing{bottom:calc(env(safe-area-inset-bottom,0px) + 118px)}
+body.mob #mbDrop{right:calc(env(safe-area-inset-right,0px) + 100px);bottom:calc(env(safe-area-inset-bottom,0px) + 118px)}
+body.mob #mbLift{right:calc(env(safe-area-inset-right,0px) + 172px);bottom:calc(env(safe-area-inset-bottom,0px) + 118px)}
+body.mob #mbDel{right:calc(env(safe-area-inset-right,0px) + 172px);bottom:calc(env(safe-area-inset-bottom,0px) + 178px)}
 </style>
 </head>
 <body>
@@ -1492,7 +1478,7 @@ function floatTxt(txt,x,y,neg){
   d.addEventListener('animationend',()=>d.remove());document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
 function gainFx(v){
   const c=document.querySelector('#hud .card'),r=c?c.getBoundingClientRect():null;
-  floatTxt('+$'+fm(v),r?r.left+r.width/2:innerWidth/2,r?r.bottom-6:60,false)}
+  floatTxt('+$'+fm(v),r?r.left+r.width/2:innerWidth/2,r?r.bottom+(document.body.classList.contains('hudnew')?30:-6):60,false)}
 function spendFx(price){
   const b=LASTBTN||{x:innerWidth/2,y:innerHeight/2};LASTBTN=null;
   floatTxt('-$'+fm(price),Math.min(b.x+8,innerWidth-110),b.y,true)}   /* al lado derecho del botón Comprar */
@@ -1514,12 +1500,12 @@ const COINFX=(()=>{
     const W=Math.round(r.width),H=Math.round(r.height);
     const PAD=26;cv.style.left=(r.left-PAD)+'px';cv.style.top=(r.top-PAD)+'px';
     const dpr=Math.min(2,devicePixelRatio||1),CW=W+PAD*2,CH=H+PAD*2;cv.style.width=CW+'px';cv.style.height=CH+'px';if(cv.width!==CW*dpr||cv.height!==CH*dpr){cv.width=CW*dpr;cv.height=CH*dpr}g.setTransform(dpr,0,0,dpr,PAD*dpr,PAD*dpr);
-    const sc=H/54;
+    const sc=H/54*(document.body.classList.contains('hudnew')?1.3:1);
     if(act){
       tSpawn+=dt;while(tSpawn>.2){tSpawn-=.2;
         P.push({t:0,x:W*.06,y:H*.9,cx:W*(.02+Math.random()*.14),cy:-H*(.1+Math.random()*.3),tx:W*(.42+Math.random()*.16),ty:H*(.4+Math.random()*.2),r:(3.8+Math.random()*2)*sc,a:Math.random()*6,va:(Math.random()-.5)*8,l:1.3+Math.random()*.4,bz:1});
         if(Math.random()<.4)P.push({t:0,x:Math.random()*W,y:H*(.35+Math.random()*.6),vx:0,vy:-4*sc,r:(1.6+Math.random()*1.8)*sc,a:0,va:0,l:.9,sp:1})}
-      tTxt+=dt;if(tTxt>.55){tTxt=0;floatTxt('+$'+fm(INCNOW*.55),r.left+r.width/2,r.top-6,false)}
+      tTxt+=dt;if(tTxt>.55){tTxt=0;floatTxt('+$'+fm(INCNOW*.55),r.left+r.width/2,document.body.classList.contains('hudnew')?r.bottom+30:r.top-6,false)}   /* HUD nuevo: el texto nace debajo del cuadro y sube hacia el (arriba se salia de la pantalla) */
     }
     g.clearRect(-PAD,-PAD,CW,CH);
     P=P.filter(p=>{p.t+=dt;if(p.t>p.l)return false;
