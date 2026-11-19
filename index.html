@@ -669,7 +669,8 @@ body.mob.hudnew #inv{padding:5px 6px;gap:5px;border-width:2px;border-radius:12px
 body.mob.hudnew #inv .slot{width:40px;height:40px;border-width:2px;border-radius:10px}
 body.mob.hudnew #inv .slot kbd{display:none}
 body.mob.hudnew #inv .slot.on{transform:translateY(-5px) scale(1.08)}
-body.mob.hudnew #mob .mb{border-width:3px;box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 3px 0 #0b0630}
+body.mob.hudnew #mob .mb{border-width:3px;box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 3px 0 #0b0630;opacity:.8}
+body.mob.hudnew #mob .mb.on{opacity:1}
 body.mob.hudnew #joyB{width:92px;height:92px;margin:-46px 0 0 -46px;border-width:3px}
 body.mob.hudnew #joyK{width:40px;height:40px;margin:-20px 0 0 -20px;border-width:3px}
 body.mob.hudnew .sbox{padding:8px 10px;border-width:3px;border-radius:18px}
@@ -1478,7 +1479,7 @@ function floatTxt(txt,x,y,neg){
   d.addEventListener('animationend',()=>d.remove());document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
 function gainFx(v){
   const c=document.querySelector('#hud .card'),r=c?c.getBoundingClientRect():null;
-  floatTxt('+$'+fm(v),r?r.left+r.width/2:innerWidth/2,r?r.bottom+(document.body.classList.contains('hudnew')?30:-6):60,false)}
+  floatTxt('+$'+fm(v),r?r.left+r.width/2:innerWidth/2,r?r.bottom+30:60,false)}
 function spendFx(price){
   const b=LASTBTN||{x:innerWidth/2,y:innerHeight/2};LASTBTN=null;
   floatTxt('-$'+fm(price),Math.min(b.x+8,innerWidth-110),b.y,true)}   /* al lado derecho del botón Comprar */
@@ -1500,12 +1501,12 @@ const COINFX=(()=>{
     const W=Math.round(r.width),H=Math.round(r.height);
     const PAD=26;cv.style.left=(r.left-PAD)+'px';cv.style.top=(r.top-PAD)+'px';
     const dpr=Math.min(2,devicePixelRatio||1),CW=W+PAD*2,CH=H+PAD*2;cv.style.width=CW+'px';cv.style.height=CH+'px';if(cv.width!==CW*dpr||cv.height!==CH*dpr){cv.width=CW*dpr;cv.height=CH*dpr}g.setTransform(dpr,0,0,dpr,PAD*dpr,PAD*dpr);
-    const sc=H/54*(document.body.classList.contains('hudnew')?1.3:1);
+    const sc=Math.max(H/54,document.body.classList.contains('hudnew')?.95:0)*(document.body.classList.contains('hudnew')?1.3:1);
     if(act){
       tSpawn+=dt;while(tSpawn>.2){tSpawn-=.2;
         P.push({t:0,x:W*.06,y:H*.9,cx:W*(.02+Math.random()*.14),cy:-H*(.1+Math.random()*.3),tx:W*(.42+Math.random()*.16),ty:H*(.4+Math.random()*.2),r:(3.8+Math.random()*2)*sc,a:Math.random()*6,va:(Math.random()-.5)*8,l:1.3+Math.random()*.4,bz:1});
         if(Math.random()<.4)P.push({t:0,x:Math.random()*W,y:H*(.35+Math.random()*.6),vx:0,vy:-4*sc,r:(1.6+Math.random()*1.8)*sc,a:0,va:0,l:.9,sp:1})}
-      tTxt+=dt;if(tTxt>.55){tTxt=0;floatTxt('+$'+fm(INCNOW*.55),r.left+r.width/2,document.body.classList.contains('hudnew')?r.bottom+30:r.top-6,false)}   /* HUD nuevo: el texto nace debajo del cuadro y sube hacia el (arriba se salia de la pantalla) */
+      tTxt+=dt;if(tTxt>.55){tTxt=0;floatTxt('+$'+fm(INCNOW*.55),r.left+r.width/2,r.bottom+30,false)}   /* ambos HUD: el texto nace debajo del cuadro y sube hacia el (arriba se salia de la pantalla y tapaba el nombre) */
     }
     g.clearRect(-PAD,-PAD,CW,CH);
     P=P.filter(p=>{p.t+=dt;if(p.t>p.l)return false;
@@ -2765,6 +2766,7 @@ function hostMsg(conn,m){
   if(pid==null)return;
   {const pl=NET.players[pid];if(pl)pl.seen=performance.now()}
   if(m.t==='ping'){if(m.ts!=null)conn.send({t:'pong',ts:m.ts});return}
+  if(m.t==='rs'){conn.send({t:'ros',players:snapPlayers(),slots:snapSlots()});return}   /* un invitado pidio la lista de jugadores de nuevo */
   if(m.t==='hreq'){hostHandover(pid,m.pr);return}
   if(m.t==='bye'){dropPlayer(pid);try{conn.close()}catch(e){}return}
   if(m.t==='st'){const p=NET.players[pid];if(p&&m.a){setTgt(p,m.a);relayHidden()}}
@@ -2841,7 +2843,11 @@ function clientMsg(m){
     case 'hand':NET.pref=m.pid;NET.hq=true;break;   /* traspaso: el admin sera el nuevo anfitrion */
     case 'join':{const had=!!NET.players[m.p.pid];const np=addPlayer(m.p.pid,m.p.name,m.p.skin,m.p.base,false,m.p.aid,m.p.dc);if(!had)noteJoin(np);break}
     case 'leave':dropPlayer(m.pid);break;
-    case 'S':{const nw=performance.now();m.l.forEach(a=>{const p=NET.players[a[0]];if(p){setTgt(p,a.slice(1));p.sT=nw}});break}
+    case 'S':{const nw=performance.now();m.l.forEach(a=>{const p=NET.players[a[0]];if(p){setTgt(p,a.slice(1));p.sT=nw}});
+      /* el anfitrion lista a alguien que yo no tengo (se perdio un aviso): le pido la lista otra vez sin salir de la sala */
+      if(NET.pid&&m.l.some(a=>a[0]!==NET.pid&&!NET.players[a[0]])&&nw-(NET.rsT||0)>2500){NET.rsT=nw;try{NET.hostConn&&NET.hostConn.open&&NET.hostConn.send({t:'rs'})}catch(e){}}break}
+    case 'ros':{m.players.forEach(p=>{if(p.pid!==NET.pid&&!NET.players[p.pid]){addPlayer(p.pid,p.name,p.skin,p.base,p.bar,p.aid,p.dc);const np=NET.players[p.pid];if(np&&p.eq){np.eq=p.eq===2?2:1;if(np.av)np.av.eq=np.eq}}});
+      m.slots.forEach(([b,i,l])=>{if(myBase&&b!==myBase.idx)putRemoteSlot(BASES[b],i,l)});updRoom();break}
     case 'sp':spawnItem(m.lvl,-BELT_L/2+2,m.iid);if(m.leg)toast('¡Apareció un Papu LEGENDARIO: '+NAMES[m.lvl]+'!');break;
     case 'rm':{const k=items.findIndex(o=>o.iid===m.iid);if(k>=0){scene.remove(items[k].g);items.splice(k,1)}break}
     case 'buyres':finishBuy(m);break;
