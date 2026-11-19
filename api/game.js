@@ -35,9 +35,12 @@ B1_INC.forEach((v, i) => { INC[5 + i] = v; PRICE[5 + i] = B1_PR[i]; });
 const REB = [{"n": 1, "money": 5000000000, "mult": 1.5, "papus": [[29, 1]]}, {"n": 2, "money": 30000000000, "mult": 2, "papus": [[37, 1], [12, 1]]}, {"n": 3, "money": 600000000000, "mult": 2.5, "papus": [[41, 1], [8, 1]]}, {"n": 4, "money": 10000000000000, "mult": 3, "papus": [[19, 1], [34, 1]]}, {"n": 5, "money": 50000000000000, "mult": 3.5, "papus": [[21, 1], [42, 1], [31, 1]]}, {"n": 6, "money": 150000000000000, "mult": 4, "papus": [[46, 2], [35, 1]]}, {"n": 7, "money": 450000000000000, "mult": 4.5, "papus": [[50, 1], [22, 1], [43, 1], [46, 1]]}, {"n": 8, "money": 1200000000000000, "mult": 5, "papus": [[47, 2], [16, 1]]}, {"n": 9, "money": 3000000000000000, "mult": 5.5, "papus": [[51, 1], [22, 1], [47, 1], [16, 2]]}, {"n": 10, "money": 8000000000000000, "mult": 6, "papus": [[51, 2], [16, 2], [27, 1], [47, 1]]}];
 const REBM = [1].concat(REB.map(x => x.mult));
 /* SALA ACTIVA: el servidor guarda el código de la sala (clave 'rm', caduca en 35 s si el anfitrión no la renueva). Así nunca hay dos salas ni una sala fantasma. */
-const RM_TTL = 50, okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
+/* la sala está 'viva' si su anfitrión la renovó hace menos de ~25 s; el admin solo puede reemplazar una sala MUERTA, nunca una sala con gente jugando */
+const RM_TTL = 50, RM_STALE = 25000;
+async function rmDead() { const t = await db('PTTL', 'rm'); return !(t > RM_STALE); }
+const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
-const CV = 3;
+const CV = 4;
 const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000], MAXF = 5, SLOTF = 10;
 const OPRICE = { bat: 870000000, push: 1740000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
@@ -246,7 +249,7 @@ const actions = {
     accrue(r, Date.now());
     const lb = lbParse(lbs), ch = lbApply(lb, r), nowT = Date.now();
     const tk = readTok(b.tok), hc = okCode(b.hc) ? b.hc : null;
-    if (hc && (!info.rc || info.rc === hc || (tk && tk.adm))) { info.rc = hc; await db('SET', 'rm', hc, 'EX', RM_TTL); }   /* el admin siempre manda: su sala reemplaza a cualquier otra */
+    if (hc && (!info.rc || info.rc === hc || (tk && tk.adm && await rmDead()))) { info.rc = hc; await db('SET', 'rm', hc, 'EX', RM_TTL); }   /* el admin siempre manda: su sala reemplaza a cualquier otra */
     const jobs = [saveRec(r)];   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
     if (ch === 2 || (ch === 1 && nowT - lb.t > 25000)) { lb.t = nowT; jobs.push(db('SET', 'lb', JSON.stringify(lb))); }
     await Promise.all(jobs);
@@ -316,7 +319,7 @@ const actions = {
   async claim(b) {
     const t = readTok(b.tok); if (!t) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
     if (!okCode(b.code)) throw new Err('Jugada no válida.', 'bad');
-    if (t.adm && b.force) { await db('SET', 'rm', b.code, 'EX', RM_TTL); return { rc: b.code, won: true }; }
+    if (t.adm && b.force && await rmDead()) { await db('SET', 'rm', b.code, 'EX', RM_TTL); return { rc: b.code, won: true }; }   /* sala muerta: el admin la reemplaza; si hay gente jugando, el admin se une a ella */
     if ((await db('SET', 'rm', b.code, 'NX', 'EX', RM_TTL)) === 'OK') return { rc: b.code, won: true };
     const cur = await db('GET', 'rm'); return { rc: cur || b.code, won: !cur };
   },
@@ -325,7 +328,7 @@ const actions = {
     const t = readTok(b.tok); if (!t) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
     if (!okCode(b.hc)) throw new Err('Jugada no válida.', 'bad');
     const cur = await db('GET', 'rm');
-    if (!cur || cur === b.hc || t.adm) { await db('SET', 'rm', b.hc, 'EX', RM_TTL); return { rc: b.hc }; }
+    if (!cur || cur === b.hc || (t.adm && await rmDead())) { await db('SET', 'rm', b.hc, 'EX', RM_TTL); return { rc: b.hc }; }
     return { rc: cur };
   },
   /* tabla de clasificación: una sola lectura, sin recorrer cuentas */
