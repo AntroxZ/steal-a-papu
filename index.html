@@ -913,7 +913,7 @@ const fm=n=>n>=1e9?abb(n):(n<10&&n%1?+n.toFixed(1):Math.floor(n)).toLocaleString
 /* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar el progreso ni al hacer Rebirth (misma lista en el servidor) */
 const EXCLUSIVO=['dance','freddy'];
 const bobY=l=>MODEL[l]?.5:SC[l]/2+.9;
-const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=5,GROUND_LIFE=10000,PERSIST=1e12,BAR_ON=80000,BAR_CD=20000;let barEnd=0,barCd=0;
+const STUN=2,SLAM_CD=2,SLAM_R=7,STEAL_T=5,GROUND_LIFE=10000,PERSIST=1e12,BAR_ON=80000,BAR_CD=20000,BAR_TBL=[80,90,100,112,125,140,155,170,190,215,240],barOn=()=>(BAR_TBL[Math.min(10,Math.max(0,((ACC.st&&ACC.st.rb)|0)))]||80)*1000;let barEnd=0,barCd=0;
 const START=50000,PRICE=[,,,,,50,200,60000,240000,600000,2400000,6000,24000,500,2000,15000000,100000000],WGT=[0,0,0,0,0,30,22,3.5,2.2,1.5,.8,8,5.5,16,10,.4,.1],SC=[2.2,2.6,3.0,3.5,4.2,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.4,3.7,3.8,4.1];
 
 /* ===== BASE 001 (guardada, aún NO activa): Papus nuevos ya dentro del juego pero con peso 0 en la cinta (solo el admin puede invocarlos). La economía actual no cambia. ===== */
@@ -1425,13 +1425,13 @@ const rbMoney=n=>'$'+abb(n);
 const myCnt=()=>{const c={};slots.forEach(q=>{if(q.item){const l=q.item.userData.lvl;c[l]=(c[l]||0)+1}});return c};
 function renderReb(){
   catThumbs();const lv=rbLv();
-  $('rebList').innerHTML='<div class="rbwarn" style="border:0;font-size:.85rem;text-align:center">Tu Rebirth actual: <b>'+(lv?'Nivel '+lv+' (×'+REB_LV[lv-1].mult+' de dinero)':'ninguno todavía')+'</b></div>'+REB_LV.map(L=>{
+  $('rebList').innerHTML='<div class="rbwarn" style="border:0;font-size:.85rem;text-align:center">Tu Rebirth actual: <b>'+(lv?'Nivel '+lv+' (×'+REB_LV[lv-1].mult+' de dinero · base cerrada '+BAR_TBL[lv]+' s)':'ninguno todavía (base cerrada 80 s)')+'</b></div>'+REB_LV.map(L=>{
     const req=L.papus.map(([l,q])=>{const th=catImgs&&catImgs[l],rc=RAR_C[RAR_OF(l)];
       return '<div class="rbitem" style="border-color:'+rc+'aa"><div class="rbimg">'+(th&&th.full?'<img alt="" src="'+th.full+'">':'<span>?</span>')+'</div><div class="rbt"><div class="rbname">'+NAMES[l]+'</div><div class="rbcat" style="color:'+rc+'">'+catKind(l).toUpperCase()+' · '+RAR_N[RAR_OF(l)]+'</div></div><div class="rbq" data-l="'+l+'" data-q="'+q+'">×'+q+'</div></div>'}).join('');
     return '<div class="rbrow" data-n="'+L.n+'"><div class="rbn">Nivel '+L.n+'</div>'
       +'<div class="rbmid"><div><div class="rbl">Dinero necesario</div><div class="rbm">'+rbMoney(L.money)+'</div></div>'
       +'<div class="rbl">Papus necesarios en tu base</div><div class="rbreq">'+req+'</div></div>'
-      +'<div class="rbrw"><div class="rbl">Multiplicador</div><div class="rbx2">×'+L.mult+'</div><div class="rbl2">de dinero</div>'
+      +'<div class="rbrw"><div class="rbl">Multiplicador</div><div class="rbx2">×'+L.mult+'</div><div class="rbl2">de dinero</div><div class="rbl" style="margin-top:6px">Base cerrada</div><div class="rbx2" style="font-size:1.05em">'+BAR_TBL[L.n]+' s</div><div class="rbl2">(antes '+BAR_TBL[L.n-1]+' s)</div>'
       +'<button class="rbclaim" data-n="'+L.n+'">Reclamar</button></div>'
       +'<div class="rbwarn">Al reclamar pierdes todo (Papus, pisos, tienda y dinero), excepto los objetos exclusivos.</div></div>'}).join('');
   updReb()}
@@ -2653,21 +2653,21 @@ function setUserName(n){userName=n;if(nameSpr)player.remove(nameSpr);nameSpr=mak
 /* ====== barreras ====== */
 function admBarrier(on){
   const now=performance.now();
-  if(on){myBase.barrierOn=true;barEnd=now+BAR_ON;barCd=0}
+  if(on){myBase.barrierOn=true;barEnd=now+barOn();barCd=0}
   else{if(!myBase.barrierOn)return;myBase.barrierOn=false;barCd=now+BAR_CD}
   myBase.barEnd=barEnd;myBase.barCd=barCd;myBase.btnPress=.25;myBase.drawBtn();
-  emit(on?{t:'bar',on:true,left:BAR_ON}:{t:'bar',on:false,cd:BAR_CD});
-  toast(on?'El admin activó tu barrera (80 s)':'El admin desactivó tu barrera: enfriamiento de 20 s')}
+  emit(on?{t:'bar',on:true,left:barOn()}:{t:'bar',on:false,cd:BAR_CD});
+  toast(on?'El admin activó tu barrera ('+barOn()/1000+' s)':'El admin desactivó tu barrera: enfriamiento de 20 s')}
 let lastCmd='';
 function toggleBarrier(){
   const now=performance.now();
   if(!myBase.barrierOn){
     if(now<barCd){toast('Barrera en enfriamiento: espera '+Math.ceil((barCd-now)/1000)+' s');return}
-    myBase.barrierOn=true;barEnd=now+BAR_ON;
+    myBase.barrierOn=true;barEnd=now+barOn();
   }else{myBase.barrierOn=false;barCd=now+BAR_CD}
   myBase.barEnd=barEnd;myBase.barCd=barCd;
-  myBase.btnPress=.25;myBase.drawBtn();emit(myBase.barrierOn?{t:'bar',on:true,left:BAR_ON}:{t:'bar',on:false,cd:BAR_CD});
-  toast(myBase.barrierOn?'Barrera ACTIVADA por 80 s: nadie más puede pasar':'Barrera apagada antes de tiempo (enfriamiento de 20 s)')
+  myBase.btnPress=.25;myBase.drawBtn();emit(myBase.barrierOn?{t:'bar',on:true,left:barOn()}:{t:'bar',on:false,cd:BAR_CD});
+  toast(myBase.barrierOn?'Barrera ACTIVADA por '+barOn()/1000+' s: nadie más puede pasar':'Barrera apagada antes de tiempo (enfriamiento de 20 s)')
 }
 function updBarrier(dt,now){BASES.forEach(b=>b.upd(dt,now))}
 /* ====== objetos en la base y en la cinta ====== */
@@ -2950,7 +2950,7 @@ function applyRejoin(m){
   m.slots.forEach(([b,i,l])=>{if(b!==myBase.idx)putRemoteSlot(BASES[b],i,l)});
   items.forEach(o=>scene.remove(o.g));items=[];m.items.forEach(it=>spawnItem(it.lvl,it.x,it.iid));
   slots.forEach((q,i)=>{if(q.item)emit({t:'place',slot:i,lvl:q.item.userData.lvl})});
-  if(myBase.barrierOn)emit({t:'bar',on:true});
+  if(myBase.barrierOn)emit({t:'bar',on:true,left:Math.max(1000,barEnd-performance.now())});
   NET.pend=null;NET.hseen=performance.now();updRoom();
 }
 /* ====== traspaso al admin: cuando entra la cuenta de admin, el anfitrion le pasa la sala al instante ====== */
