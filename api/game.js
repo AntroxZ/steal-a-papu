@@ -178,9 +178,9 @@ const cleanNick = n => String(n || '').trim().replace(/\s+/g, ' ').slice(0, 14);
 const LBN = 5;
 function lbApply(lb, r) {
   if (!r.aid) return false;   /* el admin también aparece en la tabla */
-  const vals = { m: Math.floor(r.money), p: Math.floor((r.pt || 0) / 1000), s: r.sc | 0 };
+  const vals = { m: Math.floor(r.money), p: Math.floor((r.pt || 0) / 1000), s: r.sc | 0, r: r.rb | 0 };
   let structural = false, changed = false;
-  for (const k of ['m', 'p', 's']) {
+  for (const k of ['m', 'p', 's', 'r']) {
     const a = lb[k] || (lb[k] = []), v = vals[k], before = a.map(e => e[0]).join();
     const i = a.findIndex(e => e[0] === r.aid);
     /* el admin solo aparece en dinero; la cuenta de pruebas (usuario 1234) no aparece en ninguna tabla */
@@ -192,7 +192,7 @@ function lbApply(lb, r) {
   }
   return changed ? (structural ? 2 : 1) : 0;   /* 2 = cambió el puesto de alguien, 1 = solo cambiaron números */
 }
-const lbParse = s => { try { const o = s ? JSON.parse(s) : {}; return { m: o.m || [], p: o.p || [], s: o.s || [], t: o.t || 0 }; } catch (e) { return { m: [], p: [], s: [], t: 0 }; } };
+const lbParse = s => { try { const o = s ? JSON.parse(s) : {}; return { m: o.m || [], p: o.p || [], s: o.s || [], r: o.r || [], t: o.t || 0 }; } catch (e) { return { m: [], p: [], s: [], r: [], t: 0 }; } };
 
 const actions = {
   async register(b) {
@@ -338,7 +338,7 @@ const actions = {
   async top(b) {
     if (!readTok(b.tok)) throw new Err('Sesión no válida. Inicia sesión de nuevo.', 'auth');
     const lb = lbParse(await db('GET', 'lb'));
-    return { lb: { m: lb.m, p: lb.p, s: lb.s } };
+    return { lb: { m: lb.m, p: lb.p, s: lb.s, r: lb.r } };
   },
   async hproof(b) { adminFromTok(b.tok); return { pr: signTok({ h: 1, exp: Date.now() + 60000 }) }; },
   async hchk(b) { const t = readTok(b.pr); return { ok: !!(t && t.h === 1) }; },
@@ -516,7 +516,7 @@ const actions = {
   async adel(b) {
     adminFromTok(b.tok);
     const u = String(b.user || ''); if (isAdminUser(u)) throw new Err('La cuenta de administrador no se puede borrar.');
-    { const d = await loadRec(u); if (d && d.aid) { const lb = lbParse(await db('GET', 'lb')); let c = false; for (const k of ['m', 'p', 's']) { const n = lb[k].filter(e => e[0] !== d.aid); if (n.length !== lb[k].length) { lb[k] = n; c = true; } } if (c) await db('SET', 'lb', JSON.stringify(lb)); } }
+    { const d = await loadRec(u); if (d && d.aid) { const lb = lbParse(await db('GET', 'lb')); let c = false; for (const k of ['m', 'p', 's', 'r']) { const n = lb[k].filter(e => e[0] !== d.aid); if (n.length !== lb[k].length) { lb[k] = n; c = true; } } if (c) await db('SET', 'lb', JSON.stringify(lb)); } }
     await db('DEL', ukey(u)); await db('SREM', 'users', u.toLowerCase()); return { ok: true };
   }
 };
