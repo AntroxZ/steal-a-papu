@@ -14,11 +14,13 @@ const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 240
 const EV_MS = 120000;
 /* estado de eventos para los jugadores: Golden Time, Papus invocados por el admin y la hora del servidor */
 async function evInfo() {
-  const [gt, sm, cl, rm] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed', 'rm')) || [];
+  const [gt, sm, cl, rm, am0] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed', 'rm', 'ev:msg')) || [];
   const now = Date.now(), left = gt ? +gt - now : 0;
   let list = []; try { list = sm ? JSON.parse(sm) : []; } catch (e) { list = []; }
-  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl, rc: rm || null };   /* rc = código de la sala activa (lo decide el servidor) */
+  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl, rc: rm || null, am: amView(am0, now) };   /* rc = código de la sala activa (lo decide el servidor) */
 }
+/* mensaje del admin en pantalla: vive solo mientras dura (+4 s de margen); viaja en la misma consulta de siempre, sin comandos extra */
+function amView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 + 4000 ? { id: m.id, text: m.text, secs: m.secs, age } : null; } catch (e) { return null; } }
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
 const DPRICE = [0, 2500000, 56000000, 1600000000, 3200000000, 5900000000, 12000000000, 320000000000, 28000000000, 47000000000, 90000000000, 2200000000000];
@@ -40,7 +42,7 @@ const RM_TTL = 50, RM_STALE = 25000;
 async function rmDead() { const t = await db('PTTL', 'rm'); return !(t > RM_STALE); }
 const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
-const CV = 4;
+const CV = 5;
 const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000], MAXF = 5, SLOTF = 10;
 const OPRICE = { bat: 870000000, push: 1740000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
@@ -245,13 +247,14 @@ const actions = {
   },
   async sync(b) {
     if (b.cv !== CV && !process.env.NO_CV_CHECK) throw new Err('Hay una versión nueva del juego. Recargando…', 'auth');
-    const [r, info, lbs] = await Promise.all([userFromTok(b.tok), evInfo(), db('GET', 'lb')]);   /* en paralelo: menos tiempo de funcion */
+    const skipLb = !!b.nl;   /* el cliente pide el ranking solo 1 de cada 3 veces: menos comandos */
+    const [r, info, lbs] = await Promise.all([userFromTok(b.tok), evInfo(), skipLb ? null : db('GET', 'lb')]);   /* en paralelo: menos tiempo de funcion */
     accrue(r, Date.now());
-    const lb = lbParse(lbs), ch = lbApply(lb, r), nowT = Date.now();
+    const lb = skipLb ? null : lbParse(lbs), ch = skipLb ? 0 : lbApply(lb, r), nowT = Date.now();
     const tk = readTok(b.tok), hc = okCode(b.hc) ? b.hc : null;
     if (hc && (!info.rc || info.rc === hc || (tk && tk.adm && await rmDead()))) { info.rc = hc; await db('SET', 'rm', hc, 'EX', RM_TTL); }   /* el admin siempre manda: su sala reemplaza a cualquier otra */
     const jobs = [saveRec(r)];   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
-    if (ch === 2 || (ch === 1 && nowT - lb.t > 25000)) { lb.t = nowT; jobs.push(db('SET', 'lb', JSON.stringify(lb))); }
+    if (!skipLb && (ch === 2 || (ch === 1 && nowT - lb.t > 25000))) { lb.t = nowT; jobs.push(db('SET', 'lb', JSON.stringify(lb))); }
     await Promise.all(jobs);
     const t = readTok(b.tok);
     if (info.closed && !(t && t.adm)) throw new Err('El servidor se cerró. Tu progreso se guardó.', 'closed');
@@ -474,6 +477,14 @@ const actions = {
     resetProgress(r); r.rb = 0; await saveRec(r); return { ok: true };
   },
   /* eventos: iniciar o detener el Papu Golden Time */
+  async amsg(b) {
+    adminFromTok(b.tok);
+    const text = String(b.text || '').replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e]/g, ' ').trim().slice(0, 140), secs = [1, 2, 3, 5, 10].includes(b.secs) ? b.secs : 5;
+    if (!text) throw new Err('Escribe un mensaje.', 'bad');
+    const m = { id: crypto.randomBytes(5).toString('hex'), text, secs, ts: Date.now() };
+    await db('SET', 'ev:msg', JSON.stringify(m), 'EX', 30);
+    return { ok: true, am: { id: m.id, text, secs, age: 0 } };
+  },
   async aev(b) {
     adminFromTok(b.tok);
     if (b.on) await db('SET', 'ev:gt', String(Date.now() + EV_MS), 'EX', 180); else await db('DEL', 'ev:gt');
