@@ -799,7 +799,7 @@ body.hudnew #admMsg{font-family:var(--wf)}
 </div></div>
 <div id="lb"><div class="sbox sm lbbox">
   <div class="shead"><div class="stitle">TABLA DE CLASIFICACIÓN</div><button id="lbX" aria-label="Cerrar">&times;</button></div>
-  <div class="stabs" id="lbTabs"><span class="on" data-k="m">Más PapuRico</span><span data-k="p">Más PapuViciado</span><span data-k="s">Más PapuRata</span></div>
+  <div class="stabs" id="lbTabs"><span class="on" data-k="m">Más PapuRico</span><span data-k="p">Más PapuViciado</span><span data-k="s">Más PapuRata</span><span data-k="r">Más PapuRebirths</span></div>
   <div class="lbsub" id="lbSub"></div>
   <div id="lbList"></div>
   <p class="skhint" id="lbNote"></p>
@@ -1506,10 +1506,10 @@ function lbAnim(now,dt){
   LBH.rm.opacity=.7+.2*Math.sin(now/260);
   if(LBH.light)LBH.light.visible=((now/700)|0)%2===0;
 }
-const LBK={m:['Los jugadores con más dinero','$'],p:['Los jugadores con más tiempo jugado','t'],s:['Los que más Papus han robado de bases enemigas','r']};
+const LBK={m:['Los jugadores con más dinero','$'],p:['Los jugadores con más tiempo jugado','t'],s:['Los que más Papus han robado de bases enemigas','r'],r:['Los jugadores con más Rebirths','x']};
 const LB={d:null,t:0,tab:'m',busy:false};
 const fmtT=sec=>{sec=Math.floor(sec);if(sec<60)return sec+' s';const m=Math.floor(sec/60);if(m<60)return m+' min';const h=Math.floor(m/60);return h+' h '+(m%60)+' min'};
-const lbVal=(k,v)=>k==='m'?'$'+abb(v):k==='p'?fmtT(v):v+(v===1?' robo':' robos');
+const lbVal=(k,v)=>k==='m'?'$'+abb(v):k==='r'?'Rebirth '+v:k==='p'?fmtT(v):v+(v===1?' robo':' robos');
 function renderLb(){
   document.querySelectorAll('#lbTabs span').forEach(e=>e.classList.toggle('on',e.dataset.k===LB.tab));
   $('lbSub').textContent=LBK[LB.tab][0];
