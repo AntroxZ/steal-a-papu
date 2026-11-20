@@ -42,6 +42,8 @@ const RM_TTL = 50, RM_STALE = 25000;
 /* ---- Servidor de relevo (TURN) de Cloudflare: lo usan los jugadores que NO pueden conectarse directo (distinto WiFi/operador). Las claves van SOLO en variables de entorno de Vercel (CF_TURN_ID y CF_TURN_TOKEN); sin ellas el juego usa los relevos públicos de siempre ---- */
 let _ice = null, _iceT = 0;
 async function turnIce() {
+  /* opción sin Cloudflare (ExpressTURN, Metered, etc.): usuario y contraseña del relevo en variables de entorno TURN_USER / TURN_PASS, y TURN_URLS con las direcciones separadas por coma */
+  if (process.env.TURN_USER && process.env.TURN_PASS && process.env.TURN_URLS) return [{ urls: process.env.TURN_URLS.split(',').map(x => x.trim()).filter(Boolean), username: process.env.TURN_USER, credential: process.env.TURN_PASS }];
   const id = process.env.CF_TURN_ID, tk = process.env.CF_TURN_TOKEN;
   if (!id || !tk) return null;
   if (_ice && Date.now() - _iceT < 3 * 3600 * 1000) return _ice;   /* se reutiliza 3 h: casi nunca llama a Cloudflare */
