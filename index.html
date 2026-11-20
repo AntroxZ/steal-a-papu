@@ -933,7 +933,7 @@ const $=id=>document.getElementById(id);
 const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:devicePixelRatio<1.5,powerPreference:'high-performance'});R.toneMapping=THREE.LinearToneMapping;R.toneMappingExposure=1;
 const COARSE=!!(matchMedia&&matchMedia('(pointer:coarse)').matches),PRMAX=COARSE?Math.min(devicePixelRatio,1.75):Math.max(1.5,Math.min(devicePixelRatio,2));
 /* RESOLUCION DINAMICA: empieza en 1 y sube sola mientras se mantengan 60 FPS; si el equipo se atrasa (portatil sin cargador, celular caliente) baja de inmediato y recuerda hasta donde llegó */
-let PR=Math.min(PRMAX,COARSE?.85:1),PRLIM=PRMAX,FPS=60,fpsN=0,fpsT=performance.now(),ftEma=16.7,lastPf=0,drsT=performance.now(),okT=0,probeT=0,limT=performance.now();R.setPixelRatio(PR);
+const PRMIN=COARSE?.75:.9;let PR=Math.min(PRMAX,COARSE?.9:1.25),PRLIM=PRMAX,FPS=60,fpsN=0,fpsT=performance.now(),ftEma=16.7,lastPf=0,drsT=performance.now(),okT=0,probeT=0,limT=performance.now();R.setPixelRatio(PR);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xbfe3ff);scene.fog=new THREE.Fog(0xbfe3ff,150,450);
 const cam=new THREE.PerspectiveCamera(55,1,.1,1200);
 function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
@@ -944,8 +944,8 @@ function perfTick(now){
   if(!running||document.hidden){okT=0;return}
   if(now-limT>90000){limT=now;PRLIM=PRMAX}   /* cada 90 s vuelve a probar subir (por si conectaron el cargador) */
   if(now-drsT<1200)return;
-  if(ftEma>19.5&&PR>.6){   /* menos de ~51 FPS: baja la resolución ya */
-    PR=Math.max(.6,PR-.125);if(now-probeT<5000)PRLIM=Math.max(.6,PR);   /* si recién había subido y se atrasó, ese nivel es el techo */
+  if(ftEma>21.5&&PR>PRMIN){   /* menos de ~51 FPS: baja la resolución ya */
+    PR=Math.max(PRMIN,PR-.0625);if(now-probeT<5000)PRLIM=Math.max(PRMIN,PR);   /* si recién había subido y se atrasó, ese nivel es el techo */
     R.setPixelRatio(PR);resize();drsT=now;okT=0}
   else if(ftEma<17.4&&PR<PRLIM){   /* aguanta 60 con holgura: sube poco a poco */
     if(!okT)okT=now;else if(now-okT>4000){PR=Math.min(PRLIM,PR+.0625);R.setPixelRatio(PR);resize();drsT=now;okT=now;probeT=now}}
@@ -3921,7 +3921,7 @@ function updBubbles(now){
   BUB_ACT.forEach(own=>{
     const par=own.me?player:(own.own&&own.own.g),ns=own.me?nameSpr:(own.own&&own.own.ns);
     if(!par||!own.list.length){BUB_ACT.delete(own);return}
-    const base=(ns?ns.position.y:4.9)+1.75,gp=par.position,far=Math.hypot(gp.x-cp.x,gp.z-cp.z)>85,hide=par.visible===false||(own.me&&camD<1.2);
+    const base=(ns?ns.position.y:4.9)+1.0,gp=par.position,far=Math.hypot(gp.x-cp.x,gp.z-cp.z)>85,hide=par.visible===false||(own.me&&camD<1.2);
     let y=base;const n=own.list.length;
     for(let i=n-1;i>=0;i--){const sp=own.list[i],u=sp.userData,age=now-u.t0;
       if(age>BUB_MS){par.remove(sp);sp.material.map.dispose();sp.material.dispose();own.list.splice(i,1);continue}
