@@ -768,7 +768,7 @@ body.hudnew #admMsg{font-family:var(--wf)}
 <div id="gtFlash"></div>
 <div id="gt"></div>
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
-<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mover · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> girar la cámara · <kbd>Q</kbd> soltar el Papu · <kbd>/</kbd> chat · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>F</kbd> mover un Papu de tu base · <kbd>H</kbd> eliminarlo · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>B</kbd> bailar (cualquier tecla de movimiento lo cancela) · <kbd>T</kbd> cerca de alguien que baila = sincronizar su baile · <kbd>M</kbd> música · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
+<div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mover · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> girar la cámara · <kbd>Q</kbd> soltar el Papu · <kbd>/</kbd> chat · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>F</kbd> mover un Papu de tu base · <kbd>H</kbd> eliminarlo · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>B</kbd> bailar (cualquier tecla de movimiento lo cancela) · <kbd>T</kbd> cerca de alguien que baila = sincronizar su baile · <kbd>M</kbd> música · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>R</kbd> cambiar de objeto · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
 <div id="prompt"></div>
 <div id="chat"><button id="chatX" aria-label="Cerrar chat">&times;</button><div id="chatL"></div><input id="chatIn" maxlength="120" placeholder="Escribe y presiona Enter…" autocomplete="off" enterkeyhint="send" autocapitalize="sentences"></div>
 <div id="shop"><div class="sbox">
@@ -1063,8 +1063,10 @@ function hitSolid(x,z,y,fx,fz){
   /* bajo la escalera: si ya estas dentro de esa zona (caiste ahi) se te deja salir en vez de dejarte atrapado */
   if(y!==undefined)for(const b of BASES)if(b.nf>1&&stairBlk(b,x,z,y)&&!(fx!==undefined&&stairBlk(b,fx,fz,y)))return true;
   /* base cerrada: nadie ajeno puede pasar de fuera a dentro, por ningun lado ni a ninguna altura */
-  if(fx!==undefined)for(const b of BASES)if(b.barrierOn&&b!==myBase&&inClosed(b,x,z)&&!inClosed(b,fx,fz))return true;
-  for(const b of BASES)if(b.barrierOn&&b!==myBase&&(hit([b.cx-BW/2,b.z0-.45,b.cx+BW/2,b.z0+.45])||b.fl.some((F,k)=>k>0&&k<b.nf&&F&&hit(F.barRect))))return true;
+  /* el hueco del frente de los pisos 2 en adelante NUNCA tiene barrera: por ahi se entra y se sale aunque la base esté cerrada (solo a la altura de esos pisos) */
+  const gapOpen=b=>y!==undefined&&y>=FY(1)-1.2&&Math.abs((x-b.cx)*b.dir)<2.9;
+  if(fx!==undefined)for(const b of BASES)if(b.barrierOn&&b!==myBase&&inClosed(b,x,z)&&!inClosed(b,fx,fz)&&!gapOpen(b))return true;
+  for(const b of BASES)if(b.barrierOn&&b!==myBase&&!gapOpen(b)&&(hit([b.cx-BW/2,b.z0-.45,b.cx+BW/2,b.z0+.45])||b.fl.some((F,k)=>k>0&&k<b.nf&&F&&hit(F.barRect))))return true;
   return false;
 }
 /* geometria de un tramo de escalera: x a lo largo de la subida, y hacia arriba, z el ancho (con colores por cara) */
@@ -2633,7 +2635,7 @@ addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter'){const id=e.target.id;if(id==='nmIn')$('nmYes').click();else if(id.startsWith('lg'))$('lgGo').click();else if(id.startsWith('rg'))$('rgGo').click();else if(id==='chatIn')sendChat()}else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();else if(e.key==='Escape'&&e.target.id==='chatIn')e.target.blur();return}
   const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();
-  if(k==='Escape'){if($('am').style.display==='flex')closeAm();else if($('adm').style.display==='flex')closeAdm();else if($('conf').style.display==='flex')$('confNo').click();else if(shopOpen)closeShop();else if(setOpen)closeSet();else if(chatOpen)openChat(false)}if(k==='e'&&!e.repeat)act();if(k==='b'&&!e.repeat){if(DNL.on)stopDance();else startDance()}if(k==='m'&&!e.repeat){bgmOn=!bgmOn;if(danceAudio)danceAudio.muted=!bgmOn;toast(bgmOn?'Sonido activado':'Juego en silencio (M para activar)')}if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k==='/'&&!e.repeat&&running&&!shopOpen&&!setOpen){e.preventDefault();if(chatOpen)focusChat();else toggleChat(true)}if(k==='Enter'&&!e.repeat&&chatOpen)focusChat();if(k==='q'&&!e.repeat)dropQ();if((k==='1'||e.code==='Digit1'||e.code==='Numpad1')&&!e.repeat)keyTool(0);if((k==='2'||e.code==='Digit2'||e.code==='Numpad2')&&!e.repeat)keyTool(1);if(k==='t'&&!e.repeat)syncDance();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
+  if(k==='Escape'){if($('am').style.display==='flex')closeAm();else if($('adm').style.display==='flex')closeAdm();else if($('conf').style.display==='flex')$('confNo').click();else if(shopOpen)closeShop();else if(setOpen)closeSet();else if(chatOpen)openChat(false)}if(k==='e'&&!e.repeat)act();if(k==='b'&&!e.repeat){if(DNL.on)stopDance();else startDance()}if(k==='m'&&!e.repeat){bgmOn=!bgmOn;if(danceAudio)danceAudio.muted=!bgmOn;toast(bgmOn?'Sonido activado':'Juego en silencio (M para activar)')}if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k==='/'&&!e.repeat&&running&&!shopOpen&&!setOpen){e.preventDefault();if(chatOpen)focusChat();else toggleChat(true)}if(k==='Enter'&&!e.repeat&&chatOpen)focusChat();if(k==='q'&&!e.repeat)dropQ();if((k==='1'||e.code==='Digit1'||e.code==='Numpad1')&&!e.repeat)keyTool(0);if((k==='2'||e.code==='Digit2'||e.code==='Numpad2')&&!e.repeat)keyTool(1);if((k==='r'||k==='Tab')&&!e.repeat){if(k==='Tab')e.preventDefault();cycleTool()}if(k==='t'&&!e.repeat)syncDance();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
 addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='e'||e.key==='E')cancelSteal();keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 let pitch=1.15;
 addEventListener('contextmenu',e=>e.preventDefault());
@@ -3784,6 +3786,8 @@ function toggleTool(id){
   const nm=id==='push'?'Bate EmpujaPapus 3000':'Bate';
   setEq(true,id);toast(DNL.on?nm+' equipado: volverá a tu mano al terminar el baile':(MOB?nm+' equipado: toca Golpear':nm+' equipado: clic izquierdo para golpear'))}
 const keyTool=n=>{const id=toolList()[n];if(id)toggleTool(id)};
+/* R (o Tab): alterna entre tus objetos aunque estés corriendo (Shift + otras teclas a veces no se registran en el teclado) */
+function cycleTool(){const tl=toolList();if(!tl.length)return;const cur=myEq?tl.indexOf(myTool):-1;toggleTool(tl[(cur+1)%tl.length])}
 function swingBat(){
   if(!running||!myEq||shopOpen||setOpen||stunT>0||held)return;
   const now=performance.now();if(now-batLast<SW_MS+90)return;
@@ -3880,8 +3884,8 @@ async function buyObj(id){const d=OBJ[id];
   if(r&&!r.err)spendFx(d.pr);
   if(r&&!r.err)toast(d.frd?'¡Compraste la skin '+d.n+'! Elígela en Ajustes > Skins':d.cat?'¡Compraste el baile '+d.n+'! '+(MOB?'Usa el botón Bailar':'Presiona B para bailar'):'¡Compraste el '+d.n+'! '+(MOB?'Tócalo abajo para equiparlo':'Presiona '+(Math.max(1,toolList().indexOf(id)+1))+' para equiparlo'))}
 $('invBat').addEventListener('pointerdown',e=>{e.preventDefault();$('invBat').blur();toggleTool('bat')});   /* pointerdown: funciona aunque el otro dedo este en el joystick */
-addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'&&e.button===0&&e.target&&e.target.tagName==='CANVAS'&&!shopOpen&&!setOpen)CD={id:e.pointerId,d:0}});
-addEventListener('pointerup',e=>{if(CD&&e.pointerId===CD.id){const c=CD;CD=null;if(e.button===0&&c.d<=5&&e.target&&e.target.tagName==='CANVAS')swingBat()}});
+addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'&&e.button===0&&e.target&&e.target.tagName==='CANVAS'&&!shopOpen&&!setOpen)CD={id:e.pointerId,d:0,t:performance.now()}});
+addEventListener('pointerup',e=>{if(CD&&e.pointerId===CD.id){const c=CD;CD=null;if(e.button===0&&(c.d<=5||(performance.now()-c.t<380&&c.d<=90))&&e.target&&e.target.tagName==='CANVAS')swingBat()}});   /* corriendo se mueve el mouse: un clic rapido cuenta aunque el mouse se haya movido */
 addEventListener('pointercancel',()=>{CD=null});addEventListener('blur',()=>{CD=null});
 
 /* ====== chat de la partida ====== */
