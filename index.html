@@ -3218,13 +3218,18 @@ function enterGame(st,retry,tries,rc){
   /* crear la sala con el código que el servidor acaba de darme */
   const hostWith=code=>hostRoom(n,e2=>{if(e2){if(tries<3){again();return}enterFail(e2==='RACE'?'No se pudo entrar a la sala. Intenta de nuevo.':e2);return}done(code,true)},code);
   /* el servidor decide quién crea la sala: el primero que llega la crea, los demás se unen a ella */
-  const claim=async(force)=>{const code=genCode(),r=await api('claim',{tok:ACC.tok,code,force:!!force});if(r&&r.code==='auth'){kicked(r.err);return null}return r&&r.rc?{code,rc:r.rc,won:!!r.won}:null};
+  const claim=async(force)=>{const code=genCode(),r=await api('claim',{tok:ACC.tok,code,force:!!force});if(r&&r.code==='auth'){kicked(r.err);return null}return r&&r.rc?{code,rc:r.rc,won:!!r.won,w:r.w|0}:null};
   let ADMTRY=0;const hostNew=async(force)=>{const q=await claim(force);if(!q){again();return}if(q.won)hostWith(q.rc);else if(force&&ADMTRY>=5){waitFree(q.rc,0)}else joinTo(q.rc,0)};
+  let NOREACH=0;
   /* la sala existe pero no contesta (fantasma): se espera a que el servidor la libere; el admin la reemplaza de inmediato */
-  const waitFree=(ghost,k)=>{lobbyMsg('Esperando a que la sala se libere…');
-    setTimeout(async()=>{const q=await claim(false);if(!q){if(k<9)waitFree(ghost,k+1);else enterFail('No se pudo conectar con la sala. Intenta de nuevo en un minuto.');return}
-      if(q.won){hostWith(q.rc);return}if(q.rc!==ghost){joinTo(q.rc,0);return}
-      if(k<9)waitFree(ghost,k+1);else enterFail('La sala no responde. Intenta de nuevo en un minuto.')},5000)};
+  const waitFree=(ghost,k,w)=>{
+    /* w = vida que le queda a la sala en el servidor: si es alta, el anfitrión SÍ está conectado pero tu red no logra llegar a él (distinto WiFi/operador) */
+    lobbyMsg(w>30000?'El anfitrión está en línea pero no se logra la conexión directa. Probando otra vía…':'Esperando a que la sala se libere…');
+    const wait=w>0&&w<=30000?Math.min(6000,Math.max(1500,w+800)):4000;
+    setTimeout(async()=>{const q=await claim(false);if(!q){if(k<14)waitFree(ghost,k+1,0);else enterFail('No se pudo conectar con la sala. Intenta de nuevo en un minuto.');return}
+      if(q.won){hostWith(q.rc);return}
+      if(q.rc!==ghost||(q.w>30000&&k%4===3)){if(q.w>30000)cleanupNet();joinTo(q.rc,0);return}   /* sala nueva, o el anfitrión sigue vivo: se intenta unir otra vez (con relevo) */
+      if(k<14)waitFree(ghost,k+1,q.w);else enterFail(q.w>30000?'No se logró conectar con el anfitrión. Avísale al admin: tu red y la suya no se pueden ver sin servidor de relevo.':'La sala no responde. Intenta de nuevo en un minuto.')},wait)};
   const joinTo=async(code,k)=>{
     let pr;if(ACC.adm){try{const q=await api('hproof',{tok:ACC.tok});pr=q&&q.pr;if(pr)ADMPR={pr,t:Date.now()}}catch(e){}}   /* prueba corta: con ella el admin entra aunque la sala esté llena */
     joinRoom(n,code,err=>{
@@ -3612,6 +3617,7 @@ function spawnLegendary(){
 function spawnSummon(lvl){const iid=++NET.iid;spawnItem(lvl,-BELT_L/2+2,iid);if(NET.on)bcast({t:'sp',lvl,iid})}
 const SM_SEEN=new Set();
 function gotSrv(r,quiet){
+  if(r&&r.ice&&r.ice.length){ICE.iceServers=[ICE.iceServers[0]].concat(r.ice,ICE.iceServers.slice(1))}   /* relevo propio (Cloudflare) primero: conecta jugadores de distinto WiFi/operador */
   if(r.now)SRV_OFF=r.now-Date.now();
   if(r.ev!=null&&!(performance.now()-gtP2PT<6000&&(r.ev>0)!==gtActive()))setGT(r.ev);   /* un sync viejo no pisa el aviso que acaba de llegar por la sala */
   if(r.am)showAdmMsg(r.am);
