@@ -39,6 +39,21 @@ const REBM = [1].concat(REB.map(x => x.mult));
 /* SALA ACTIVA: el servidor guarda el código de la sala (clave 'rm', caduca en 35 s si el anfitrión no la renueva). Así nunca hay dos salas ni una sala fantasma. */
 /* la sala está 'viva' si su anfitrión la renovó hace menos de ~25 s; el admin solo puede reemplazar una sala MUERTA, nunca una sala con gente jugando */
 const RM_TTL = 50, RM_STALE = 25000;
+/* ---- Servidor de relevo (TURN) de Cloudflare: lo usan los jugadores que NO pueden conectarse directo (distinto WiFi/operador). Las claves van SOLO en variables de entorno de Vercel (CF_TURN_ID y CF_TURN_TOKEN); sin ellas el juego usa los relevos públicos de siempre ---- */
+let _ice = null, _iceT = 0;
+async function turnIce() {
+  const id = process.env.CF_TURN_ID, tk = process.env.CF_TURN_TOKEN;
+  if (!id || !tk) return null;
+  if (_ice && Date.now() - _iceT < 3 * 3600 * 1000) return _ice;   /* se reutiliza 3 h: casi nunca llama a Cloudflare */
+  try {
+    const ac = new AbortController(), to = setTimeout(() => ac.abort(), 2500);
+    const r = await fetch('https://rtc.live.cloudflare.com/v1/turn/keys/' + encodeURIComponent(id) + '/credentials/generate', { method: 'POST', headers: { Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json' }, body: JSON.stringify({ ttl: 86400 }), signal: ac.signal });
+    clearTimeout(to);
+    const j = await r.json(), ic = j && j.iceServers;
+    if (ic) { _ice = Array.isArray(ic) ? ic : [ic]; _iceT = Date.now(); return _ice; }
+  } catch (e) {}
+  return _ice;
+}
 async function rmDead() { const t = await db('PTTL', 'rm'); return !(t > RM_STALE); }
 const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
@@ -324,7 +339,7 @@ const actions = {
     if (!okCode(b.code)) throw new Err('Jugada no válida.', 'bad');
     if (t.adm && b.force && await rmDead()) { await db('SET', 'rm', b.code, 'EX', RM_TTL); return { rc: b.code, won: true }; }   /* sala muerta: el admin la reemplaza; si hay gente jugando, el admin se une a ella */
     if ((await db('SET', 'rm', b.code, 'NX', 'EX', RM_TTL)) === 'OK') return { rc: b.code, won: true };
-    const cur = await db('GET', 'rm'); return { rc: cur || b.code, won: !cur };
+    const cur = await db('GET', 'rm'); return { rc: cur || b.code, won: !cur, w: cur ? Math.max(0, +(await db('PTTL', 'rm')) || 0) : 0 };   /* w = cuánto le queda a la sala registrada (ms): el cliente sabe si el anfitrión está vivo o la sala es fantasma */
   },
   /* latido del anfitrión cuando su pestaña está oculta (el sync normal no corre oculto) */
   async hb(b) {
@@ -531,7 +546,9 @@ module.exports = async (req, res) => {
   const fn = actions[b.a];
   if (!fn) return res.status(400).json({ err: 'Acción desconocida' });
   try {
-    res.status(200).json(await fn(b));
+    const out = await fn(b);
+    if (out && (b.a === 'login' || b.a === 'register' || b.a === 'resume')) { const ic = await turnIce(); if (ic) out.ice = ic; }
+    res.status(200).json(out);
   } catch (e) {
     if (e instanceof Err) return res.status(e.code === 'auth' ? 401 : 200).json({ err: e.message, code: e.code, st: e.st });
     console.error(e);
