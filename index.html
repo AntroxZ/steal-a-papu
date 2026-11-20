@@ -2514,7 +2514,8 @@ function animate(sp,dt){
 /* estado */
 let poorLast=0,hudLast=0,hudM='',hudI='',hudC='',promptLast=0,fxLast=-999,fxCache=new Set();
 let gY=0,camG=0;const GROUND=[],keys={};let stunT=0,slamCd=0,STL=null,picking=false,yaw=Math.PI,items=[],held=null,money=0,t=0,spawnT=0,running=false,toastT=0;
-function toast(m){if(MOB)m=mobTxt(m);const e=$('toast');e.textContent=m;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,1600)}
+function toast(m){if(MOB)m=mobTxt(m);const e=$('toast');e.textContent=m;{const iv=$('inv'),r=iv&&iv.offsetParent!==null||(iv&&getComputedStyle(iv).display!=='none')?iv.getBoundingClientRect():null;let tp=r&&r.height?r.top:innerHeight;const hn=$('hint');if(hn&&getComputedStyle(hn).display!=='none'){const hr=hn.getBoundingClientRect();if(hr.height&&hr.top<tp)tp=hr.top}
+  e.style.top='auto';e.style.bottom=Math.round(innerHeight-(tp<innerHeight?tp:innerHeight-(MOB?46:60))+(r&&r.height&&tp===r.top?22:14))+'px'}e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,1600)}
 /* Papu Golden Time: evento en vivo de 2 minutos (lo inicia el admin) con los Papus más raros */
 const WGT_GT=[0, 0, 0, 0, 0, 7.647111, 4.506333, 12.563795, 7.403665, 3.629541, 2.138837, 5.257389, 3.098104, 5.257389, 3.098104, 0.3, 0.024, 1.160722, 0.341389, 1.907005, 0.560884, 0.550912, 0.162033, 0.797997, 0.234705, 0.797997, 0.234705, 0.0014, 3.823556, 2.253167, 0.580361, 0.170694, 3.345611, 1.971521, 0.507816, 0.149358, 3.823556, 2.253167, 0.580361, 0.170694, 6.979886, 4.113147, 1.059447, 0.311602, 2.233564, 1.316207, 0.339023, 0.099713, 1.25638, 0.740366, 0.1907, 0.056088];
 let gtP2PT=-1e9;
@@ -3921,7 +3922,7 @@ function updBubbles(now){
   BUB_ACT.forEach(own=>{
     const par=own.me?player:(own.own&&own.own.g),ns=own.me?nameSpr:(own.own&&own.own.ns);
     if(!par||!own.list.length){BUB_ACT.delete(own);return}
-    const base=(ns?ns.position.y:4.9)+1.0,gp=par.position,far=Math.hypot(gp.x-cp.x,gp.z-cp.z)>85,hide=par.visible===false||(own.me&&camD<1.2);
+    const base=(ns?ns.position.y:4.9)+.4,gp=par.position,far=Math.hypot(gp.x-cp.x,gp.z-cp.z)>85,hide=par.visible===false||(own.me&&camD<1.2);
     let y=base;const n=own.list.length;
     for(let i=n-1;i>=0;i--){const sp=own.list[i],u=sp.userData,age=now-u.t0;
       if(age>BUB_MS){par.remove(sp);sp.material.map.dispose();sp.material.dispose();own.list.splice(i,1);continue}
