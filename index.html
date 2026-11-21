@@ -2571,12 +2571,14 @@ function updGT(){
   else if(GT.on){GT.on=false;GT.last=-1;el.style.display='none'}
 }
 /* ===== LA PAPU PURGA: todas las bases abiertas 30 s, pantalla de alerta roja y canción ===== */
-const PG={on:false,id:'',start:0,end:0,last:-1},PG_SEEN=new Set();
+const PG={on:false,id:'',start:0,end:0,last:-1},PG_SEEN=new Set();let PG_PEND=null;
 const pgOwnerOk=p=>{if(!PG.on||!p)return false;const l=NET.host?p.seen:p.sT;return l!=null&&l>=PG.start};   /* estaba conectado cuando EMPEZÓ la Purga: si se sale, su base se queda abierta */
 function pgTop(){let b=0;document.querySelectorAll('#hud .card').forEach(c=>{const r=c.getBoundingClientRect();if(r.height>0&&getComputedStyle(c).display!=='none')b=Math.max(b,r.bottom)});const g=$('gt');if(g&&g.style.display==='block')b=Math.max(b,g.getBoundingClientRect().bottom);return b+10}
 function startPurge(m){
-  if(!m||!m.id||PG_SEEN.has(m.id))return;PG_SEEN.add(m.id);
-  const secs=Math.max(5,Math.min(120,+m.secs||30)),age=Math.max(0,+m.age||0),left=secs*1000-age;if(left<800||!running)return;
+  if(!m||!m.id||PG_SEEN.has(m.id))return;
+  if(!running){PG_PEND={m,t:performance.now()};return}   /* llegó al iniciar sesión, antes de entrar a la partida: se guarda y arranca al entrar (antes se perdía y el jugador podía cerrar su base) */
+  PG_SEEN.add(m.id);
+  const secs=Math.max(5,Math.min(120,+m.secs||30)),age=Math.max(0,+m.age||0),left=secs*1000-age;if(left<800)return;
   const now=performance.now();PG.on=true;PG.id=m.id;PG.start=now-age;PG.end=now+left;PG.last=-1;
   document.body.classList.add('purge');
   if(DNL.on)stopDance();
@@ -2592,6 +2594,8 @@ function endPurge(early){
   updRoom();toast(early?'La Papu Purga fue detenida':'La Papu Purga terminó');srvMsg('LA PAPU PURGA terminó.');
 }
 function updPurge(now){
+  {const ui=!!(shopOpen||setOpen),v=ui?'hidden':'visible',sa=$('stlAlert'),bn=$('pgBan');   /* tienda, ajustes, catálogo, panel admin…: el aviso no se interpone */
+   if(sa&&sa.style.visibility!==v)sa.style.visibility=v;if(bn&&bn.style.visibility!==v)bn.style.visibility=v}
   if(!PG.on)return;const left=Math.ceil((PG.end-now)/1000);
   if(left<=0){endPurge();return}
   if(left!==PG.last){PG.last=left;const bn=$('pgBan');bn.querySelector('.pgC').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');bn.style.top=pgTop()+'px';if(left%2===0)shake=Math.max(shake,.12)}
@@ -3288,7 +3292,7 @@ function awayBeacon(e){if(ACC.tok&&running){const fin=!!(e&&e.type==='pagehide'&
   try{navigator.sendBeacon('/api/game',new Blob([JSON.stringify({a:'away',tok:ACC.tok,mob:MOB?1:0,hc:(fin&&NET.on&&NET.host&&NET.code&&!Object.keys(NET.players).length)?NET.code:undefined})],{type:'application/json'}))}catch(x){}}}
 addEventListener('pagehide',awayBeacon);document.addEventListener('freeze',awayBeacon);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)awayBeacon();else if(running&&ACC.tok)syncNow()});
-function beginPlay(){$('chatBtn').style.display='flex';sfxInit();$('panel').style.display='none';$('tpRow').style.display='flex';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom()}
+function beginPlay(){$('chatBtn').style.display='flex';sfxInit();$('panel').style.display='none';$('tpRow').style.display='flex';for(const id of ['lgUser','lgPass','rgUser','rgNick','rgPass','rgPass2'])$(id).blur();running=true;updRoom();if(PG_PEND){const q=PG_PEND;PG_PEND=null;startPurge(Object.assign({},q.m,{age:(+q.m.age||0)+(performance.now()-q.t)}))}}
 function startOwnBase(n){setUserName(n);setMyBase(BASES[0]);assignBase(BASES[0],0,n);reset()}
 function enterFail(m){lobbyBusy(false);lobbyMsg(m,true);cleanupNet()}
 function enterGame(st,retry,tries,rc){
