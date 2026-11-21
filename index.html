@@ -24,10 +24,7 @@ body.mob #rb{top:calc(env(safe-area-inset-top,0px) + 56px);padding:2px 10px;bord
 body.hudnew #rb{font-family:var(--fd);font-weight:400;border:5px solid #fff}
 body.hudnew.mob #rb{border-width:3px}
 #rbEdge{position:fixed;inset:0;pointer-events:none;z-index:5;display:none;animation:rbHue 4s linear infinite}
-#rbEdge::before,#rbEdge::after{content:"";position:absolute;inset:0;box-sizing:border-box;background:conic-gradient(from 0deg at 50% 50%,#ff1f1f,#ff9a00,#ffe600,#2bff4a,#00e5ff,#4d4dff,#ff2dd4,#ff1f1f);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask-composite:exclude}
-#rbEdge::before{padding:9px;opacity:.95}
-#rbEdge::after{padding:34px;filter:blur(18px);opacity:.85}
-body.mob #rbEdge::before{padding:5px}body.mob #rbEdge::after{padding:18px;filter:blur(10px)}
+#rbEdge::before{content:"";position:absolute;inset:0;background:conic-gradient(from 0deg at 50% 50%,#ff1f1f,#ff9a00,#ffe600,#2bff4a,#00e5ff,#4d4dff,#ff2dd4,#ff1f1f);-webkit-mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0) 52%,rgba(0,0,0,.55) 80%,#000 100%);mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0) 52%,rgba(0,0,0,.55) 80%,#000 100%);opacity:.8}
 @keyframes rbHue{to{filter:hue-rotate(360deg)}}
 #rbTitle{position:fixed;left:0;right:0;top:26%;text-align:center;pointer-events:none;z-index:7;display:none;font:900 clamp(1.6rem,7vw,5.2rem) "Trebuchet MS","Segoe UI",Verdana,sans-serif;letter-spacing:.04em;line-height:1.05;color:transparent;background:linear-gradient(90deg,#ff2d2d,#ff9a00,#ffe600,#2bff4a,#00d5ff,#5a3dff,#ff2dd4,#ff2d2d);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:2px #fff;filter:drop-shadow(0 0 14px #fff) drop-shadow(0 0 34px #ff2dd4)}
 #rbTitle small{display:block;font-size:.34em;letter-spacing:.25em;-webkit-text-stroke:1px #fff;margin-top:.3em}
@@ -994,7 +991,7 @@ body.hudnew #mis .misBar{border-color:#150a45}
       <div id="pgSt">Inactiva</div>
       <button id="pgGo" class="wbtn2 dng">Iniciar LA PAPU PURGA</button>
     </div>
-    <div class="evcard mid"><h3>🔒 Servidor</h3>
+    <div class="evcard"><h3>🔒 Servidor</h3>
       <p>Para hacer pruebas: si lo cierras, nadie más puede entrar al juego (solo tú, el admin). Los jugadores que estén dentro salen en unos segundos y su progreso se guarda. Al abrirlo, todos entran normal.</p>
       <div id="srvSt">Cargando…</div>
       <button id="srvBtn" class="wbtn2 dng">Cerrar servidor</button>
@@ -4110,6 +4107,22 @@ const RB_SIGN=(()=>{const L=[],h=2.75;for(let i=0;i<16;i++){const t=-h+2*h*i/16;
   [[h,h],[h,-h],[-h,h],[-h,-h]].forEach(([x,z])=>{for(let y=7.9;y<=11.4;y+=.7)L.push([x,y,z])});
   const b=mkBulbs(L,1.5);b.pts.visible=false;signG.add(b.pts);
   const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex,color:0xff66ff,transparent:true,opacity:.0,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending}));halo.scale.set(26,20,1);halo.position.y=9.6;signG.add(halo);b.halo=halo;return b})();
+
+/* --- suelo: nube gigante con rios de lava (solo decoracion) --- */
+const rbGTex=(()=>{const N=1024,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');
+  const bg=x.createLinearGradient(0,0,N,N);bg.addColorStop(0,'#f7ecff');bg.addColorStop(.5,'#ffe9f2');bg.addColorStop(1,'#eaf2ff');x.fillStyle=bg;x.fillRect(0,0,N,N);
+  const blob=(a,b,r,col)=>{for(const dx of[-N,0,N])for(const dy of[-N,0,N]){const q=x.createRadialGradient(a+dx,b+dy,0,a+dx,b+dy,r);q.addColorStop(0,col);q.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=q;x.fillRect(a+dx-r,b+dy-r,r*2,r*2)}};
+  for(let i=0;i<150;i++)blob(Math.random()*N,Math.random()*N,rbRnd(40,120),'rgba(255,255,255,.85)');
+  for(let i=0;i<40;i++)blob(Math.random()*N,Math.random()*N,rbRnd(60,140),'hsla('+Math.floor(Math.random()*360)+',90%,80%,.35)');
+  for(let i=0;i<70;i++)blob(Math.random()*N,Math.random()*N,rbRnd(20,60),'rgba(200,190,230,.35)');
+  const river=(vert,base,amp,n,ph)=>{const path=()=>{x.beginPath();for(let u=0;u<=N;u+=8){const w=base+Math.sin(u/N*6.2832*n+ph)*amp+Math.sin(u/N*6.2832*(n*2+1)+ph*2)*amp*.25,X=vert?w:u,Y=vert?u:w;u?x.lineTo(X,Y):x.moveTo(X,Y)}x.stroke()};
+    x.lineCap='round';x.lineJoin='round';
+    x.strokeStyle='rgba(255,70,0,.35)';x.lineWidth=64;path();x.strokeStyle='rgba(255,110,0,.7)';x.lineWidth=40;path();x.strokeStyle='#ff9a10';x.lineWidth=24;path();x.strokeStyle='#ffe066';x.lineWidth=11;path();x.strokeStyle='#fff7c2';x.lineWidth=4;path()};
+  river(false,256,70,1,0);river(false,768,60,2,1.7);river(true,150,55,1,.8);river(true,640,70,2,3.1);
+  for(let i=0;i<60;i++){const a=Math.random()*N,b=Math.random()*N;x.fillStyle='rgba(255,230,120,.8)';x.beginPath();x.arc(a,b,rbRnd(1.5,4),0,7);x.fill()}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.anisotropy=4;return t})();
+const rbGround=new THREE.Mesh(new THREE.PlaneGeometry(820,820),new THREE.MeshBasicMaterial({map:rbGTex,transparent:true,opacity:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,toneMapped:false}));
+rbGround.rotation.x=-Math.PI/2;rbGround.position.y=.02;rbGround.renderOrder=-1;rbGround.visible=false;scene.add(rbGround);
 const RBS={t:0};
 function drawRbSign(now){
   if(now-RBS.t<66)return;RBS.t=now;
@@ -4128,10 +4141,10 @@ function drawRbSign(now){
 function updRB(dt,now){
   const on=rbActive();RBK.k+=((on?1:0)-RBK.k)*Math.min(1,dt*1.4);if(Math.abs(RBK.k-(on?1:0))<.004)RBK.k=on?1:0;
   const k=RBK.k;
-  if(k<=0){if(RBK.was){RBK.was=false;rbG.visible=false;rbSky.visible=false;RB_TW.g.visible=false;RB_SIGN.pts.visible=false;RB_SIGN.halo.material.opacity=0;signG.scale.setScalar(1);legLast=-1;
+  if(k<=0){if(RBK.was){RBK.was=false;rbGround.visible=false;rbG.visible=false;rbSky.visible=false;RB_TW.g.visible=false;RB_SIGN.pts.visible=false;RB_SIGN.halo.material.opacity=0;signG.scale.setScalar(1);legLast=-1;
     rbCl.forEach(c=>{c.sp.material=c.m0});RFW.forEach(f=>{f.st=0;f.pts.visible=false;f.rk.visible=false;f.fl.visible=false})}return}
   if(!RBK.was){RBK.was=true;rbCl.forEach(c=>{c.sp.material=c.m});RB_SIGN.pts.visible=true;RB_TW.g.visible=true}
-  rbG.visible=true;rbSky.visible=true;rbSky.material.opacity=k;rbSkyTex.offset.x=(rbSkyTex.offset.x+dt*.006)%1;
+  rbGround.visible=true;rbGround.material.opacity=Math.min(1,k*1.3);rbGTex.offset.set((rbGTex.offset.x+dt*.0012)%1,(rbGTex.offset.y+dt*.0006)%1);rbG.visible=true;rbSky.visible=true;rbSky.material.opacity=k;rbSkyTex.offset.x=(rbSkyTex.offset.x+dt*.006)%1;
   /* nubes */
   rbCl.forEach((c,i)=>{c.m.color.setHSL((now/9000+i*.083)%1,.95,.68);c.m.opacity=.95});
   /* volcanes */
