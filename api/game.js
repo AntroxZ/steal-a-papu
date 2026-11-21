@@ -13,11 +13,21 @@ const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 240
 /* evento en vivo: Papu Golden Time (el admin lo inicia; los jugadores lo reciben al sincronizar) */
 const EV_MS = 120000;
 /* estado de eventos para los jugadores: Golden Time, Papus invocados por el admin y la hora del servidor */
-async function evInfo() {
-  const [gt, sm, cl, rm, am0] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed', 'rm', 'ev:msg')) || [];
+async function evInfo(keepNx) {
+  const [gt, sm, cl, rm, am0, pg0, pgnx] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed', 'rm', 'ev:msg', 'ev:pg', 'pg:nx')) || [];   /* una sola consulta trae todo (la Purga también) */
   const now = Date.now(), left = gt ? +gt - now : 0;
   let list = []; try { list = sm ? JSON.parse(sm) : []; } catch (e) { list = []; }
-  return { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl, rc: rm || null, am: amView(am0, now) };   /* rc = código de la sala activa (lo decide el servidor) */
+  const out = { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl, rc: rm || null, am: amView(am0, now), pg: pgView(pg0, now) };
+  if (keepNx) out._nx = +pgnx || 0;
+  return out;   /* rc = código de la sala activa (lo decide el servidor) */
+}
+/* ---- LA PAPU PURGA: 30 s con todas las bases abiertas. La inicia el admin cuando quiera o el servidor solo (raro): con 4+ jugadores en la sala se tira un dado cada 5 min (3 %), y tras cada Purga hay 10 min sin dado ---- */
+const PG_SECS = 30, PG_MIN_PLAYERS = 4, PG_ROLL_MS = 300000, PG_P = 0.03, PG_COOLDOWN_MS = 600000;
+function pgView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 ? { id: m.id, secs: m.secs, age } : null; } catch (e) { return null; } }
+async function pgStart(now) {
+  const m = { id: crypto.randomBytes(4).toString('hex'), ts: now, secs: PG_SECS };
+  await Promise.all([db('SET', 'ev:pg', JSON.stringify(m), 'EX', PG_SECS + 15), db('SET', 'pg:nx', String(now + PG_SECS * 1000 + PG_COOLDOWN_MS), 'EX', 1500)]);
+  return { id: m.id, secs: m.secs, age: 0 };
 }
 /* mensaje del admin en pantalla: vive solo mientras dura (+4 s de margen); viaja en la misma consulta de siempre, sin comandos extra */
 function amView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 + 4000 ? { id: m.id, text: m.text, secs: m.secs, age } : null; } catch (e) { return null; } }
@@ -59,7 +69,7 @@ async function turnIce() {
 async function rmDead() { const t = await db('PTTL', 'rm'); return !(t > RM_STALE); }
 const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
-const CV = 5;
+const CV = 6;
 const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000], MAXF = 5, SLOTF = 10;
 const OPRICE = { bat: 870000000, push: 1740000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
@@ -265,11 +275,17 @@ const actions = {
   async sync(b) {
     if (b.cv !== CV && !process.env.NO_CV_CHECK) throw new Err('Hay una versión nueva del juego. Recargando…', 'auth');
     const skipLb = !!b.nl;   /* el cliente pide el ranking solo 1 de cada 3 veces: menos comandos */
-    const [r, info, lbs] = await Promise.all([userFromTok(b.tok), evInfo(), skipLb ? null : db('GET', 'lb')]);   /* en paralelo: menos tiempo de funcion */
+    const [r, info, lbs] = await Promise.all([userFromTok(b.tok), evInfo(!!(b.hc && (b.np | 0) >= PG_MIN_PLAYERS)), skipLb ? null : db('GET', 'lb')]);   /* en paralelo: menos tiempo de funcion */
     accrue(r, Date.now());
     const lb = skipLb ? null : lbParse(lbs), ch = skipLb ? 0 : lbApply(lb, r), nowT = Date.now();
     const tk = readTok(b.tok), hc = okCode(b.hc) ? b.hc : null;
     if (hc && (!info.rc || info.rc === hc || (tk && tk.adm && await rmDead()))) { info.rc = hc; await db('SET', 'rm', hc, 'EX', RM_TTL); }   /* el admin siempre manda: su sala reemplaza a cualquier otra */
+    /* disparo automático de la Purga: solo lo evalúa el anfitrión (sabe cuántos hay en la sala). Sin comandos extra salvo cada 5 min */
+    if (hc && info.rc === hc && (b.np | 0) >= PG_MIN_PLAYERS && !info.pg) {
+      if (!info._nx) await db('SET', 'pg:nx', String(nowT + PG_ROLL_MS), 'EX', 700);   /* el grupo tiene que sostenerse 5 min antes del primer dado */
+      else if (nowT >= info._nx) { await db('SET', 'pg:nx', String(nowT + PG_ROLL_MS), 'EX', 700); if (Math.random() < PG_P) info.pg = await pgStart(nowT); }
+    }
+    delete info._nx;
     const jobs = [saveRec(r)];   /* el progreso se guarda siempre, incluso si el servidor esta cerrado */
     if (!skipLb && (ch === 2 || (ch === 1 && nowT - lb.t > 25000))) { lb.t = nowT; jobs.push(db('SET', 'lb', JSON.stringify(lb))); }
     await Promise.all(jobs);
@@ -326,7 +342,7 @@ const actions = {
     const v = vu ? await loadRec(vu) : null;
     if (!v || v.user === r.user) { await saveRec(r); return { ok: false, st: view(r) }; }
     /* celular con la pantalla apagada: su base ya no esta en la partida, no se le puede robar */
-    if (v.off && v.mob) { await saveRec(r); throw Object.assign(new Err('Ese jugador no está disponible.', 'bad'), { st: view(r) }); }
+    if (v.off && v.mob && !pgView(await db('GET', 'ev:pg'), Date.now())) { await saveRec(r); throw Object.assign(new Err('Ese jugador no está disponible.', 'bad'), { st: view(r) }); }
     accrue(v, Date.now());
     const lvl = v.slots[slot];
     if (lvl == null || lvl < 0) { await saveRec(v); await saveRec(r); return { ok: false, st: view(r) }; }
@@ -506,6 +522,14 @@ const actions = {
     adminFromTok(b.tok);
     if (b.on) await db('SET', 'ev:gt', String(Date.now() + EV_MS), 'EX', 180); else await db('DEL', 'ev:gt');
     return { ev: await evLeft() };
+  },
+  /* la Papu Purga la inicia (o detiene) el admin cuando quiera; también arranca el cooldown de 10 min del disparo automático */
+  async apg(b) {
+    adminFromTok(b.tok);
+    const now = Date.now();
+    if (b.on) return { pg: await pgStart(now) };
+    await Promise.all([db('DEL', 'ev:pg'), db('SET', 'pg:nx', String(now + PG_COOLDOWN_MS), 'EX', 700)]);
+    return { pg: null };
   },
   /* cerrar / abrir el servidor: cerrado, solo entra el admin (para pruebas); los jugadores en linea son sacados al sincronizar */
   async aclose(b) {
