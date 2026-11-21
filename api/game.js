@@ -22,8 +22,11 @@ async function evInfo(keepNx) {
   return out;   /* rc = código de la sala activa (lo decide el servidor) */
 }
 /* ---- LA PAPU PURGA: 30 s con todas las bases abiertas. La inicia el admin cuando quiera o el servidor solo (raro): con 4+ jugadores en la sala se tira un dado cada 5 min (3 %), y tras cada Purga hay 10 min sin dado ---- */
-const PG_SECS = 30, PG_MIN_PLAYERS = 4, PG_ROLL_MS = 300000, PG_P = 0.03, PG_COOLDOWN_MS = 600000;
+const PG_SECS = 120, PG_MIN_PLAYERS = 4, PG_ROLL_MS = 300000, PG_P = 0.03, PG_COOLDOWN_MS = 600000;
 function pgView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 ? { id: m.id, secs: m.secs, age } : null; } catch (e) { return null; } }
+/* durante un evento (Golden Time o Purga) nadie nuevo puede entrar: solo siguen los que ya estaban jugando. El admin siempre puede */
+async function evBusy() { const [gt, pg] = (await db('MGET', 'ev:gt', 'ev:pg')) || [], now = Date.now(); return (!!gt && +gt > now) || !!pgView(pg, now); }
+const EV_BLOCK = 'No puedes entrar durante un evento. Inténtalo más tarde.';
 async function pgStart(now) {
   const m = { id: crypto.randomBytes(4).toString('hex'), ts: now, secs: PG_SECS };
   await Promise.all([db('SET', 'ev:pg', JSON.stringify(m), 'EX', PG_SECS + 15), db('SET', 'pg:nx', String(now + PG_SECS * 1000 + PG_COOLDOWN_MS), 'EX', 1500)]);
@@ -71,7 +74,7 @@ const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
 const CV = 6;
 const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000], MAXF = 5, SLOTF = 10;
-const OPRICE = { bat: 870000000, push: 1740000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
+const OPRICE = { bat: 870000000, push: 1740000000, bomba: 5220000000, freezer: 8700000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -224,6 +227,7 @@ const lbParse = s => { try { const o = s ? JSON.parse(s) : {}; return { m: o.m |
 const actions = {
   async register(b) {
     if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
+    if (await evBusy()) throw new Err(EV_BLOCK, 'event');
     const user = String(b.user || '').trim(), pass = String(b.pass || ''), nick = cleanNick(b.nick);
     if (!checkUser(user)) throw new Err('Usuario: de 3 a 16 letras, números o _ (sin espacios).');
     if (pass.length < 4 || pass.length > 32) throw new Err('La contraseña debe tener de 4 a 32 caracteres.');
@@ -254,6 +258,7 @@ const actions = {
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
     if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
+    if (await evBusy()) throw new Err(EV_BLOCK, 'event');
     r.sid = crypto.randomBytes(9).toString('base64url'); r.kk = 0; r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
@@ -263,6 +268,7 @@ const actions = {
     const t = readTok(b.tok);
     if (t && t.adm && t.u === '*admin') throw new Err('Inicia sesión de nuevo.', 'auth');
     if (!(t && t.adm) && await isClosed()) throw new Err(CLOSED_MSG, 'closed');
+    if (!(t && t.adm) && await evBusy()) throw new Err(EV_BLOCK, 'event');
     const r = await userFromTok(b.tok);
     r.t = Date.now(); r.seen = r.t; r.off = 0; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
     return { tok: b.tok, st: view(r), ...(t && t.adm ? { admin: true } : {}), ...(await evInfo()) };
