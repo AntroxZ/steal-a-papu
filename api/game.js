@@ -79,7 +79,7 @@ const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
 const CV = 6;
 const FPRICE = [0, 0, 6800000000, 110000000000, 2400000000000, 46000000000000, 410000000000000, 3000000000000000], MAXF = 7, SLOTF = 10;
-const OPRICE = { bat: 200000000, push: 450000000, bomba: 2500000000, freezer: 5800000000, dance: 120000000000000, freddy: 240000000000000 }, MAXM = 1e27, START = 50000, NSLOT = 70, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
+const OPRICE = { bat: 200000000, push: 450000000, bomba: 2500000000, freezer: 5800000000, dance: 120000000000000, freddy: 240000000000000, perd: 100000000000000 }, MAXM = 1e27, START = 50000, NSLOT = 70, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -90,7 +90,7 @@ async function db(...cmd) {
 const ukey = u => 'u:' + u.toLowerCase();
 const emptySlots = () => Array(NSLOT).fill(-1);
 /* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar progreso ni al hacer Rebirth (misma lista que el cliente) */
-const EXCLUSIVO = ['dance', 'freddy'];
+const EXCLUSIVO = ['dance', 'freddy', 'perd'];
 /* reinicio de progreso a cero (reiniciar cuenta o Rebirth): conserva siempre los objetos exclusivos */
 function resetProgress(r) {
   const keep = (Array.isArray(r.inv) ? r.inv : []).filter(i => EXCLUSIVO.includes(i));
