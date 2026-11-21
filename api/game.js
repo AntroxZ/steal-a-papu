@@ -36,7 +36,7 @@ async function pgStart(now) {
 function amView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 + 4000 ? { id: m.id, text: m.text, secs: m.secs, age } : null; } catch (e) { return null; } }
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
-const DPRICE = [0, 2500000, 56000000, 1600000000, 3200000000, 5900000000, 12000000000, 320000000000, 28000000000, 47000000000, 90000000000, 2200000000000];
+const DPRICE = [0, 470000, 6800000, 410000000, 1200000000, 2900000000, 9400000000, 4600000000000, 49000000000, 120000000000, 500000000000, 80000000000000];
 /* pisos de la base: se empieza con 1 (10 espacios) y se pueden comprar hasta 5; precio del piso numero n */
 /* BASE 001 (guardada): Papus nuevos 17..51, mismos valores que el cliente. Solo el admin puede invocarlos en la cinta. */
 [[5, 10], [5, 25], [7, 10], [7, 25], [9, 10], [9, 25], [11, 10], [11, 25], [13, 10], [13, 25]].forEach(([b, m]) => { INC.push(INC[b] * m); PRICE.push(PRICE[b] * m); });
@@ -78,8 +78,8 @@ async function rmDead() { const t = await db('PTTL', 'rm'); return !(t > RM_STAL
 const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
 const CV = 6;
-const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000, 9400000000000, 62000000000000], MAXF = 7, SLOTF = 10;
-const OPRICE = { bat: 870000000, push: 1740000000, bomba: 5220000000, freezer: 8700000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 70, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
+const FPRICE = [0, 0, 6800000000, 110000000000, 2400000000000, 46000000000000, 410000000000000, 3000000000000000], MAXF = 7, SLOTF = 10;
+const OPRICE = { bat: 200000000, push: 450000000, bomba: 2500000000, freezer: 5800000000, dance: 120000000000000, freddy: 240000000000000 }, MAXM = 1e27, START = 50000, NSLOT = 70, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
