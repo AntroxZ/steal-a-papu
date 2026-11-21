@@ -76,8 +76,8 @@ async function rmDead() { const t = await db('PTTL', 'rm'); return !(t > RM_STAL
 const okCode = c => typeof c === 'string' && /^[A-Za-z0-9]{3,16}$/.test(c);
 /* versión del cliente: si una pestaña vieja (otra versión) sigue abierta, se le pide recargar para que nunca haya dos versiones jugando en salas distintas */
 const CV = 6;
-const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000], MAXF = 5, SLOTF = 10;
-const OPRICE = { bat: 870000000, push: 1740000000, bomba: 5220000000, freezer: 8700000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 50, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
+const FPRICE = [0, 0, 9600000000, 46000000000, 220000000000, 1420000000000, 9400000000000, 62000000000000], MAXF = 7, SLOTF = 10;
+const OPRICE = { bat: 870000000, push: 1740000000, bomba: 5220000000, freezer: 8700000000, dance: 2999999967000, freddy: 5999999934000 }, MAXM = 1e27, START = 50000, NSLOT = 70, NSKIN = 12, TOKEN_DAYS = 30, MAX_DT = 25000;
 
 async function db(...cmd) {
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
@@ -443,7 +443,7 @@ const actions = {
     if (id === 11) d.f = d.f ? 0 : 1; else d.c = d.c === id ? 0 : id;
     await saveRec(r); return { st: view(r) };
   },
-  /* comprar el siguiente piso de la base (permanente, hasta 5 pisos) */
+  /* comprar el siguiente piso de la base (permanente, hasta 7 pisos) */
   async fbuy(b) {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const n = r.fl || 1;
