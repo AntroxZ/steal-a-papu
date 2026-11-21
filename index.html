@@ -985,7 +985,7 @@ body.hudnew #mis .misBar{border-color:#150a45}
 </div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/data.5a40debb9c.js"></script>
+<script src="/data.dbe0a08510.js"></script>
 
 <script>const MENU_LOGO=__D[0];document.querySelectorAll('.menuLogo').forEach(e=>e.src=MENU_LOGO);
 </script>
@@ -2459,12 +2459,13 @@ function makePerdFx(){
   const eye=new THREE.Group();eye.userData={};
   const beam=new THREE.Group();eye.add(beam);
   /* capas del rayo (de adentro hacia afuera): nucleo blanco, rayo rojo con vetas, y varias capas de brillo; ancho en el origen -> ancho en la punta */
-  const L=[[.05,.11,0xfff4ec,1,0,1,5],[.17,.42,0xff2410,.92,1,0,4],[.3,.8,0xff1608,.42,0,0,3],[.55,1.5,0xe60c04,.2,0,0,2],[.95,2.4,0xc80802,.1,0,0,1]];   /* [radio inicio, radio punta, color, opacidad, vetas, aditivo, orden]: capas normales para que se vea rojo incluso de dia */
-  const cyl=L.map(([r0,r1,col,op,st,ad,ro])=>{const g=new THREE.CylinderGeometry(r1,r0,1,28,1,true);g.rotateX(Math.PI/2);g.translate(0,0,.5);
+  const EX=.16,L=[[.03,.06,0xfff4ec,1,0,1,5,1],[.1,.25,0xff2410,.95,1,0,4,1],[.22,.7,0xff1608,.4,0,0,3,0],[.5,1.4,0xe60c04,.2,0,0,2,0],[.9,2.3,0xc80802,.1,0,0,1,0]];   /* el nucleo y el rayo rojo salen uno por cada ojo (ultimo dato = 1); el brillo de afuera es compartido */   /* [radio inicio, radio punta, color, opacidad, vetas, aditivo, orden]: capas normales para que se vea rojo incluso de dia */
+  const cyl=[];
+  L.forEach(([r0,r1,col,op,st,ad,ro,pe])=>{(pe?[-1,1]:[0]).forEach(sx=>{const g=new THREE.CylinderGeometry(r1,r0,1,28,1,true);g.rotateX(Math.PI/2);g.translate(0,0,.5);
     const m=new THREE.Mesh(g,add({color:col,opacity:op,map:st?T.streak.clone():null,blending:ad?THREE.AdditiveBlending:THREE.NormalBlending}));m.renderOrder=ro;if(st){m.material.map.needsUpdate=true;m.material.map.wrapS=m.material.map.wrapT=THREE.RepeatWrapping;m.material.map.repeat.set(1,3)}
-    m.frustumCulled=false;m.userData={op,st};beam.add(m);return m});
+    m.position.x=sx*EX;m.frustumCulled=false;m.userData={op,st,core:r0<.05};beam.add(m);cyl.push(m)})});
   const spr=(tex,col)=>{const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color:col,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));sp.frustumCulled=false;return sp};
-  const flare=spr(T.glow,0xffffff),tip=spr(T.glow,0xff5a28),cl1=spr(T.cloud,0xffffff),cl2=spr(T.cloud,0xffb08a);[cl1,cl2].forEach(c=>{c.material.blending=THREE.NormalBlending;c.renderOrder=1});flare.renderOrder=tip.renderOrder=6;beam.add(flare,tip,cl1,cl2);
+  const flare=spr(T.glow,0xffffff),flare2=spr(T.glow,0xffffff),tip=spr(T.glow,0xff5a28),cl1=spr(T.cloud,0xffffff),cl2=spr(T.cloud,0xffb08a);[cl1,cl2].forEach(c=>{c.material.blending=THREE.NormalBlending;c.renderOrder=1});flare.renderOrder=flare2.renderOrder=tip.renderOrder=6;beam.add(flare,flare2,tip,cl1,cl2);
   /* chispas y brasas que salen disparadas a lo largo del rayo */
   const NS=110,sp=new Float32Array(NS*3),sc=new Float32Array(NS*3),prm=[];for(let i=0;i<NS;i++)prm.push({o:Math.random(),s:.5+Math.random()*1.1,a:Math.random()*6.283,r:Math.random(),w:.5+Math.random()});
   const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(sp,3));sg.setAttribute('color',new THREE.BufferAttribute(sc,3));
@@ -2476,13 +2477,13 @@ function makePerdFx(){
   const NE=70,ep=new Float32Array(NE*3),ec=new Float32Array(NE*3),eprm=[];for(let i=0;i<NE;i++)eprm.push({a:Math.random()*6.283,r:.7+Math.random()*2.3,s:.25+Math.random()*.45,o:Math.random(),h:1.5+Math.random()*3.5,d:Math.random()<.5?1:-1});
   const eg=new THREE.BufferGeometry();eg.setAttribute('position',new THREE.BufferAttribute(ep,3));eg.setAttribute('color',new THREE.BufferAttribute(ec,3));
   const embers=new THREE.Points(eg,new THREE.PointsMaterial({size:.17,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,fog:false}));embers.frustumCulled=false;gr.add(embers);
-  eye.userData={beam,cyl,flare,tip,cl1,cl2,sparks,sp,sc,prm,gr,rings,disc,embers,ep,ec,eprm,par:null,rig:null};
+  eye.userData={beam,cyl,flare,flare2,tip,cl1,cl2,sparks,sp,sc,prm,gr,rings,disc,embers,ep,ec,eprm,par:null,rig:null};
   return eye;
 }
-const perdI=t=>{if(t<3.5||t>=16.1)return 0;return Math.min(1,(t-3.5)/.3)*(t>15.4?Math.max(0,(16-t)/.6):1)};
+const perdI=t=>{if(t<1||t>=16.1)return 0;return Math.min(1,(t-1)/.3)*(t>15.4?Math.max(0,(16-t)/.6):1)};
 function updPerdFx(host,rig,on,t,now,isLocal){
   let f=host.pfx;const I=on?perdI(t):0;
-  if(isLocal){const a=$('perdFx'),b=$('perdFl');if(a){const ph=(t*2)%1,pl=Math.exp(-ph*5);a.style.opacity=I>0?(Math.min(1,I)*(.55+.25*pl)).toFixed(3):0;b.style.opacity=on&&t>3.5&&t<4.3?(Math.max(0,1-(t-3.5)/.8)*.7).toFixed(3):0}
+  if(isLocal){const a=$('perdFx'),b=$('perdFl');if(a){const ph=(t*2)%1,pl=Math.exp(-ph*5);a.style.opacity=I>0?(Math.min(1,I)*(.55+.25*pl)).toFixed(3):0;b.style.opacity=on&&t>1&&t<1.8?(Math.max(0,1-(t-1)/.8)*.7).toFixed(3):0}
     if(I>0)shake=Math.max(shake,.07+.2*I*Math.exp(-((t*2)%1)*5))}
   if(!f){if(I<=0)return;f=host.pfx=makePerdFx();host.g.add(f.userData.gr)}
   const u=f.userData;
@@ -2492,11 +2493,11 @@ function updPerdFx(host,rig,on,t,now,isLocal){
   if(u.par!==hb){if(f.parent)f.parent.remove(f);hb.add(f);u.par=hb;u.rig=rig;
     const k=rig.hipsY/93.7;f.position.set(0,10.5*k,11.5*k);f.quaternion.copy(rig.restQi[BI.Head]);f.scale.setScalar(1/rig.S)}
   f.visible=true;u.gr.visible=true;
-  const ph=(t*2)%1,pulse=Math.exp(-ph*5),e=Math.max(0,t-3.5),len=PFX.len*Math.pow(Math.min(1,e/.3),.6)*(t>15.4?Math.max(.2,(16-t)/.6):1);
+  const ph=(t*2)%1,pulse=Math.exp(-ph*5),e=Math.max(0,t-1),len=PFX.len*Math.pow(Math.min(1,e/.3),.6)*(t>15.4?Math.max(.2,(16-t)/.6):1);
   const thick=(.38+.62*Math.min(1,e/3))*(.92+.08*Math.sin(t*41)+.05*Math.sin(t*67))+.2*pulse,I2=Math.min(1,I);
-  u.cyl.forEach((m,i)=>{m.scale.set(thick*(i?1:.85),thick*(i?1:.85),len);m.material.opacity=m.userData.op*I2*(.88+.12*Math.sin(t*53+i*1.7)+.1*pulse);
+  u.cyl.forEach((m,i)=>{const w=thick*(m.userData.core?.85:1);m.scale.set(w,w,len);m.material.opacity=m.userData.op*I2*(.88+.12*Math.sin(t*53+i*1.7)+.1*pulse);
     if(m.userData.st){const mp=m.material.map;mp.offset.y=-(now/1000)*2.6;mp.offset.x=Math.sin(now/230)*.03}});
-  u.flare.position.set(0,0,.1);u.flare.scale.setScalar((2.6+1.4*pulse)*I2);u.flare.material.opacity=I2;
+  u.flare.position.set(-.16,0,.1);u.flare2.position.set(.16,0,.1);[u.flare,u.flare2].forEach(fl=>{fl.scale.setScalar((1.9+1.1*pulse)*I2);fl.material.opacity=I2});
   u.tip.position.set(0,0,len);u.tip.scale.setScalar((7+3.5*thick+2*pulse)*I2);u.tip.material.opacity=.8*I2;
   u.cl1.position.set(0,0,len*.97);u.cl1.scale.setScalar(11*I2*(.9+.1*Math.sin(t*3)));u.cl1.material.rotation=t*.35;u.cl1.material.opacity=.75*I2;
   u.cl2.position.set(0,0,len*.8);u.cl2.scale.setScalar(8.5*I2);u.cl2.material.rotation=-t*.5;u.cl2.material.opacity=.5*I2;
