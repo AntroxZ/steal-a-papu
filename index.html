@@ -1492,26 +1492,26 @@ SOL.push([SHOP_X-2.5,BELT_Z-SHOP_DZ-3.7,SHOP_X+3.4,BELT_Z-SHOP_DZ+3.7]);
 /* ===== Rebirth: por ahora solo la interfaz (los datos de cada nivel se llenan despues) ===== */
 /* Rebirth (datos guardados de la Base 001; el boton Reclamar sigue bloqueado hasta que esten todos los modelos) */
 const REB_LV=[
- {n:1,money:100000000,mult:1.5,papus:[[29, 1]]},
- {n:2,money:220000000,mult:2,papus:[[37, 1]]},
- {n:3,money:230000000,mult:2.5,papus:[[12, 1]]},
- {n:4,money:1000000000,mult:3,papus:[[41, 1]]},
- {n:5,money:4600000000,mult:3.5,papus:[[19, 1]]},
- {n:6,money:60000000000,mult:4,papus:[[35, 1]]},
- {n:7,money:230000000000,mult:4.5,papus:[[46, 2]]},
- {n:8,money:340000000000,mult:5,papus:[[21, 2], [43, 1]]},
- {n:9,money:14000000000000,mult:5.5,papus:[[47, 2], [16, 1]]},
- {n:10,money:1100000000000000.0,mult:6,papus:[[51, 1], [22, 1], [43, 1], [47, 1], [16, 1], [27, 1]]},
- {n:11,money:1300000000000000.0,mult:7,papus:[[55, 1], [56, 1], [57, 1]]},
- {n:12,money:1600000000000000.0,mult:8,papus:[[58, 2], [59, 1]]},
- {n:13,money:4200000000000000.0,mult:9.5,papus:[[59, 2], [60, 1]]},
- {n:14,money:1.4e+16,mult:11,papus:[[60, 2], [61, 1]]},
- {n:15,money:4.9e+16,mult:13,papus:[[61, 2], [62, 1], [27, 1]]},
- {n:16,money:9.7e+16,mult:15,papus:[[62, 2], [61, 1], [27, 2]]},
- {n:17,money:1.8e+17,mult:18,papus:[[62, 3], [60, 2], [27, 2]]},
- {n:18,money:3.3e+17,mult:21,papus:[[62, 3], [61, 3], [60, 2], [27, 1]]},
- {n:19,money:2.5e+19,mult:25,papus:[[62, 4], [61, 3], [60, 2], [63, 1]]},
- {n:20,money:1.4e+20,mult:30,papus:[[63, 4], [62, 3], [61, 3]]}];
+ {n:1,money:230000000,mult:1.5,papus:[[41, 1]]},
+ {n:2,money:550000000,mult:2,papus:[[17, 1]]},
+ {n:3,money:3000000000,mult:2.5,papus:[[19, 1], [17, 1]]},
+ {n:4,money:11000000000,mult:3,papus:[[42, 1], [19, 1]]},
+ {n:5,money:30000000000,mult:3.5,papus:[[49, 1], [42, 1]]},
+ {n:6,money:86000000000,mult:4,papus:[[35, 1], [49, 1]]},
+ {n:7,money:200000000000,mult:4.5,papus:[[46, 1], [35, 1]]},
+ {n:8,money:550000000000,mult:5,papus:[[50, 1], [46, 1]]},
+ {n:9,money:1900000000000,mult:5.5,papus:[[47, 1], [50, 1]]},
+ {n:10,money:6100000000000,mult:6,papus:[[51, 1], [47, 1]]},
+ {n:11,money:28000000000000,mult:7,papus:[[16, 1], [51, 1], [47, 1]]},
+ {n:12,money:150000000000000,mult:8,papus:[[52, 1], [16, 1], [51, 1]]},
+ {n:13,money:490000000000000,mult:9.5,papus:[[57, 1], [52, 1], [16, 1]]},
+ {n:14,money:1200000000000000,mult:11,papus:[[54, 1], [57, 1], [52, 1]]},
+ {n:15,money:2500000000000000,mult:13,papus:[[55, 1], [54, 1], [57, 1]]},
+ {n:16,money:11000000000000000,mult:15,papus:[[59, 1], [16, 1], [27, 1]]},
+ {n:17,money:24000000000000000,mult:18,papus:[[60, 1], [59, 1], [27, 1]]},
+ {n:18,money:75000000000000000,mult:21,papus:[[61, 1], [60, 1], [27, 2]]},
+ {n:19,money:180000000000000000,mult:25,papus:[[62, 1], [61, 1], [27, 2]]},
+ {n:20,money:35000000000000000000,mult:30,papus:[[63, 1], [62, 1], [61, 1]]}];
 const rbMoney=n=>'$'+abb(n);
 const myCnt=()=>{const c={};slots.forEach(q=>{if(q.item){const l=q.item.userData.lvl;c[l]=(c[l]||0)+1}});return c};
 function renderReb(){
@@ -1838,7 +1838,7 @@ $('amYes').onclick=sendAm;
 $('amIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAm()}else if(e.key==='Escape')closeAm()});
 $('tpBase').onclick=()=>{$('tpBase').blur();const sp=myBase.W(0,BZ0-3);tpTo(sp[0],sp[1],myBase.dir>0?0:Math.PI)};
 /* catalogo (bitacora de Papus conseguidos, guardada en el servidor) */
-const CAT_ORDER=[5,6,17,18,13,14,25,26,11,12,23,24,7,8,19,20,28,29,30,31,36,37,38,39,32,33,34,35,40,41,42,43,9,10,21,22,44,45,46,47,48,49,50,51,15,16,27,52,53,54,55,56,57,58,59,60,61,62,63];   /* de lo mas comun a lo mas raro; por Papu: normal, dorado, diamante, rainbow */
+const CAT_ORDER=[5,6,17,18,52, 13,14,25,26,53, 11,12,23,24,57, 7,8,19,20,58, 28,29,30,31,54, 36,37,38,39,56, 32,33,34,35,55, 40,41,42,43,59, 9,10,21,22,60, 44,45,46,47,61, 48,49,50,51,62, 15,16,27,63];   /* de lo mas comun a lo mas raro; por Papu: normal, dorado, diamante, rainbow */
 let catR=null,catImgs=null,catSel=-1;
 const catKind=l=>VAR[l]===4?'PapuDark':l===27?'Ultra Rainbow':l===16?'Ultra':VAR[l]===1?'Dorado':VAR[l]===2?'Diamante':VAR[l]===3?'Rainbow':'Normal',catCls=l=>VAR[l]===4?'dk':l===27?'rb':l===16?'u':VAR[l]===1?'d':VAR[l]===2?'di':VAR[l]===3?'rb':'n',AVAIL=l=>WGT[l]>0;
 const catProb=l=>{if(!AVAIL(l))return 'aún no disponible';const T=WGT.reduce((a,b)=>a+b,0),p=WGT[l]/T*100;return (p>=10?Math.round(p):p>=1?+p.toFixed(1):p.toLocaleString('es-MX',{maximumSignificantDigits:2,maximumFractionDigits:9}))+' %'};
