@@ -4086,7 +4086,7 @@ function mkBulbs(list,size){const n=list.length,pos=new Float32Array(n*3),col=ne
   const geo=new THREE.BufferGeometry(),ca=new THREE.BufferAttribute(col,3);geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('color',ca);
   const pts=new THREE.Points(geo,new THREE.PointsMaterial({size,vertexColors:true,transparent:true,opacity:1,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending,map:dotTex}));pts.frustumCulled=false;
   return{pts,col,ca,n,ci:list.map(()=>Math.floor(Math.random()*6)),ph:list.map(()=>Math.random()*6.28)}}
-function twBulbs(b,now,mode){const c=b.col;for(let i=0;i<b.n;i++){
+function twBulbs(b,now,mode,lim){const c=b.col;for(let i=0;i<(lim||b.n);i++){
   const ci=mode?(b.ci[i]+((now/450)|0))%6:b.ci[i],q=XMAS[ci],tw=mode?.6+.4*Math.sin(now/170+b.ph[i]*3):.55+.45*Math.sin(now/260+b.ph[i]);
   c[i*3]=q[0]*tw;c[i*3+1]=q[1]*tw;c[i*3+2]=q[2]*tw}b.ca.needsUpdate=true}
 const RB_FEST=(()=>{const L=[],W=[],xs=[-80,-48,-16,16,48,80];
@@ -4109,20 +4109,37 @@ const RB_SIGN=(()=>{const L=[],h=2.75;for(let i=0;i<16;i++){const t=-h+2*h*i/16;
   const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex,color:0xff66ff,transparent:true,opacity:.0,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending}));halo.scale.set(26,20,1);halo.position.y=9.6;signG.add(halo);b.halo=halo;return b})();
 
 /* --- suelo: nube gigante con rios de lava (solo decoracion) --- */
+const rbNeon=['#00e5ff','#2bff9a','#ff2dd4','#ff6ad0','#3d6bff','#a24dff','#38ffd9','#ff8a3d'];
+const rbWrap=(x,N,a,b,r,draw)=>{for(const dx of[-N,0,N])for(const dy of[-N,0,N])if(a+dx>-r&&a+dx<N+r&&b+dy>-r&&b+dy<N+r)draw(a+dx,b+dy)};
 const rbGTex=(()=>{const N=1024,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');
-  const bg=x.createLinearGradient(0,0,N,N);bg.addColorStop(0,'#f7ecff');bg.addColorStop(.5,'#ffe9f2');bg.addColorStop(1,'#eaf2ff');x.fillStyle=bg;x.fillRect(0,0,N,N);
-  const blob=(a,b,r,col)=>{for(const dx of[-N,0,N])for(const dy of[-N,0,N]){const q=x.createRadialGradient(a+dx,b+dy,0,a+dx,b+dy,r);q.addColorStop(0,col);q.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=q;x.fillRect(a+dx-r,b+dy-r,r*2,r*2)}};
-  for(let i=0;i<150;i++)blob(Math.random()*N,Math.random()*N,rbRnd(40,120),'rgba(255,255,255,.85)');
-  for(let i=0;i<40;i++)blob(Math.random()*N,Math.random()*N,rbRnd(60,140),'hsla('+Math.floor(Math.random()*360)+',90%,80%,.35)');
-  for(let i=0;i<70;i++)blob(Math.random()*N,Math.random()*N,rbRnd(20,60),'rgba(200,190,230,.35)');
-  const river=(vert,base,amp,n,ph)=>{const path=()=>{x.beginPath();for(let u=0;u<=N;u+=8){const w=base+Math.sin(u/N*6.2832*n+ph)*amp+Math.sin(u/N*6.2832*(n*2+1)+ph*2)*amp*.25,X=vert?w:u,Y=vert?u:w;u?x.lineTo(X,Y):x.moveTo(X,Y)}x.stroke()};
-    x.lineCap='round';x.lineJoin='round';
-    x.strokeStyle='rgba(255,70,0,.35)';x.lineWidth=64;path();x.strokeStyle='rgba(255,110,0,.7)';x.lineWidth=40;path();x.strokeStyle='#ff9a10';x.lineWidth=24;path();x.strokeStyle='#ffe066';x.lineWidth=11;path();x.strokeStyle='#fff7c2';x.lineWidth=4;path()};
-  river(false,256,70,1,0);river(false,768,60,2,1.7);river(true,150,55,1,.8);river(true,640,70,2,3.1);
-  for(let i=0;i<60;i++){const a=Math.random()*N,b=Math.random()*N;x.fillStyle='rgba(255,230,120,.8)';x.beginPath();x.arc(a,b,rbRnd(1.5,4),0,7);x.fill()}
-  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.anisotropy=4;return t})();
+  x.fillStyle='#b4bfdc';x.fillRect(0,0,N,N);
+  const rad=(a,b,r,col,al)=>rbWrap(x,N,a,b,r,(A,B2)=>{const q=x.createRadialGradient(A,B2,0,A,B2,r);q.addColorStop(0,col);q.addColorStop(1,'rgba(0,0,0,0)');x.globalAlpha=al;x.fillStyle=q;x.fillRect(A-r,B2-r,r*2,r*2)});
+  for(let i=0;i<64;i++)rad(Math.random()*N,Math.random()*N,rbRnd(110,240),rbNeon[i%rbNeon.length],1);
+  x.globalAlpha=1;
+  const river=(vert,base,amp,n,ph)=>{const path=()=>{x.beginPath();for(let u=0;u<=N;u+=8){const w=base+Math.sin(u/N*6.2832*n+ph)*amp,X=vert?w:u,Y=vert?u:w;u?x.lineTo(X,Y):x.moveTo(X,Y)}x.stroke()};
+    x.lineCap='round';x.strokeStyle='rgba(255,90,0,.3)';x.lineWidth=40;path();x.strokeStyle='#ff9a10';x.lineWidth=14;path();x.strokeStyle='#fff0a0';x.lineWidth=5;path()};
+  river(false,300,70,1,0.4);river(true,700,60,1,2.2);
+  /* nubes esponjosas grises con sombra, dejando ver el brillo de abajo */
+  for(let i=0;i<420;i++){const a=Math.random()*N,b=Math.random()*N,r=rbRnd(55,120);
+    rad(a+r*.1,b+r*.3,r*1.1,'rgba(90,100,150,1)',.05);
+    rad(a,b,r,'rgba(236,240,252,1)',.2);rad(a-r*.15,b-r*.2,r*.5,'rgba(255,255,255,1)',.17)}
+  x.globalAlpha=1;
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(5,5);t.anisotropy=4;return t})();
+const rbGlTex=(()=>{const N=1024,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');
+  for(let i=0;i<34;i++){const a=Math.random()*N,b=Math.random()*N,r=rbRnd(80,190),col=rbNeon[i%rbNeon.length];rbWrap(x,N,a,b,r,(A,B2)=>{const q=x.createRadialGradient(A,B2,0,A,B2,r);q.addColorStop(0,col);q.addColorStop(1,'rgba(0,0,0,0)');x.globalAlpha=.9;x.fillStyle=q;x.fillRect(A-r,B2-r,r*2,r*2)})}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);return t})();
 const rbGround=new THREE.Mesh(new THREE.PlaneGeometry(820,820),new THREE.MeshBasicMaterial({map:rbGTex,transparent:true,opacity:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,toneMapped:false}));
 rbGround.rotation.x=-Math.PI/2;rbGround.position.y=.02;rbGround.renderOrder=-1;rbGround.visible=false;scene.add(rbGround);
+const rbGlow=new THREE.Mesh(new THREE.PlaneGeometry(820,820),new THREE.MeshBasicMaterial({map:rbGlTex,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3,toneMapped:false,fog:false}));
+rbGlow.rotation.x=-Math.PI/2;rbGlow.position.y=.03;rbGlow.renderOrder=0;rbGlow.visible=false;scene.add(rbGlow);
+/* --- luces en las bases (como las torres): un anillo por piso --- */
+const RB_BASES=BASES.map(b=>{const L=[],per=[],o=.7,x0=-BW/2-o,x1=BW/2+o,z0=BZ0-BD-o,z1=BZ0+o;
+  for(let k=0;k<MAXF;k++){const n0=L.length,ys=[FY(k)+.5,FY(k)+PH-.2];
+    ys.forEach(y=>{const sd=[[x0,z0,x1,z0],[x1,z0,x1,z1],[x1,z1,x0,z1],[x0,z1,x0,z0]];sd.forEach(([a,b2,c2,d])=>{const n=Math.round(Math.hypot(c2-a,d-b2)/1.9);for(let j=0;j<n;j++){const u=j/n;L.push([a+(c2-a)*u,y+Math.sin(j*1.3)*.1,b2+(d-b2)*u])}})});
+    [[x0,z0],[x1,z0],[x1,z1],[x0,z1]].forEach(([cx,cz])=>{for(let y=FY(k)+1.9;y<FY(k)+PH-.5;y+=1.9)L.push([cx,y,cz])});
+    per.push(L.length-n0)}
+  const bl=mkBulbs(L,1.7);bl.per=per;bl.pts.visible=false;b.G.add(bl.pts);bl.b=b;return bl});
+
 const RBS={t:0};
 function drawRbSign(now){
   if(now-RBS.t<66)return;RBS.t=now;
@@ -4141,10 +4158,10 @@ function drawRbSign(now){
 function updRB(dt,now){
   const on=rbActive();RBK.k+=((on?1:0)-RBK.k)*Math.min(1,dt*1.4);if(Math.abs(RBK.k-(on?1:0))<.004)RBK.k=on?1:0;
   const k=RBK.k;
-  if(k<=0){if(RBK.was){RBK.was=false;rbGround.visible=false;rbG.visible=false;rbSky.visible=false;RB_TW.g.visible=false;RB_SIGN.pts.visible=false;RB_SIGN.halo.material.opacity=0;signG.scale.setScalar(1);legLast=-1;
+  if(k<=0){if(RBK.was){RBK.was=false;rbGround.visible=false;rbGlow.visible=false;RB_BASES.forEach(q=>q.pts.visible=false);rbG.visible=false;rbSky.visible=false;RB_TW.g.visible=false;RB_SIGN.pts.visible=false;RB_SIGN.halo.material.opacity=0;signG.scale.setScalar(1);legLast=-1;
     rbCl.forEach(c=>{c.sp.material=c.m0});RFW.forEach(f=>{f.st=0;f.pts.visible=false;f.rk.visible=false;f.fl.visible=false})}return}
-  if(!RBK.was){RBK.was=true;rbCl.forEach(c=>{c.sp.material=c.m});RB_SIGN.pts.visible=true;RB_TW.g.visible=true}
-  rbGround.visible=true;rbGround.material.opacity=Math.min(1,k*1.3);rbGTex.offset.set((rbGTex.offset.x+dt*.0012)%1,(rbGTex.offset.y+dt*.0006)%1);rbG.visible=true;rbSky.visible=true;rbSky.material.opacity=k;rbSkyTex.offset.x=(rbSkyTex.offset.x+dt*.006)%1;
+  if(!RBK.was){RBK.was=true;rbCl.forEach(c=>{c.sp.material=c.m});RB_SIGN.pts.visible=true;RB_TW.g.visible=true;RB_BASES.forEach(q=>q.pts.visible=true)}
+  rbGround.visible=true;rbGlow.visible=true;rbGround.material.opacity=Math.min(1,k*1.3);rbGTex.offset.set((rbGTex.offset.x+dt*.0008)%1,(rbGTex.offset.y+dt*.0004)%1);rbGlow.material.opacity=k*(.5+.2*Math.sin(now/700));rbGlTex.offset.set((rbGlTex.offset.x-dt*.004+1)%1,(rbGlTex.offset.y+dt*.003)%1);rbG.visible=true;rbSky.visible=true;rbSky.material.opacity=k;rbSkyTex.offset.x=(rbSkyTex.offset.x+dt*.006)%1;
   /* nubes */
   rbCl.forEach((c,i)=>{c.m.color.setHSL((now/9000+i*.083)%1,.95,.68);c.m.opacity=.95});
   /* volcanes */
@@ -4178,7 +4195,7 @@ function updRB(dt,now){
       if(f.t>=3){f.st=0;f.pts.visible=false;f.fl.visible=false}}
   });
   /* luces */
-  twBulbs(RB_FEST,now,1);twBulbs(RB_TW,now,1);twBulbs(RB_SIGN,now,1);
+  RB_BASES.forEach(q=>{const nf=Math.max(1,Math.min(MAXF,q.b.nf|0));let c=0;for(let f=0;f<nf;f++)c+=q.per[f];q.pts.geometry.setDrawRange(0,c);twBulbs(q,now,1,c)});twBulbs(RB_FEST,now,1);twBulbs(RB_TW,now,1);twBulbs(RB_SIGN,now,1);
   RB_SIGN.halo.material.opacity=(.55+.25*Math.sin(now/220))*k;RB_SIGN.halo.material.color.setHSL((now/1800)%1,1,.6);
   signG.scale.setScalar(1+.35*k);
 }
