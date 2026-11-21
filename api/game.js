@@ -12,12 +12,14 @@ const INC = [.25, 1.25, 3, 6, 12.5, 2.5, 10, 1375, 5500, 10000, 40000, 175, 700,
 const PRICE = [0, 0, 0, 0, 0, 50, 200, 60000, 240000, 600000, 2400000, 6000, 24000, 500, 2000, 15000000, 100000000];
 /* evento en vivo: Papu Golden Time (el admin lo inicia; los jugadores lo reciben al sincronizar) */
 const EV_MS = 120000;
+/* Super Papu Rainbow Time: 5 minutos, solo lo inicia el admin */
+const RB_MS = 300000;
 /* estado de eventos para los jugadores: Golden Time, Papus invocados por el admin y la hora del servidor */
 async function evInfo(keepNx) {
-  const [gt, sm, cl, rm, am0, pg0, pgnx] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed', 'rm', 'ev:msg', 'ev:pg', 'pg:nx')) || [];   /* una sola consulta trae todo (la Purga también) */
+  const [gt, sm, cl, rm, am0, pg0, pgnx, rb0] = (await db('MGET', 'ev:gt', 'ev:sm', 'srv:closed', 'rm', 'ev:msg', 'ev:pg', 'pg:nx', 'ev:rb')) || [];   /* una sola consulta trae todo (la Purga también) */
   const now = Date.now(), left = gt ? +gt - now : 0;
   let list = []; try { list = sm ? JSON.parse(sm) : []; } catch (e) { list = []; }
-  const out = { ev: left > 0 ? left : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl, rc: rm || null, am: amView(am0, now), pg: pgView(pg0, now) };
+  const out = { ev: left > 0 ? left : 0, rb: rb0 && +rb0 > now ? +rb0 - now : 0, sm: list.filter(m => now - m.ts < 30000).map(m => ({ id: m.id, lvl: m.lvl, age: now - m.ts })), now, closed: !!cl, rc: rm || null, am: amView(am0, now), pg: pgView(pg0, now) };
   if (keepNx) out._nx = +pgnx || 0;
   return out;   /* rc = código de la sala activa (lo decide el servidor) */
 }
@@ -25,7 +27,7 @@ async function evInfo(keepNx) {
 const PG_SECS = 120, PG_MIN_PLAYERS = 4, PG_ROLL_MS = 300000, PG_P = 0.03, PG_COOLDOWN_MS = 600000;
 function pgView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 ? { id: m.id, secs: m.secs, age } : null; } catch (e) { return null; } }
 /* durante un evento (Golden Time o Purga) nadie nuevo puede entrar: solo siguen los que ya estaban jugando. El admin siempre puede */
-async function evBusy() { const [gt, pg] = (await db('MGET', 'ev:gt', 'ev:pg')) || [], now = Date.now(); return (!!gt && +gt > now) || !!pgView(pg, now); }
+async function evBusy() { const [gt, pg, rb] = (await db('MGET', 'ev:gt', 'ev:pg', 'ev:rb')) || [], now = Date.now(); return (!!gt && +gt > now) || (!!rb && +rb > now) || !!pgView(pg, now); }
 const EV_BLOCK = 'No puedes entrar durante un evento. Inténtalo más tarde.';
 async function pgStart(now) {
   const m = { id: crypto.randomBytes(4).toString('hex'), ts: now, secs: PG_SECS };
@@ -34,6 +36,7 @@ async function pgStart(now) {
 }
 /* mensaje del admin en pantalla: vive solo mientras dura (+4 s de margen); viaja en la misma consulta de siempre, sin comandos extra */
 function amView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 + 4000 ? { id: m.id, text: m.text, secs: m.secs, age } : null; } catch (e) { return null; } }
+async function rbLeft() { const v = await db('GET', 'ev:rb'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 async function evLeft() { const v = await db('GET', 'ev:gt'); const left = v ? +v - Date.now() : 0; return left > 0 ? left : 0; }
 /* decoracion de bases: 1-10 colores de estructura (de barato a caro), 11 = efecto Papu Fuego */
 const DPRICE = [0, 470000, 6800000, 410000000, 1200000000, 2900000000, 9400000000, 4600000000000, 49000000000, 120000000000, 500000000000, 80000000000000];
@@ -494,7 +497,7 @@ const actions = {
     }
     /* en línea arriba por orden de entrada (el que entró primero, primero); fuera de línea abajo: el que entró más recientemente arriba y el que lleva más tiempo sin entrar hasta abajo */
     out.sort((a, b) => (b.online - a.online) || (a.online ? (a.lin - b.lin) : (b.seen - a.seen)));
-    return { users: out, now: Date.now(), ev: await evLeft(), closed: await isClosed() };
+    return { users: out, now: Date.now(), ev: await evLeft(), rb: await rbLeft(), closed: await isClosed() };
   },
   async aset(b) {
     adminFromTok(b.tok);
@@ -531,6 +534,10 @@ const actions = {
   },
   async aev(b) {
     adminFromTok(b.tok);
+    if (b.k === 'rb') {   /* Super Papu Rainbow Time */
+      if (b.on) await db('SET', 'ev:rb', String(Date.now() + RB_MS), 'EX', 330); else await db('DEL', 'ev:rb');
+      return { rb: await rbLeft() };
+    }
     if (b.on) await db('SET', 'ev:gt', String(Date.now() + EV_MS), 'EX', 180); else await db('DEL', 'ev:gt');
     return { ev: await evLeft() };
   },
