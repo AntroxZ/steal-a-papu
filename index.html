@@ -18,17 +18,15 @@ canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block}
 @keyframes gtp{50%{box-shadow:0 4px 0 #35200e,0 0 34px rgba(255,230,90,1)}}
 #gtFlash{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;z-index:4}
 /* ===== SUPER PAPU RAINBOW TIME ===== */
-#rb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 92px);left:50%;transform:translateX(-50%);display:none;padding:8px 26px;border-radius:999px;border:3px solid #fff;background:linear-gradient(90deg,#ff2d2d,#ff9a00,#ffe600,#2bff4a,#00d5ff,#5a3dff,#ff2dd4,#ff2d2d);background-size:300% 100%;animation:rbBg 3s linear infinite,gtp 1s ease-in-out infinite;box-shadow:0 0 22px rgba(255,255,255,.9),0 0 48px rgba(255,70,220,.9);font:900 1.1rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff;text-shadow:0 0 6px #000,0 2px 0 #000,0 0 3px #000;letter-spacing:.04em;white-space:nowrap;pointer-events:none;z-index:6}
+#rb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 92px);left:50%;transform:translateX(-50%);display:none;padding:8px 26px;border-radius:999px;border:3px solid #fff;background:linear-gradient(90deg,#ff2d2d,#ff9a00,#ffe600,#2bff4a,#00d5ff,#5a3dff,#ff2dd4,#ff2d2d);animation:gtp 1s ease-in-out infinite;box-shadow:0 0 14px rgba(255,255,255,.9),0 0 26px rgba(255,70,220,.8);font:900 1.1rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff;text-shadow:0 0 6px #000,0 2px 0 #000,0 0 3px #000;letter-spacing:.04em;white-space:nowrap;pointer-events:none;z-index:6}
 @keyframes rbBg{to{background-position:300% 0}}
 body.mob #rb{top:calc(env(safe-area-inset-top,0px) + 56px);padding:2px 10px;border-width:2px;font-size:.58rem;letter-spacing:0}
 body.hudnew #rb{font-family:var(--fd);font-weight:400;border:5px solid #fff}
 body.hudnew.mob #rb{border-width:3px}
-#rbEdge{position:fixed;inset:0;pointer-events:none;z-index:5;display:none;animation:rbHue 4s linear infinite}
-#rbEdge::before{content:"";position:absolute;inset:0;background:conic-gradient(from 0deg at 50% 50%,#ff1f1f,#ff9a00,#ffe600,#2bff4a,#00e5ff,#4d4dff,#ff2dd4,#ff1f1f);-webkit-mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0) 52%,rgba(0,0,0,.55) 80%,#000 100%);mask-image:radial-gradient(ellipse at center,rgba(0,0,0,0) 52%,rgba(0,0,0,.55) 80%,#000 100%);opacity:.8}
-@keyframes rbHue{to{filter:hue-rotate(360deg)}}
-#rbTitle{position:fixed;left:0;right:0;top:26%;text-align:center;pointer-events:none;z-index:7;display:none;font:900 clamp(1.6rem,7vw,5.2rem) "Trebuchet MS","Segoe UI",Verdana,sans-serif;letter-spacing:.04em;line-height:1.05;color:transparent;background:linear-gradient(90deg,#ff2d2d,#ff9a00,#ffe600,#2bff4a,#00d5ff,#5a3dff,#ff2dd4,#ff2d2d);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:2px #fff;filter:drop-shadow(0 0 14px #fff) drop-shadow(0 0 34px #ff2dd4)}
+#rbEdge{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:5;display:none}body.rbl2 #rbEdge{display:none!important}
+#rbTitle{position:fixed;left:0;right:0;top:26%;text-align:center;pointer-events:none;z-index:7;display:none;font:900 clamp(1.6rem,7vw,5.2rem) "Trebuchet MS","Segoe UI",Verdana,sans-serif;letter-spacing:.04em;line-height:1.05;color:transparent;background:linear-gradient(90deg,#ff2d2d,#ff9a00,#ffe600,#2bff4a,#00d5ff,#5a3dff,#ff2dd4,#ff2d2d);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:3px #fff}
 #rbTitle small{display:block;font-size:.34em;letter-spacing:.25em;-webkit-text-stroke:1px #fff;margin-top:.3em}
-#rbTitle.go{display:block;animation:rbBg 1.4s linear infinite,rbIntro 5.2s ease-out forwards}
+#rbTitle.go{display:block;animation:rbIntro 5.2s ease-out forwards}
 @keyframes rbIntro{0%{transform:scale(.2);opacity:0}10%{transform:scale(1.15);opacity:1}18%{transform:scale(1)}80%{opacity:1}100%{transform:scale(1.35);opacity:0}}
 
 #toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);left:0;right:0;text-align:center;font-size:.9rem;color:#fff;text-shadow:0 0 6px #000,0 0 10px var(--cy);pointer-events:none;opacity:0;transition:opacity .3s}
@@ -865,7 +863,7 @@ body.hudnew #mis .misBar{border-color:#150a45}
 </div>
 <div id="toast"></div>
 <div id="gtFlash"></div>
-<div id="gt"></div><div id="rb"></div><div id="rbEdge"></div><div id="rbTitle">SUPER PAPU<br>RAINBOW TIME<small>EL EVENTO MÁS GRANDE</small></div>
+<div id="gt"></div><div id="rb"></div><canvas id="rbEdge" width="192" height="108"></canvas><div id="rbTitle">SUPER PAPU<br>RAINBOW TIME<small>EL EVENTO MÁS GRANDE</small></div>
 <div id="stl"><span id="stlLbl">Robando…</span><div class="stbar"><i id="stlFill"></i></div></div>
 <div id="hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mover · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> girar la cámara · <kbd>Q</kbd> soltar el Papu · <kbd>/</kbd> chat · <kbd>E</kbd> agarrar / colocar (mantén <kbd>E</kbd> 7 s en una base ajena = robar) · <kbd>F</kbd> mover un Papu de tu base · <kbd>H</kbd> eliminarlo · <kbd>Shift</kbd> correr rápido (no con un Papu en la mano) · <kbd>B</kbd> rueda de bailes (moverte la cierra y cancela el baile) · <kbd>T</kbd> cerca de alguien que baila = sincronizar su baile · <kbd>M</kbd> música · <kbd>Espacio</kbd> saltar · <kbd>Espacio</kbd> en el aire = sentón · <kbd>Clic derecho</kbd> + arrastrar para mover la cámara · <kbd>R</kbd> cambiar de objeto · <kbd>Rueda</kbd> zoom (muy cerca = primera persona)</div>
 <div id="prompt"></div>
@@ -2787,6 +2785,7 @@ const _dc=new THREE.Color();
 function doorAnim(now){
   if(!DOOR.G)return;
   const px=player.position.x,pz=player.position.z;if(Math.hypot(px-DOOR.AX,pz-BELT_Z)>170)return;   /* lejos no se anima */
+  if(now-(DOOR.nt||0)<(RBQ.lv>=2?250:90))return;DOOR.nt=now;
   const T=DOOR.tubes,ca=T.attr,pc=ca.count;
   const per=T.rs,tot=T.segs+1;
   for(let i=0;i<pc;i++){const seg=(i/per)|0;_dc.setHSL(((seg/tot)*1.5+now/2600)%1,1,.58);ca.array[i*3]=_dc.r;ca.array[i*3+1]=_dc.g;ca.array[i*3+2]=_dc.b}
@@ -3358,7 +3357,7 @@ function hostMsg(conn,m){
   if(m.t==='hello'){
     /* ADMIN: se verifica la prueba que manda (si la trae) antes de decidir si hay lugar; el lugar 8 de la sala es solo para el admin */
     if(m.pr&&!m._v){
-      api('hchk',{pr:m.pr}).then(r=>{m._v=1;if(r&&r.ok){m._adm=1;if(m.aid)(NET.admA||(NET.admA=new Set())).add(m.aid)}else delete m.pr;hostMsg(conn,m)}).catch(()=>{m._v=1;delete m.pr;hostMsg(conn,m)});
+      api('hchk',{pr:m.pr}).catch(()=>new Promise(q=>setTimeout(q,700)).then(()=>api('hchk',{pr:m.pr}))).then(r=>{m._v=1;if(r&&r.ok){m._adm=1;if(m.aid)(NET.admA||(NET.admA=new Set())).add(m.aid)}else delete m.pr;hostMsg(conn,m)}).catch(()=>{m._v=1;delete m.pr;hostMsg(conn,m)});
       return}
     const ex=(m.rc!=null&&m.rc!==NET.pid)?NET.players[m.rc]:null;
     if(m.aid)for(const id in NET.players){const o=NET.players[id];if(o.aid===m.aid&&+id!==m.rc){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(+id,false,true)}}   /* reconexion: se quita el "fantasma" de la conexion anterior */
@@ -3613,17 +3612,17 @@ setInterval(()=>{
    for(const id in NET.players){const p=NET.players[id];if(!alive)break;
      const last=NET.host?p.seen:p.sT,gone=last!=null&&now-last>3000&&(NET.host||now-(NET.hseen||0)<4000);
      if(!!p.gone!==gone){p.gone=gone;ch=true;const bb=BASES[p.base],bg=gone&&!pgOwnerOk(p);if(bb){bb.ghost=bg;if(bg)cancelStealOf(bb);bb.slots.forEach(s=>{if(s.item)s.item.visible=!bg})}}   /* sin señal: su base desaparece igual que su personaje */
-     if(!NET.host&&last!=null&&now-last>6500&&now-(NET.hseen||0)<4000)dropPlayer(+id,true)}   /* el anfitrion ya no lo reenvia: se fue */
+     if(!NET.host&&last!=null&&now-last>10000&&now-(NET.hseen||0)<4000)dropPlayer(+id,true)}   /* el anfitrion ya no lo reenvia: se fue */
    if(ch)updRoom()}
   if(NET.host){
     if(pingTog)bcast({t:'ping'});
     for(const id in NET.players){const p=NET.players[id];if(p.seen==null)p.seen=now;const c0=NET.conns[id],pc=c0&&c0.peerConnection,ic=pc&&pc.iceConnectionState;
       if(ic==='disconnected'){if(!p.dcT)p.dcT=now}else p.dcT=0;
-      if(now-p.seen>7500||ic==='failed'||ic==='closed'||(p.dcT&&now-p.dcT>5000)||(c0&&c0.open===false&&now-p.seen>3000)){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
+      if(now-p.seen>14000||ic==='failed'||ic==='closed'||(p.dcT&&now-p.dcT>9000)||(c0&&c0.open===false&&now-p.seen>3000)){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(id)}}
   }else{
     if(pingTog&&NET.hostConn&&NET.hostConn.open)NET.hostConn.send({t:'ping',ts:performance.now()});
     if(NET.hseen==null)NET.hseen=now;
-    if(now-NET.hseen>12000)onHostGone();
+    if(now-NET.hseen>20000)onHostGone();
   }
 },1000);
 function cleanupNet(){try{NET.peer&&NET.peer.destroy()}catch(e){}NET.peer=null;NET.ucon=null;NET.uc={};NET.byPeer={};NET.on=false;NET.host=true;NET.hostConn=null;NET.pid=0;NET.code='';updRoom()}
@@ -4211,15 +4210,15 @@ for(let v=0;v<6;v++){
   VLC.push({g,glow,fo,pos,col,vel,life,at,ca,pts,smoke,ph:Math.random()*6.28})
 }
 /* --- fuegos artificiales GIGANTES --- */
-const RFW=[],RFW_N=240;
+const RFW=[],RFW_N=170;
 function newRFW(){
   const geo=new THREE.BufferGeometry(),pos=new Float32Array(RFW_N*3),col=new Float32Array(RFW_N*3),at=new THREE.BufferAttribute(pos,3),ca=new THREE.BufferAttribute(col,3);geo.setAttribute('position',at);geo.setAttribute('color',ca);
-  const mat=new THREE.PointsMaterial({size:7,vertexColors:true,transparent:true,opacity:0,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending,map:dotTex});
+  const mat=new THREE.PointsMaterial({size:5,vertexColors:true,transparent:true,opacity:0,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending,map:dotTex});
   const pts=new THREE.Points(geo,mat);pts.frustumCulled=false;pts.visible=false;rbG.add(pts);
   const rk=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,color:0xffe0a0,transparent:true,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending}));rk.scale.set(3,6,1);rk.visible=false;rbG.add(rk);
   const fl=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex,color:0xffffff,transparent:true,depthWrite:false,fog:false,toneMapped:false,blending:THREE.AdditiveBlending,opacity:0}));fl.visible=false;rbG.add(fl);
   return{pts,mat,pos,col,at,ca,vel:new Float32Array(RFW_N*3),rk,fl,st:0,t:0,x:0,y:0,z:0,ty:0}}
-for(let i=0;i<9;i++)RFW.push(newRFW());
+for(let i=0;i<6;i++)RFW.push(newRFW());
 let rfwNext=.3;
 /* --- luces: guirnaldas entre las antorchas y bombillos de colores --- */
 function mkBulbs(list,size){const n=list.length,pos=new Float32Array(n*3),col=new Float32Array(n*3);list.forEach((q,i)=>{pos[i*3]=q[0];pos[i*3+1]=q[1];pos[i*3+2]=q[2]});
@@ -4280,6 +4279,22 @@ const RB_BASES=BASES.map(b=>{const L=[],per=[],o=.7,x0=-BW/2-o,x1=BW/2+o,z0=BZ0-
     per.push(L.length-n0)}
   const bl=mkBulbs(L,1.7);bl.per=per;bl.pts.visible=false;b.G.add(bl.pts);bl.b=b;return bl});
 
+/* CALIDAD ADAPTATIVA del evento: si el equipo se atrasa (FPS bajos) se apagan efectos pesados para que no se trabe la conexion */
+let _rbE=0;
+function rbEdgeDraw(now){
+  const c=$('rbEdge');if(!c||c.style.display==='none'||now-_rbE<125)return;_rbE=now;
+  const x=c.getContext('2d'),W=c.width,H=c.height;x.globalCompositeOperation='source-over';x.clearRect(0,0,W,H);
+  let g;const cols=['#ff1f1f','#ff9a00','#ffe600','#2bff4a','#00e5ff','#4d4dff','#ff2dd4','#ff1f1f'];
+  if(x.createConicGradient){g=x.createConicGradient((now/5000)%6.2832,W/2,H/2);cols.forEach((q,i)=>g.addColorStop(i/(cols.length-1),q))}
+  else{g=x.createLinearGradient(0,0,W,H);cols.forEach((q,i)=>g.addColorStop(i/(cols.length-1),q))}
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.globalCompositeOperation='destination-in';const m=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.hypot(W,H)*.52);
+  m.addColorStop(0,'rgba(0,0,0,0)');m.addColorStop(.55,'rgba(0,0,0,.5)');m.addColorStop(1,'rgba(0,0,0,.95)');x.fillStyle=m;x.fillRect(0,0,W,H)}
+const RBQ={lv:-1,fw:6,sz:1,fl:1,vp:90,sm:5,bt:1,fr:0,chk:0,okT:0};
+function setRBQ(lv){
+  if(lv===RBQ.lv)return;RBQ.lv=lv;
+  const T=[{fw:6,sz:1,fl:1,vp:90,sm:5,bt:1,gl:1},{fw:3,sz:.8,fl:.5,vp:40,sm:3,bt:3,gl:0},{fw:1,sz:.65,fl:.25,vp:0,sm:0,bt:6,gl:0}][lv];
+  Object.assign(RBQ,T);rbGlow.visible=!!T.gl&&RBK.k>0;document.body.classList.toggle('rbl2',lv>=2)}
 const RBS={t:0};
 function drawRbSign(now){
   if(now-RBS.t<66)return;RBS.t=now;
@@ -4301,7 +4316,9 @@ function updRB(dt,now){
   if(k<=0){if(RBK.was){RBK.was=false;rbGround.visible=false;rbGlow.visible=false;RB_BASES.forEach(q=>q.pts.visible=false);rbG.visible=false;rbSky.visible=false;RB_TW.g.visible=false;RB_SIGN.pts.visible=false;RB_SIGN.halo.material.opacity=0;signG.scale.setScalar(1);legLast=-1;
     rbCl.forEach(c=>{c.sp.material=c.m0});RFW.forEach(f=>{f.st=0;f.pts.visible=false;f.rk.visible=false;f.fl.visible=false})}return}
   if(!RBK.was){RBK.was=true;rbCl.forEach(c=>{c.sp.material=c.m});RB_SIGN.pts.visible=true;RB_TW.g.visible=true;RB_BASES.forEach(q=>q.pts.visible=true)}
-  rbGround.visible=true;rbGlow.visible=true;rbGround.material.opacity=Math.min(1,k*1.3);rbGTex.offset.set((rbGTex.offset.x+dt*.0008)%1,(rbGTex.offset.y+dt*.0004)%1);rbGlow.material.opacity=k*(.5+.2*Math.sin(now/700));rbGlTex.offset.set((rbGlTex.offset.x-dt*.004+1)%1,(rbGlTex.offset.y+dt*.003)%1);rbG.visible=true;rbSky.visible=true;rbSky.material.opacity=k;rbSkyTex.offset.x=(rbSkyTex.offset.x+dt*.006)%1;
+  if(RBQ.lv<0)setRBQ(QPERF?1:0);
+  { const nw=performance.now();if(nw-RBQ.chk>2000){RBQ.chk=nw;if(ftEma>24&&RBQ.lv<2){setRBQ(RBQ.lv+1);RBQ.okT=nw}else if(ftEma<15.5&&RBQ.lv>0&&nw-RBQ.okT>20000){setRBQ(RBQ.lv-1);RBQ.okT=nw}}}
+  rbEdgeDraw(now);rbGround.visible=RBQ.lv<2;rbGlow.visible=RBQ.lv===0;rbGround.material.opacity=Math.min(1,k*1.3);rbGTex.offset.set((rbGTex.offset.x+dt*.0008)%1,(rbGTex.offset.y+dt*.0004)%1);rbGlow.material.opacity=k*(.45+.15*Math.sin(now/700));rbGlTex.offset.set((rbGlTex.offset.x-dt*.004+1)%1,(rbGlTex.offset.y+dt*.003)%1);rbG.visible=true;rbSky.visible=true;rbSky.material.opacity=k;rbSkyTex.offset.x=(rbSkyTex.offset.x+dt*.006)%1;
   /* nubes */
   rbCl.forEach((c,i)=>{c.m.color.setHSL((now/9000+i*.083)%1,.95,.68);c.m.opacity=.95});
   /* volcanes */
@@ -4309,20 +4326,20 @@ function updRB(dt,now){
   VLC.forEach((v,vi)=>{
     v.g.scale.set(1,Math.max(.02,k),1);
     const pulse=.55+.45*Math.sin(now/900+v.ph),burst=Math.sin(now/3100+v.ph*2)>.55?1.8:1;
-    v.glow.material.opacity=(.55+.35*pulse)*k;v.glow.scale.setScalar(62+24*pulse);v.fo.scale.set(1,.55+.6*pulse*burst,1);v.fo.material.opacity=.38+.25*pulse;
-    for(let i=0;i<VLC_N;i++){const q=i*3;
+    v.glow.material.opacity=(.5+.3*pulse)*k;v.glow.scale.setScalar(44+16*pulse);v.fo.scale.set(1,.55+.6*pulse*burst,1);v.fo.material.opacity=.38+.25*pulse;
+    for(let i=0;i<RBQ.vp;i++){const q=i*3;
       v.life[i]-=dt;
       if(v.life[i]<=0){if(Math.random()<dt*(14+22*pulse)*burst*2.2||v.pos[q+1]<-900&&Math.random()<.15){const a=Math.random()*6.283,sp=rbRnd(8,20)*(burst>1?1.35:1);v.pos[q]=Math.cos(a)*4;v.pos[q+1]=VH+3;v.pos[q+2]=Math.sin(a)*4;v.vel[q]=Math.cos(a)*sp*.45;v.vel[q+1]=rbRnd(34,70)*(burst>1?1.25:1);v.vel[q+2]=Math.sin(a)*sp*.45;v.life[i]=rbRnd(2.4,4.4);const hh=rbRnd(.0,.11);tmpC.setHSL(hh,1,.55);v.col[q]=tmpC.r;v.col[q+1]=tmpC.g;v.col[q+2]=tmpC.b}else v.pos[q+1]=-999}
       else{v.vel[q+1]-=30*dt;v.pos[q]+=v.vel[q]*dt;v.pos[q+1]+=v.vel[q+1]*dt;v.pos[q+2]+=v.vel[q+2]*dt;if(v.pos[q+1]<2){v.life[i]=0;v.pos[q+1]=-999}}
     }
     v.at.needsUpdate=true;v.ca.needsUpdate=true;
-    v.smoke.forEach(sm=>{sm.userData.t+=dt*.11;if(sm.userData.t>1)sm.userData.t-=1;const u=sm.userData.t;sm.position.set(Math.sin(u*5+sm.id)*10+u*26,VH+8+u*95,Math.cos(u*4+sm.id)*8);const w=26+u*70;sm.scale.set(w,w*.7,1);sm.material.opacity=.55*Math.sin(Math.PI*u)*k})
+    v.smoke.forEach((sm,si)=>{sm.visible=si<RBQ.sm;if(si>=RBQ.sm)return;sm.userData.t+=dt*.11;if(sm.userData.t>1)sm.userData.t-=1;const u=sm.userData.t;sm.position.set(Math.sin(u*5+sm.id)*10+u*26,VH+8+u*95,Math.cos(u*4+sm.id)*8);const w=22+u*46;sm.scale.set(w,w*.7,1);sm.material.opacity=.55*Math.sin(Math.PI*u)*k})
   });
   /* fuegos artificiales gigantes */
-  rfwNext-=dt;if(rfwNext<=0&&on){const f=RFW.find(q=>q.st===0);if(f){f.st=1;f.t=0;f.x=px+rbRnd(-300,300);f.z=pz+rbRnd(-260,160);f.ty=rbRnd(70,125);f.rk.visible=true;rfwNext=rbRnd(.25,.6)}else rfwNext=.2}
+  rfwNext-=dt;if(rfwNext<=0&&on){const f=RFW.slice(0,RBQ.fw).find(q=>q.st===0);if(f){f.st=1;f.t=0;f.x=px+rbRnd(-300,300);f.z=pz+rbRnd(-260,160);f.ty=rbRnd(70,125);f.rk.visible=true;rfwNext=rbRnd(.25,.6)}else rfwNext=.2}
   RFW.forEach(f=>{
     if(f.st===1){f.t+=dt;const u=Math.min(1,f.t/1.1),e=1-(1-u)*(1-u);f.y=1+(f.ty-1)*e;f.rk.position.set(f.x,f.y,f.z);
-      if(u>=1){f.st=2;f.t=0;f.rk.visible=false;f.mat.opacity=1;f.mat.size=7;f.pts.visible=true;f.fl.visible=true;f.fl.position.set(f.x,f.ty,f.z);
+      if(u>=1){f.st=2;f.t=0;f.rk.visible=false;f.mat.opacity=1;f.mat.size=5*RBQ.sz;f.pts.visible=true;f.fl.visible=true;f.fl.position.set(f.x,f.ty,f.z);
         const h0=Math.random(),rb=Math.random()<.5,ring=Math.random()<.3;
         for(let i=0;i<RFW_N;i++){const uu=ring?0:Math.random()*2-1,th=ring?i/RFW_N*6.283:Math.random()*6.283,r=Math.sqrt(1-uu*uu),sp=ring?34:rbRnd(18,46);
           f.pos[i*3]=f.x;f.pos[i*3+1]=f.ty;f.pos[i*3+2]=f.z;f.vel[i*3]=r*Math.cos(th)*sp;f.vel[i*3+1]=uu*sp+(ring?r*Math.sin(th)*sp*.0:0);f.vel[i*3+2]=r*Math.sin(th)*sp;
@@ -4330,12 +4347,12 @@ function updRB(dt,now){
         f.ca.needsUpdate=true;PARTY.fh=h0;PARTY.fa=Math.max(PARTY.fa,.9)}}
     else if(f.st===2){f.t+=dt;
       for(let i=0;i<RFW_N;i++){const j=i*3;f.pos[j]+=f.vel[j]*dt;f.pos[j+1]+=f.vel[j+1]*dt;f.pos[j+2]+=f.vel[j+2]*dt;const d=1-.9*dt;f.vel[j]*=d;f.vel[j+1]=f.vel[j+1]*d-9*dt;f.vel[j+2]*=d}
-      f.at.needsUpdate=true;const u=f.t/3;f.mat.opacity=Math.max(0,1-u*u);f.mat.size=7*(1-.35*u);
-      f.fl.material.opacity=Math.max(0,.9-f.t*2.2);f.fl.scale.setScalar(40+f.t*60);
+      f.at.needsUpdate=true;const u=f.t/3;f.mat.opacity=Math.max(0,1-u*u);f.mat.size=5*RBQ.sz*(1-.35*u);
+      f.fl.material.opacity=Math.max(0,.9-f.t*2.2)*RBQ.fl;f.fl.scale.setScalar(30+f.t*40);
       if(f.t>=3){f.st=0;f.pts.visible=false;f.fl.visible=false}}
   });
   /* luces */
-  RB_BASES.forEach(q=>{const nf=Math.max(1,Math.min(MAXF,q.b.nf|0));let c=0;for(let f=0;f<nf;f++)c+=q.per[f];q.pts.geometry.setDrawRange(0,c);twBulbs(q,now,1,c)});twBulbs(RB_FEST,now,1);twBulbs(RB_TW,now,1);twBulbs(RB_SIGN,now,1);
+  if((RBQ.fr++)%RBQ.bt===0){RB_BASES.forEach(q=>{const nf=Math.max(1,Math.min(MAXF,q.b.nf|0));let c=0;for(let f=0;f<nf;f++)c+=q.per[f];q.pts.geometry.setDrawRange(0,c);twBulbs(q,now,1,c)});twBulbs(RB_FEST,now,1);twBulbs(RB_TW,now,1);twBulbs(RB_SIGN,now,1)}
   RB_SIGN.halo.material.opacity=(.55+.25*Math.sin(now/220))*k;RB_SIGN.halo.material.color.setHSL((now/1800)%1,1,.6);
   signG.scale.setScalar(1+.35*k);
 }
