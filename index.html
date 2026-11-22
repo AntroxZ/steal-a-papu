@@ -451,6 +451,7 @@ body.mob #reb{padding:6px}
 /* ===================== HUD NUEVO · "Papu Pop" (se activa con body.hudnew; el HUD OG no cambia) ===================== */
 .hudopt .optt{font-weight:800;font-size:1.05rem;color:var(--tx);text-shadow:var(--ol)}
 .hudopt .row button.hudb{margin:0}
+.qopt{display:none}body.mob .qopt{display:flex}
 .hudopt .row button.hudb.on{background:linear-gradient(180deg,#7fbf5a,#5f9f3f 55%,#4a8530)!important;cursor:default}
 .rwrap,.awn,.hiN,.coin,.rib,.panelglow{display:none}
 body.hudnew{--page:#130b33;--ink-0:#150a45;--ink-1:#2a1380;--ink-2:#5a34e0;--gold:#ffc61a;--gold-hi:#ffe66b;--gold-ink:#3a2200;
@@ -942,6 +943,7 @@ body.hudnew #mis .misBar{border-color:#150a45}
   <div class="opt"><button id="optClean" class="big">Limpiar base</button><p>Quita todos los Papus de tu base. Tu dinero NO se reinicia.</p></div>
   <div class="opt"><button id="optName" class="big">Cambiar nombre</button><p>Cambia el nombre que aparece sobre tu personaje. Puedes hacerlo cuando quieras.</p></div>
   <div class="opt hudopt"><div class="optt">Pestañas</div><div class="row"><button id="hudOG" class="hudb">HUD OG</button><button id="hudNew" class="hudb">HUD NUEVO</button></div><p>Elige el diseño del HUD y de las pestañas. Solo cambia el aspecto: el juego funciona igual. Se guarda en este dispositivo.</p></div>
+  <div class="opt hudopt qopt"><div class="optt">Rendimiento</div><div class="row"><button id="qPerf" class="hudb">RENDIMIENTO</button><button id="qNorm" class="hudb">CALIDAD NORMAL</button></div><p>Calidad normal: la misma que en computadora, la mejor. Rendimiento: baja la resolución para que el juego corra suave en teléfonos que no lo aguantan. Se guarda en este dispositivo.</p></div>
 </div></div>
 <div id="afk"><div class="afkb"><b>¿Sigues ahí?</b><span id="afkT"></span></div></div>
 <div id="conf"><div class="sbox sm">
@@ -1089,13 +1091,18 @@ const FXL=[],LABN=[5,7,9,11,13];NAMES.forEach((_,l)=>{if(isFx(l))FXL.push(l);if(
 const SPAWN=3,BELT_V=3.2,MAXB=50,BELT_Z=19,BELT_L=170;
 const $=id=>document.getElementById(id);
 const cv=$('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:devicePixelRatio<1.5,powerPreference:'high-performance'});R.toneMapping=THREE.LinearToneMapping;R.toneMappingExposure=1;
-const COARSE=!!(matchMedia&&matchMedia('(pointer:coarse)').matches),PRMAX=COARSE?Math.min(devicePixelRatio,1.75):Math.max(1.5,Math.min(devicePixelRatio,2));
+const COARSE=!!(matchMedia&&matchMedia('(pointer:coarse)').matches);
+/* CALIDAD: por defecto "normal" (la misma de PC, la mejor) tambien en celular; "rendimiento" (resolucion mas baja) solo si el jugador la elige en Ajustes (solo version movil) */
+const savedQPerf=()=>{try{return localStorage.getItem('papuQ')==='p'}catch(e){return false}};
+let QPERF=COARSE&&savedQPerf(),PRMAX=QPERF?Math.min(devicePixelRatio,1.75):Math.max(1.5,Math.min(devicePixelRatio,2));
 /* RESOLUCION DINAMICA: empieza en 1 y sube sola mientras se mantengan 60 FPS; si el equipo se atrasa (portatil sin cargador, celular caliente) baja de inmediato y recuerda hasta donde llegó */
-const PRMIN=COARSE?.75:.9;let PR=Math.min(PRMAX,COARSE?.9:1.25),PRLIM=PRMAX,FPS=60,fpsN=0,fpsT=performance.now(),ftEma=16.7,lastPf=0,drsT=performance.now(),okT=0,probeT=0,limT=performance.now();R.setPixelRatio(PR);
+const qMin=()=>COARSE?(QPERF?.75:1):.9,qStart=()=>QPERF?Math.min(PRMAX,.9):Math.min(PRMAX,COARSE?1.5:1.25);let PRMIN=qMin(),PR=qStart(),PRLIM=PRMAX,FPS=60,fpsN=0,fpsT=performance.now(),ftEma=16.7,lastPf=0,drsT=performance.now(),okT=0,probeT=0,limT=performance.now();R.setPixelRatio(PR);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xbfe3ff);scene.fog=new THREE.Fog(0xbfe3ff,150,450);
 const cam=new THREE.PerspectiveCamera(55,1,.1,1200);
 function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
+function applyQuality(perf){
+  QPERF=!!perf;PRMAX=QPERF?Math.min(devicePixelRatio,1.75):Math.max(1.5,Math.min(devicePixelRatio,2));PRMIN=qMin();PRLIM=PRMAX;PR=qStart();okT=0;drsT=performance.now();R.setPixelRatio(PR);resize()}
 function perfTick(now){
   fpsN++;if(lastPf){const ft=Math.min(now-lastPf,40);ftEma=ftEma*.88+ft*.12}lastPf=now;
   if(now-fpsT>=2000){FPS=Math.round(fpsN*1000/(now-fpsT));fpsN=0;fpsT=now}
@@ -4772,7 +4779,7 @@ const joy={on:false,x:0,y:0,m:0,id:null,cx:0,cy:0},CT=new Map(),JR=52;
 function mobTxt(s){return String(s).replace(/presiona E en otro lugar/i,'toca Acción en otro lugar').replace(/Presiona H otra vez/i,'Toca Quitar otra vez').replace(/Presiona 1/i,'Toca el bate').replace(/\(M para activar\)/,'').replace(/Mant[eé]n E\b/g,'Mantén Acción')}
 function setPlatform(m){
   try{sessionStorage.setItem('papu_plat',m?'m':'p')}catch(e){}
-  MOB=!!m;document.body.classList.toggle('mob',MOB);if(MOB)$('chatIn').placeholder='Toca aquí para escribir…';document.documentElement.classList.toggle('mob',MOB);$('plat').style.display='none';
+  MOB=!!m;document.body.classList.toggle('mob',MOB);applyQuality(MOB&&savedQPerf());if(window.__paintQ)window.__paintQ();if(MOB)$('chatIn').placeholder='Toca aquí para escribir…';document.documentElement.classList.toggle('mob',MOB);$('plat').style.display='none';
   if(MOB){try{const d=document.documentElement,r=(d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d);if(r&&r.catch)r.catch(()=>{})}catch(e){}
     try{const o=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(o&&o.catch)o.catch(()=>{})}catch(e){}}
   if(MOB){const vm=document.querySelector('meta[name=viewport]');if(vm)vm.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover')}
@@ -4888,6 +4895,9 @@ Promise.all(SRC.map(u=>new Promise(res=>{const i=new Image();i.onload=()=>res(i)
   setHud(cur,false);
   const o=document.getElementById('hudOG'),w=document.getElementById('hudNew');
   if(o)o.onclick=()=>setHud(0,true);if(w)w.onclick=()=>setHud(1,true);
+  function paintQ(){const a=document.getElementById('qPerf'),b=document.getElementById('qNorm');if(a)a.classList.toggle('on',QPERF);if(b)b.classList.toggle('on',!QPERF)}
+  function setQ(perf){try{localStorage.setItem('papuQ',perf?'p':'n')}catch(e){}applyQuality(perf);paintQ()}
+  window.__paintQ=paintQ;const qa=document.getElementById('qPerf'),qb=document.getElementById('qNorm');if(qa)qa.onclick=()=>setQ(true);if(qb)qb.onclick=()=>setQ(false);paintQ();
 })();
 </script>
 <div id="pgScreen"></div><div id="edgeRed"></div>
