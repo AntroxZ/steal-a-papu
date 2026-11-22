@@ -3275,25 +3275,31 @@ function snapPlayers(){
   return l;
 }
 /* anfitrion */
+const MAX_NORMAL=7;   /* jugadores normales por sala (el 8.º lugar es del admin) */
 function hostMsg(conn,m){
   const pid=conn._pid;
   if(m.t==='hello'){
+    /* ADMIN: se verifica la prueba que manda (si la trae) antes de decidir si hay lugar; el lugar 8 de la sala es solo para el admin */
+    if(m.pr&&!m._v){
+      api('hchk',{pr:m.pr}).then(r=>{m._v=1;if(r&&r.ok){m._adm=1;if(m.aid)(NET.admA||(NET.admA=new Set())).add(m.aid)}else delete m.pr;hostMsg(conn,m)}).catch(()=>{m._v=1;delete m.pr;hostMsg(conn,m)});
+      return}
     const ex=(m.rc!=null&&m.rc!==NET.pid)?NET.players[m.rc]:null;
     if(m.aid)for(const id in NET.players){const o=NET.players[id];if(o.aid===m.aid&&+id!==m.rc){const c=NET.conns[id];try{c&&c.close()}catch(e){}dropPlayer(+id,false,true)}}   /* reconexion: se quita el "fantasma" de la conexion anterior */
     let np,base;
     if(ex&&!(NET.conns[m.rc]&&NET.conns[m.rc].open)){np=m.rc;base=ex.base}   /* un jugador que vuelve tras un cambio de anfitrión conserva su base */
     else{
+      /* CAPACIDAD: 8 en total, pero los jugadores normales solo pueden ser 7 (el 8.º lugar queda reservado para el admin, haya o no un admin dentro) */
+      if(!m._adm){let nn=ACC.adm?0:1;for(const id in NET.players){const o=NET.players[id];if(+id===NET.pid||(NET.admA&&o.aid&&NET.admA.has(o.aid)))continue;nn++}   /* el anfitrión también cuenta (si no es admin) */
+        if(nn>=MAX_NORMAL){conn.send({t:'full'});setTimeout(()=>conn.close(),400);return}}
       base=freeBaseIdx();
       if(base<0){
-        if(m.pr&&!m._v){   /* PRIORIDAD DEL ADMIN: si la sala está llena, el admin entra y sale el último en llegar */
-          api('hchk',{pr:m.pr}).then(r=>{
+        if(m._adm){   /* respaldo: si por algo la sala está llena (8), el admin entra y sale el último normal en llegar */
+          Promise.resolve({ok:1}).then(r=>{
             const no=()=>{try{conn.send({t:'full'})}catch(e){}setTimeout(()=>{try{conn.close()}catch(e){}},400)};
-            if(!(r&&r.ok))return no();
-            if(m.aid)(NET.admA||(NET.admA=new Set())).add(m.aid);
             let vic=null;for(const id in NET.players){const k=+id;if(k===NET.pid)continue;if(NET.admA&&NET.admA.has(NET.players[id].aid))continue;if(vic==null||k>vic)vic=k}
             if(vic==null)return no();
             const vc=NET.conns[vic];try{vc&&vc.send({t:'ak'})}catch(e){}setTimeout(()=>{try{vc&&vc.close()}catch(e){}},300);
-            dropPlayer(vic);m._v=1;hostMsg(conn,m)});
+            dropPlayer(vic);hostMsg(conn,m)});
           return}
         conn.send({t:'full'});setTimeout(()=>conn.close(),400);return}
       np=NET.nextPid++;
@@ -3461,7 +3467,7 @@ function migJoin(n,oldHost){
   peer.on('error',retry);
   peer.on('open',()=>{
     const c=peer.connect(peerId(NET.code||RCODE),{serialization:'json',reliable:true});
-    c.on('open',()=>c.send({t:'hello',name:userName,skin:curSkin,rc:NET.pid,aid:myAid(),dc:myDc()}));
+    c.on('open',()=>{const hi=pr=>c.send({t:'hello',name:userName,skin:curSkin,rc:NET.pid,aid:myAid(),dc:myDc(),pr});if(ACC.adm){api('hproof',{tok:ACC.tok}).then(q=>hi(q&&q.pr)).catch(()=>hi())}else hi()});
     c.on('data',m=>{
       if(m.t==='welcome'&&!ok&&!fin){
         ok=true;fin=true;NET.peer=peer;NET.hostConn=c;NET.host=false;NET.migrating=false;
@@ -3505,7 +3511,7 @@ function joinRoom(name,code,done,pr){
       c.on('open',()=>{NET.peer=peer;NET.hostConn=c;c.send({t:'hello',name,skin:curSkin,aid:myAid(),dc:myDc(),pr})});
       c.on('data',m=>{
         if(m.t==='welcome'&&!fin){NET.on=true;NET.host=false;applyWelcome(m);end(null);openFast(peer,code);return}
-        if(m.t==='full'){end('La sala está llena (máximo 8 jugadores).');return}
+        if(m.t==='full'){end('La sala está llena (máximo 7 jugadores; el último lugar está reservado).');return}
         if(fin)clientMsg(m);
       });
       c.on('close',()=>{if(!fin)end('Se perdió la conexión con la sala.');else onHostGone()});
