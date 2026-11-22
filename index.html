@@ -1143,24 +1143,7 @@ const belt=add(new THREE.Mesh(new THREE.PlaneGeometry(BELT_L,3.6),B(0xffffff,{ma
 for(let x=-72;x<=84;x+=12){add(new THREE.Mesh(new THREE.BoxGeometry(.3,5,5),B(0x00f0ff,{transparent:true,opacity:.14,blending:THREE.AdditiveBlending,depthWrite:false})),x,2.5,BELT_Z);
   add(new THREE.Mesh(new THREE.BoxGeometry(.4,.4,5),B(0x00f0ff)),x,5,BELT_Z)}
 
-/* ARCO de entrada: aqui salen los Papus */
-{const AX=-81.6,AZ=BELT_Z,W=2.45,PH=4,stone=0xe4e4ea,shade=0xb4b4bf,blk=0x050508;
- const bm=()=>new THREE.MeshBasicMaterial({color:blk,side:THREE.DoubleSide});
- const g=new THREE.Group();g.position.set(AX,0,AZ);ROOT.add(g);
- const M=(geo,c,x,y,z)=>{const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:c}));m.position.set(x,y,z);g.add(m);return m};
- [-1,1].forEach(sd=>{M(new THREE.BoxGeometry(1.5,PH+.3,1.0),stone,0,(PH+.3)/2,sd*(W+.45));M(new THREE.BoxGeometry(1.7,.35,1.2),shade,0,PH+.15,sd*(W+.45));M(new THREE.BoxGeometry(1.7,.4,1.2),shade,0,.2,sd*(W+.45));M(new THREE.BoxGeometry(.1,PH-.5,.6),shade,.76,(PH-.5)/2+.3,sd*(W+.45))});
- const t1=new THREE.Mesh(new THREE.TorusGeometry(W+.45,.55,8,28,Math.PI),new THREE.MeshBasicMaterial({color:stone}));t1.rotation.y=Math.PI/2;t1.position.y=PH+.3;g.add(t1);
- const t2=new THREE.Mesh(new THREE.TorusGeometry(W+.45,.3,8,28,Math.PI),new THREE.MeshBasicMaterial({color:shade}));t2.rotation.y=Math.PI/2;t2.position.set(.35,PH+.3,0);g.add(t2);
- /* tunel negro detras del arco */
- const D=3.2;
- const back=new THREE.Mesh(new THREE.PlaneGeometry(W*2,PH+.3),bm());back.rotation.y=Math.PI/2;back.position.set(-D,(PH+.3)/2,0);g.add(back);
- const bh=new THREE.Mesh(new THREE.CircleGeometry(W,20,0,Math.PI),bm());bh.rotation.y=Math.PI/2;bh.position.set(-D,PH+.3,0);g.add(bh);
- const bh2=new THREE.Mesh(new THREE.CircleGeometry(W,20,0,Math.PI),bm());bh2.rotation.y=Math.PI/2;bh2.position.set(.2,PH+.3,0);g.add(bh2);
- const front=new THREE.Mesh(new THREE.PlaneGeometry(W*2,PH+.3),bm());front.rotation.y=Math.PI/2;front.position.set(.2,(PH+.3)/2,0);front.visible=false;g.add(front);
- [-1,1].forEach(sd=>{const w=new THREE.Mesh(new THREE.PlaneGeometry(D,PH+.3),bm());w.position.set(-D/2,(PH+.3)/2,sd*W);g.add(w)});
- const roof=new THREE.Mesh(new THREE.CylinderGeometry(W,W,D,20,1,true,0,Math.PI),bm());roof.rotation.z=Math.PI/2;roof.position.set(-D/2,PH+.3,0);g.add(roof);
- const fl=new THREE.Mesh(new THREE.PlaneGeometry(D,W*2),new THREE.MeshBasicMaterial({color:blk}));fl.rotation.x=-Math.PI/2;fl.position.set(-D/2,.07,0);g.add(fl);
-}
+/* ARCO de entrada: ahora es la salida con Freddy Papu (mas abajo, despues de crear los rigs) */
 for(let i=0;i<10;i++){const a=i/10*Math.PI*2,p=add(new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,16,16,1,true),B(i%2?0xff2bd6:0x00f0ff,{transparent:true,opacity:.18,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})),Math.cos(a)*170,8,Math.sin(a)*170)}
 /* base ampliada: entrada hacia la cinta, 10 puntos de colocacion, paredes, pilares, techo y letrero */
 const BW=28,BD=33,BZ0=-6,BZc=BZ0-BD/2,BH=.8,WH=3,PH=9.4,RH=BH+PH;
@@ -1679,6 +1662,7 @@ const LBH={g:null};
   LBH.ring=ring;LBH.rm=rm;LBH.g=G;
 })();
 function lbAnim(now,dt){
+  doorAnim(now);
   if(!LBH.ring)return;LBH.ring.rotation.y+=dt*.32;
   LBH.rm.opacity=.7+.2*Math.sin(now/260);
   if(LBH.light)LBH.light.visible=((now/700)|0)%2===0;
@@ -2711,12 +2695,105 @@ function mkFredRig(){const r=buildRig(FSK,FRG,{map:FTX[0]});r.mesh.material=FMAT
 const rigs=[rigA,rigB,rigC,rigD,rigE];for(let k=0;k<6;k++)rigs.push(mkCubeRig());rigs[8]=rigI;rigs[9]=rigG;rigs[10]=rigH;rigs.push(mkFredRig());
 function useRig(k){const r=rigs[k];RG=r;curSkin=k;chr.children.slice().forEach(c=>chr.remove(c));chr.add(r.mesh);bones=r.bones;restQ=r.restQ;restQi=r.restQi;hipsY=r.hipsY;KS=r.hipsY/rigA.hipsY;chr.scale.setScalar(r.S)}
 useRig(0);
+
 /* animacion procedural estilo GTA: aceleracion, giro suave, inclinacion al correr */
 const RUN=10.5,SPR=16.5;
 const AX=new THREE.Vector3(1,0,0),AY=new THREE.Vector3(0,1,0),AZ=new THREE.Vector3(0,0,1);
 const qX=a=>new THREE.Quaternion().setFromAxisAngle(AX,a),qY=a=>new THREE.Quaternion().setFromAxisAngle(AY,a),qZ=a=>new THREE.Quaternion().setFromAxisAngle(AZ,a);
 const ID=new THREE.Quaternion(),Aq=Array.from({length:NB},()=>new THREE.Quaternion()),Ai=new THREE.Quaternion();
 const lerp=(a,b,t)=>a+(b-a)*t;
+/* ====== SALIDA: portal oscuro con borde neon arcoiris y Freddy Papu abrazandolo (aqui salen los Papus) ====== */
+const DOOR={AX:-82.0,Sd:1.4,D:1.8,T:.7,FS:4.3,G:null,rig:null,tubes:null,bulbs:null};
+const _dAq=Array.from({length:NB},()=>new THREE.Quaternion()),_dAi=new THREE.Quaternion(),_dq=new THREE.Quaternion(),_dQ={};
+const DOOR_XM=[[1,.1,.1],[.1,1,.25],[.2,.45,1],[1,.85,.1],[1,.45,.05],[1,.2,.85]];
+const DOOR_DQ={"RightArm": [-0.3302837914540682, 0.25629088429708713, -0.004386120244631627, 0.9084097983168953], "RightForeArm": [-0.01664831932113061, 0.023560505820926066, 0.027119632861170487, 0.999215823304815], "LeftArm": [-0.32994865907861937, -0.2560604936434702, 0.005202611748170862, 0.9085922291095611], "LeftForeArm": [-0.01668178733338238, -0.02356953123432535, -0.027090735352997275, 0.9992158361569294]};
+(function(){
+  const {AX,Sd,D,T,FS}=DOOR,Wi=2.45*Sd,Wo=Wi+.8,Wm=(Wi+Wo)/2,HS=4.3*Sd;
+  const G=new THREE.Group();G.position.set(AX,0,BELT_Z);scene.add(G);DOOR.G=G;
+  const mk=(w,h,draw)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);return t};
+  const blk=()=>new THREE.MeshBasicMaterial({color:0x050508,side:THREE.DoubleSide});
+  /* tunel negro (los Papus salen de aqui) */
+  const back=new THREE.Mesh(new THREE.PlaneGeometry(Wi*2,HS),blk());back.rotation.y=Math.PI/2;back.position.set(-D,HS/2,0);G.add(back);
+  const bh=new THREE.Mesh(new THREE.CircleGeometry(Wi,28,0,Math.PI),blk());bh.rotation.y=Math.PI/2;bh.position.set(-D,HS,0);G.add(bh);
+  [-1,1].forEach(sd=>{const w=new THREE.Mesh(new THREE.PlaneGeometry(D,HS),blk());w.position.set(-D/2,HS/2,sd*Wi);G.add(w)});
+  const roof=new THREE.Mesh(new THREE.CylinderGeometry(Wi,Wi,D,28,1,true,0,Math.PI),blk());roof.rotation.z=Math.PI/2;roof.position.set(-D/2,HS,0);G.add(roof);
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(D,Wi*2),blk());fl.rotation.x=-Math.PI/2;fl.position.set(-D/2,.07,0);G.add(fl);
+  /* anillo oscuro con grosor */
+  const outline=(r)=>{const sh=new THREE.Path();return sh};
+  const shp=new THREE.Shape();shp.moveTo(-Wo,0);shp.lineTo(-Wo,HS);shp.absarc(0,HS,Wo,Math.PI,0,true);shp.lineTo(Wo,0);shp.lineTo(-Wo,0);
+  const hole=new THREE.Path();hole.moveTo(-Wi,0);hole.lineTo(Wi,0);hole.lineTo(Wi,HS);hole.absarc(0,HS,Wi,0,Math.PI,false);hole.lineTo(-Wi,0);shp.holes.push(hole);
+  const rg=new THREE.ExtrudeGeometry(shp,{depth:T,bevelEnabled:false,curveSegments:28});
+  const ring=new THREE.Mesh(rg,[new THREE.MeshBasicMaterial({color:0x1a1a24}),new THREE.MeshBasicMaterial({color:0x0c0c12})]);
+  ring.rotation.y=Math.PI/2;ring.position.set(-T,0,0);G.add(ring);   /* z local -> x global: el grosor queda entre x=-T y x=0 */
+  /* bordes neon arcoiris (interior y exterior) */
+  const path=(R)=>{const pts=[];pts.push(new THREE.Vector3(.04,0,-R));for(let y=0;y<=HS;y+=HS/4)pts.push(new THREE.Vector3(.04,y,-R));for(let k=1;k<=24;k++){const a=Math.PI-k/24*Math.PI;pts.push(new THREE.Vector3(.04,HS+Math.sin(a)*R,Math.cos(a)*R))}for(let y=HS;y>=0;y-=HS/4)pts.push(new THREE.Vector3(.04,y,R));return new THREE.CatmullRomCurve3(pts)};
+  const TS=140,RS=6;let colAttr=null;const tubes=[];
+  [[Wi-.02,.12,1],[Wo+.02,.12,1],[Wi-.02,.34,.28],[Wo+.02,.34,.28]].forEach(([R,th,op],i)=>{
+    const g=new THREE.TubeGeometry(path(R),TS,th,RS,false);
+    if(!colAttr){colAttr=new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*3),3)}
+    g.setAttribute('color',colAttr);
+    const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,transparent:op<1,opacity:op,blending:op<1?THREE.AdditiveBlending:THREE.NormalBlending,depthWrite:op>=1,fog:false,toneMapped:false}));
+    G.add(m);tubes.push(m)});
+  DOOR.tubes={attr:colAttr,segs:TS,rs:RS+1};
+  /* foquitos de colores en el frente del anillo */
+  const dt=mk(64,64,(x)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.4,'rgba(255,255,255,.85)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64)});
+  const L=[];{const pc=path(Wm),n=Math.round(pc.getLength()/.62);for(let i=0;i<=n;i++){const v=pc.getPointAt(i/n);L.push([.08,v.y,v.z])}}
+  const bp=new Float32Array(L.length*3),bc=new Float32Array(L.length*3);L.forEach((q,i)=>{bp[i*3]=q[0];bp[i*3+1]=q[1];bp[i*3+2]=q[2]});
+  const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(bp,3));const bca=new THREE.BufferAttribute(bc,3);bg.setAttribute('color',bca);
+  const bpts=new THREE.Points(bg,new THREE.PointsMaterial({size:.62,vertexColors:true,transparent:true,depthWrite:false,fog:false,toneMapped:false,map:dt}));bpts.frustumCulled=false;G.add(bpts);
+  DOOR.bulbs={ca:bca,n:L.length,ph:L.map(()=>Math.random()*6.28)};
+  /* letrero SALIDA y estrellas neon */
+  const neon=(w,h,draw)=>mk(w,h,(x,W,H)=>{x.clearRect(0,0,W,H);draw(x,W,H)});
+  const salT=neon(640,200,(x,W,H)=>{
+    const rr=(a,b,w,h,r)=>{x.beginPath();x.moveTo(a+r,b);x.lineTo(a+w-r,b);x.quadraticCurveTo(a+w,b,a+w,b+r);x.lineTo(a+w,b+h-r);x.quadraticCurveTo(a+w,b+h,a+w-r,b+h);x.lineTo(a+r,b+h);x.quadraticCurveTo(a,b+h,a,b+h-r);x.lineTo(a,b+r);x.quadraticCurveTo(a,b,a+r,b);x.closePath()};
+    rr(20,24,W-40,H-48,34);x.fillStyle='rgba(30,6,34,.92)';x.fill();
+    x.lineWidth=9;x.shadowColor='#ff3df0';x.shadowBlur=26;x.strokeStyle='#ff5cf5';x.stroke();x.lineWidth=3;x.shadowBlur=0;x.strokeStyle='#ffd6fb';x.stroke();
+    x.font='900 118px "Trebuchet MS","Segoe UI",Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';
+    const g=x.createLinearGradient(80,0,W-80,0);['#ff3b3b','#ff9a00','#ffe600','#2bff4a','#00d5ff','#6a5cff','#ff2dd4'].forEach((c,i,a)=>g.addColorStop(i/(a.length-1),c));
+    x.shadowColor='#fff';x.shadowBlur=22;x.lineWidth=12;x.strokeStyle=g;x.strokeText('SALIDA',W/2,H/2+6);x.shadowBlur=0;x.fillStyle='#fff7ff';x.fillText('SALIDA',W/2,H/2+6)});
+  const sal=new THREE.Mesh(new THREE.PlaneGeometry(5.6,1.75),new THREE.MeshBasicMaterial({map:salT,transparent:true,depthWrite:false,fog:false,toneMapped:false}));
+  sal.rotation.y=Math.PI/2;sal.position.set(.16,HS+Wo-.4,0);G.add(sal);
+  const starT=(col)=>neon(128,128,(x)=>{x.translate(64,66);x.beginPath();for(let i=0;i<10;i++){const r=i%2?24:56,a=-Math.PI/2+i*Math.PI/5;x.lineTo(Math.cos(a)*r,Math.sin(a)*r)}x.closePath();x.lineWidth=9;x.shadowColor=col;x.shadowBlur=18;x.strokeStyle=col;x.stroke();x.lineWidth=3;x.shadowBlur=0;x.strokeStyle='#fff';x.stroke()});
+  [[40,'#ffe14a',1],[140,'#46e6ff',-1]].forEach(([deg,col])=>{const a=deg*Math.PI/180,m=new THREE.Mesh(new THREE.PlaneGeometry(1.3,1.3),new THREE.MeshBasicMaterial({map:starT(col),transparent:true,depthWrite:false,fog:false,toneMapped:false}));m.rotation.y=Math.PI/2;m.position.set(.14,HS+Math.sin(a)*Wm,Math.cos(a)*Wm);G.add(m)});
+  /* logos STEAL A PAPU en los costados inferiores */
+  const logoT=(dir)=>neon(512,128,(x,W,H)=>{
+    x.font='900 76px "Trebuchet MS","Segoe UI",Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';const g=x.createLinearGradient(40,0,W-40,0);['#ff3b3b','#ffd400','#2bff4a','#00d5ff','#ff2dd4'].forEach((c,i,a)=>g.addColorStop(i/(a.length-1),c));
+    x.lineWidth=14;x.strokeStyle='#150a45';x.strokeText('STEAL A PAPU',W/2,H/2);x.fillStyle=g;x.fillText('STEAL A PAPU',W/2,H/2);x.lineWidth=3;x.strokeStyle='#fff';x.strokeText('STEAL A PAPU',W/2,H/2)});
+  [[-1,Wm],[1,-Wm]].forEach(([dir,z])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.05),new THREE.MeshBasicMaterial({map:logoT(dir),transparent:true,depthWrite:false,fog:false,toneMapped:false}));m.rotation.y=Math.PI/2;m.rotation.x=0;m.position.set(.1,2.6,z);m.rotation.z=dir>0?Math.PI/2:-Math.PI/2;G.add(m)});
+  /* FREDDY PAPU detras, abrazando el portal */
+  /* Freddy de la puerta: sin los logos de la espalda (su espalda es azul lisa); la malla se clona para no tocar la del jugador */
+  let rig;try{const g=FRG.clone(),pos=g.getAttribute('position').array,idx=Array.from(g.index.array),gr=g.groups[5],keep=[];
+    for(let t=gr.start;t<gr.start+gr.count;t+=3){const A=idx[t],B_=idx[t+1],C=idx[t+2],x=(pos[A*3]+pos[B_*3]+pos[C*3])/3,y=(pos[A*3+1]+pos[B_*3+1]+pos[C*3+1])/3,z=(pos[A*3+2]+pos[B_*3+2]+pos[C*3+2])/3;
+      if(Math.abs(x)<22&&y>60&&y<135&&z<-5.9)continue;keep.push(A,B_,C)}
+    g.setIndex(new THREE.BufferAttribute(new Uint16Array(idx.slice(0,gr.start).concat(keep)),1));gr.count=keep.length;
+    rig=buildRig(FSK,g,{map:FTX[0]});rig.mesh.material=FMATS;rig.bo=FRED.bo}catch(e){rig=mkFredRig()}
+  const fg=new THREE.Group();fg.position.set(-D-1.0,0,0);fg.rotation.y=Math.PI/2;fg.scale.setScalar(rig.S*FS);fg.add(rig.mesh);G.add(fg);DOOR.rig=rig;
+  poseFredDoor(0);
+})();
+function poseFredDoor(now){
+  const r=DOOR.rig;if(!r)return;
+  const d=new Array(NB).fill(null);
+  for(const n in DOOR_DQ){const a=DOOR_DQ[n];d[BI[n]]=_dQ[n]||(_dQ[n]=new THREE.Quaternion(a[0],a[1],a[2],a[3]))}
+  const t=now/1000;d[BI.Head]=qY(.5*Math.sin(t*.55)).multiply(qX(.06+.03*Math.sin(t*1.3)));
+  for(let i=0;i<NB;i++){
+    const p=PAR[i],dq=d[i]||ID;
+    _dAq[i].copy(dq);if(p>=0)_dAq[i].multiply(_dAq[p]);
+    const q=r.bones[i].quaternion;
+    if(p>=0){q.copy(r.restQi[p]);_dAi.copy(_dAq[p]).invert();q.multiply(_dAi).multiply(_dAq[i]).multiply(r.restQ[i])}
+    else q.copy(_dAq[i]).multiply(r.restQ[i]);
+  }
+}
+const _dc=new THREE.Color();
+function doorAnim(now){
+  if(!DOOR.G)return;
+  const px=player.position.x,pz=player.position.z;if(Math.hypot(px-DOOR.AX,pz-BELT_Z)>170)return;   /* lejos no se anima */
+  const T=DOOR.tubes,ca=T.attr,pc=ca.count;
+  const per=T.rs,tot=T.segs+1;
+  for(let i=0;i<pc;i++){const seg=(i/per)|0;_dc.setHSL(((seg/tot)*1.5+now/2600)%1,1,.58);ca.array[i*3]=_dc.r;ca.array[i*3+1]=_dc.g;ca.array[i*3+2]=_dc.b}
+  ca.needsUpdate=true;
+  const B=DOOR.bulbs,ba=B.ca;for(let i=0;i<B.n;i++){const ci=(i+((now/380)|0))%6,q=DOOR_XM[ci],tw=.65+.35*Math.sin(now/180+B.ph[i]);ba.array[i*3]=q[0]*tw;ba.array[i*3+1]=q[1]*tw;ba.array[i*3+2]=q[2]*tw}ba.needsUpdate=true;
+  poseFredDoor(now);
+}
 let walkPh=0,carryT=0,idleT=0,heading=0,speed=0;
 const JV=16,GR=42;
 let mode='ground',modeT=0,py=0,vy=0,airT=0,landT=0,flipA=0,shake=0,wSm=0,dropSm=0;
@@ -4069,7 +4146,7 @@ const plankC=(()=>{const c=document.createElement('canvas');c.width=LW;c.height=
     x.fillStyle='#a47e3c';x.fillRect(0,r*rh+rh-3,LW,3)}
   x.lineWidth=16;x.strokeStyle='#6b4a22';x.strokeRect(8,8,LW-16,LH-16);return c})();
 const plankTex=new THREE.CanvasTexture(plankC);plankTex.magFilter=THREE.NearestFilter;
-const signG=new THREE.Group();signG.position.set(-81.6,0,BELT_Z);
+const signG=new THREE.Group();signG.position.set(-82.0,9.2,BELT_Z);
 {const bm=new THREE.MeshBasicMaterial({map:legTex,toneMapped:false}),sm=new THREE.MeshBasicMaterial({map:plankTex,toneMapped:false});
  const board=new THREE.Mesh(new THREE.BoxGeometry(5,3.4,5),[bm,bm,sm,sm,bm,bm]);board.position.y=9.6;signG.add(board);
  scene.add(signG)}
