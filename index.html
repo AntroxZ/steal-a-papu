@@ -2704,7 +2704,7 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const DOOR={AX:-89.0,Sd:1.4,D:1.8,T:.7,FS:4.3,G:null,rig:null,tubes:null,bulbs:null};
 const _dAq=Array.from({length:NB},()=>new THREE.Quaternion()),_dAi=new THREE.Quaternion(),_dq=new THREE.Quaternion(),_dQ={};
 const DOOR_XM=[[1,.1,.1],[.1,1,.25],[.2,.45,1],[1,.85,.1],[1,.45,.05],[1,.2,.85]];
-const DOOR_DQ={"Spine": [0.09983, 0.0, 0.0, 0.995], "Spine1": [0.08739, 0.0, 0.0, 0.99617], "Spine2": [0.06246, 0.0, 0.0, 0.99805], "Neck": [-0.31931, -0.0, -0.0, 0.94765], "Head": [-0.07493, -0.0, -0.0, 0.99719], "LeftUpLeg": [-0.26665, -0.00667, -0.02409, 0.96347], "LeftLeg": [0.30506, 0.0, 0.0, 0.95233], "LeftFoot": [-0.09983, -0.0, -0.0, 0.995], "RightUpLeg": [-0.08487, 0.00212, 0.02491, 0.99608], "RightLeg": [0.08988, 0.0, 0.0, 0.99595], "RightFoot": [0.025, 0.0, 0.0, 0.99969], "RightArm": [-0.54429, 0.63959, -0.25456, 0.47945], "RightForeArm": [0.52774, 0.37432, 0.74173, 0.17667], "RightHand": [0.0, 0.0, 0.0, 1.0], "LeftArm": [-0.41811, -0.65573, 0.47469, 0.41216], "LeftForeArm": [0.5116, -0.42847, -0.74146, -0.07009], "LeftHand": [0.0, 0.0, 0.0, 1.0]};
+const DOOR_DQ={"Spine": [0.09983, 0.0, 0.0, 0.995], "Spine1": [0.08739, 0.0, 0.0, 0.99617], "Spine2": [0.06246, 0.0, 0.0, 0.99805], "Neck": [-0.31931, -0.0, -0.0, 0.94765], "Head": [-0.07493, -0.0, -0.0, 0.99719], "LeftUpLeg": [-0.26665, -0.00667, -0.02409, 0.96347], "LeftLeg": [0.30506, 0.0, 0.0, 0.95233], "LeftFoot": [-0.09983, -0.0, -0.0, 0.995], "RightUpLeg": [-0.08487, 0.00212, 0.02491, 0.99608], "RightLeg": [0.08988, 0.0, 0.0, 0.99595], "RightFoot": [0.025, 0.0, 0.0, 0.99969], "RightArm": [-0.54429, 0.63959, -0.25456, 0.47945], "RightForeArm": [0.52774, 0.37432, 0.74173, 0.17667], "RightHand": [0.93592, 0.10888, 0.33495, 0.0], "LeftArm": [-0.41811, -0.65573, 0.47469, 0.41216], "LeftForeArm": [0.5116, -0.42847, -0.74146, -0.07009], "LeftHand": [-0.91121, 0.23314, 0.33961, 0.0]};
 (function(){
   const {AX,Sd,D,T,FS}=DOOR,Wi=2.45*Sd,Wo=Wi+.8,Wm=(Wi+Wo)/2,HS=4.3*Sd;
   const G=new THREE.Group();G.position.set(AX,0,BELT_Z);scene.add(G);DOOR.G=G;
@@ -4535,6 +4535,17 @@ const fnum=(v,a,b)=>typeof v==='number'&&isFinite(v)&&v>=a&&v<=b;
 function loadImgTex(src,cb){const t=new THREE.Texture(),im=new Image();im.onload=()=>{t.image=im;t.needsUpdate=true;if(cb)cb()};im.src=src;return t}
 let _gG=null,_gM=null,_lgT=null;
 const logoTex=()=>_lgT||(_lgT=loadImgTex(MENU_LOGO,()=>refreshIcons()));
+/* ===== carteles gigantes fuera del mapa: logo + bienvenida a la version 2.0 ===== */
+{const tc=document.createElement('canvas');tc.width=1024;tc.height=150;const x=tc.getContext('2d');
+  x.font='900 78px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  const g=x.createLinearGradient(0,0,1024,0);['#ff3b3b','#ff9a00','#ffe600','#2bff4a','#00d5ff','#6a5cff','#ff2dd4'].forEach((c,i,a)=>g.addColorStop(i/(a.length-1),c));
+  x.lineJoin='round';x.lineWidth=14;x.strokeStyle='#14081f';x.strokeText('¡BIENVENIDOS A LA VERSIÓN 2.0!',512,78);x.fillStyle=g;x.fillText('¡BIENVENIDOS A LA VERSIÓN 2.0!',512,78);
+  const tt=new THREE.CanvasTexture(tc);tt.anisotropy=4;
+  const mkB=(px,pz,ry)=>{const G=new THREE.Group();G.position.set(px,0,pz);G.rotation.y=ry;scene.add(G);
+    const lg=new THREE.Mesh(new THREE.PlaneGeometry(190,97),new THREE.MeshBasicMaterial({map:logoTex(),transparent:true,fog:false,toneMapped:false,side:THREE.DoubleSide}));lg.position.y=76;G.add(lg);
+    const tx=new THREE.Mesh(new THREE.PlaneGeometry(190,27.8),new THREE.MeshBasicMaterial({map:tt,transparent:true,fog:false,toneMapped:false,side:THREE.DoubleSide}));tx.position.y=14;G.add(tx);
+    [-1,1].forEach(sd=>{const pl=new THREE.Mesh(new THREE.BoxGeometry(3,60,3),new THREE.MeshBasicMaterial({color:0x2a2a38,fog:false}));pl.position.set(sd*70,30,-1.8);G.add(pl)})};
+  mkB(0,-230,0);mkB(0,300,Math.PI);mkB(-290,0,Math.PI/2);mkB(290,0,-Math.PI/2)}
 function gunGeo(){
   if(_gG)return _gG;const p=new Int16Array(b64(GUN_D.p)),pf=new Float32Array(p.length);for(let i=0;i<p.length;i++)pf[i]=p[i]/20000;
   _gG=new THREE.BufferGeometry();_gG.setAttribute('position',new THREE.BufferAttribute(pf,3));_gG.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(b64(GUN_D.u)),2));
