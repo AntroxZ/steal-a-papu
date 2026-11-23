@@ -1831,7 +1831,7 @@ function updPrompt(){
         tipPos=[bo.g.position.x,bo.g.position.y+2.1,bo.g.position.z];
         tipHtml=key+'<b>Comprar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="'+(ok?'ok':'no')+'">$'+fm(PRICE[l])+(ok?'':' · te faltan $'+fm(Math.ceil(PRICE[l]-money)))+'</i>'}
       else if(nr&&nr.k==='ground'){const o=nr.o;tipPos=[o.g.position.x,o.g.position.y+2.1,o.g.position.z];tipHtml=key+'<b>Agarrar '+NAMES[o.lvl]+'</b>'+rarTag(o.lvl)+'<i class="ok">¡del suelo!</i>'}
-      else if(nr&&nr.k==='steal'&&!STL){const q=nr.o,l=q.s.item.userData.lvl;tipPos=[q.s.x,(q.s.y||BH)+2.2,q.s.z];tipHtml=key+'<b>Mantén E para robar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="ok">'+STEAL_T+' s</i>'}
+      else if(nr&&nr.k==='steal'&&!STL){const q=nr.o,l=q.s.item.userData.lvl;tipPos=[q.s.x,(q.s.y||BH)+2.2,q.s.z];tipHtml=key+'<b>Presiona E para robar '+NAMES[l]+'</b>'+rarTag(l)+'<i class="ok">al instante</i>'}
       if(!tipHtml&&!MOB&&anyDance()){const nd=nearDancer();if(nd&&syncGap(nd)>.8){const ag=nd.av.g.position;tipPos=[ag.x,ag.y+6.6,ag.z];tipHtml='<span class="k">T</span><b>Sincronizar baile</b>'}}
       if(!tipHtml){const on=ownSlotNear();if(on){tipPos=[on.s.x,(on.s.y||BH)+2.2,on.s.z];tipHtml='<span class="k">F</span><b>Mover</b> &nbsp;<span class="k">H</span><b>Eliminar</b>'}}
     }else{
@@ -4027,11 +4027,14 @@ function stealTarget(){
   });
   return best;
 }
+let stealBusy=false;
 function startSteal(tg){
+  if(stealBusy||held)return;
   const pl=NET.players[tg.b.owner],aid0=pl?pl.aid:tg.b.keepAid;
   if(!aid0){toast('No puedes robar de esta base');return}
   STL={b:tg.b,i:tg.i,aid:aid0,t:0};
-  $('stlLbl').textContent='Robando '+NAMES[tg.s.item.userData.lvl]+'…';$('stlFill').style.width='0%';$('stl').style.display='block';
+  $('stlLbl').textContent='Robando '+NAMES[tg.s.item.userData.lvl]+'…';$('stlFill').style.width='0%';
+  {const t=STL;cancelSteal();stealBusy=true;finishSteal(t).finally(()=>{stealBusy=false})}   /* robo instantaneo: sin tiempo de espera */
 }
 function cancelSteal(){if(STL){STL=null;$('stl').style.display='none'}}
 function cancelStealOf(b){if(STL&&STL.b===b)cancelSteal()}
