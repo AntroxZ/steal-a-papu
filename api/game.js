@@ -28,6 +28,7 @@ const PG_SECS = 120, PG_MIN_PLAYERS = 4, PG_ROLL_MS = 300000, PG_P = 0.03, PG_CO
 function pgView(v, now) { if (!v) return null; try { const m = JSON.parse(v), age = now - m.ts; return age < m.secs * 1000 ? { id: m.id, secs: m.secs, age } : null; } catch (e) { return null; } }
 /* durante un evento (Golden Time o Purga) nadie nuevo puede entrar: solo siguen los que ya estaban jugando. El admin siempre puede */
 async function evBusy() { const [gt, pg, rb] = (await db('MGET', 'ev:gt', 'ev:pg', 'ev:rb')) || [], now = Date.now(); return (!!gt && +gt > now) || (!!rb && +rb > now) || !!pgView(pg, now); }
+const EV_REJOIN_MS = 120000;
 const EV_BLOCK = 'No puedes entrar durante un evento. Inténtalo más tarde.';
 async function pgStart(now) {
   const m = { id: crypto.randomBytes(4).toString('hex'), ts: now, secs: PG_SECS };
@@ -94,6 +95,7 @@ const ukey = u => 'u:' + u.toLowerCase();
 const emptySlots = () => Array(NSLOT).fill(-1);
 /* EXCLUSIVO: objetos que NUNCA se pierden al reiniciar progreso ni al hacer Rebirth (misma lista que el cliente) */
 const EXCLUSIVO = ['dance', 'freddy', 'perd'];
+const RETIRED = ['dance'];   /* ya no se vende; quien lo compró a tiempo lo conserva */
 /* reinicio de progreso a cero (reiniciar cuenta o Rebirth): conserva siempre los objetos exclusivos */
 function resetProgress(r) {
   const keep = (Array.isArray(r.inv) ? r.inv : []).filter(i => EXCLUSIVO.includes(i));
@@ -206,6 +208,17 @@ async function fail(user) {
   await db('INCR', k); await db('EXPIRE', k, 600);
 }
 
+
+/* ---- CODIGO DE VERIFICACION para cuentas nuevas: se genera aqui y solo el admin lo ve en su panel (pestaña "Correo") ---- */
+const VC_TTL = 600000, VC_MAX = 40, VC_OFF = process.env.VC_DISABLE === '1';
+const vcParse = v => { try { const o = JSON.parse(v); return o && o.code ? o : null; } catch (e) { return null; } };
+async function vcAll() {
+  const a = (await db('HGETALL', 'vc')) || [], now = Date.now(), out = [], dead = [];
+  for (let i = 0; i + 1 < a.length; i += 2) { const o = vcParse(a[i + 1]); if (o && now - o.ts < VC_TTL) out.push(Object.assign({ key: a[i] }, o)); else dead.push(a[i]); }
+  if (dead.length) await db('HDEL', 'vc', ...dead);
+  return out;
+}
+
 const CLOSED_MSG = 'El servidor está cerrado por el administrador. Intenta más tarde.';
 const isClosed = async () => !!(await db('GET', 'srv:closed'));
 const checkUser = u => /^[A-Za-z0-9_]{3,16}$/.test(u);
@@ -241,6 +254,13 @@ const actions = {
     if (pass.length < 4 || pass.length > 32) throw new Err('La contraseña debe tener de 4 a 32 caracteres.');
     if (!nick) throw new Err('Escribe un nickname.');
     if (ADMIN_USER && user.toLowerCase() === ADMIN_USER.toLowerCase()) throw new Err('Ese usuario ya existe.');
+    if (!VC_OFF) {   /* cuentas nuevas: hace falta el código de 6 dígitos que ve el admin */
+      const code = String(b.code || '').replace(/\s/g, ''), ent = vcParse(await db('HGET', 'vc', user.toLowerCase()));
+      if (!code) throw new Err('Necesitas el código de verificación.', 'vcode');
+      if (!ent || Date.now() - ent.ts > VC_TTL) throw new Err('El código expiró o no existe. Pide uno nuevo.', 'vcode');
+      if ((ent.att | 0) >= 5) { await db('HDEL', 'vc', user.toLowerCase()); throw new Err('Demasiados intentos. Pide un código nuevo.', 'vcode'); }
+      if (!safeEq(code, ent.code)) { ent.att = (ent.att | 0) + 1; await db('HSET', 'vc', user.toLowerCase(), JSON.stringify(ent)); throw new Err('Código incorrecto.', 'vcode'); }
+    }
     const sid = crypto.randomBytes(9).toString('base64url'), now = Date.now();
     const r = { user, pass: encPass(pass), nick, skin: 0, money: START, slots: emptySlots(), held: -1, hpaid: 0, t: now, seen: now, created: now, lin: now, sid };
     r.aid = crypto.randomBytes(6).toString('base64url');
@@ -248,7 +268,32 @@ const actions = {
     if (!ok) throw new Err('Ese usuario ya existe.');
     await ensureAid(r);
     await db('SADD', 'users', user.toLowerCase());
+    if (!VC_OFF) await db('HDEL', 'vc', user.toLowerCase());
     return { tok: signTok({ u: user, sid, exp: Date.now() + TOKEN_DAYS * 864e5 }), st: view(r) };
+  },
+  /* paso previo al registro: pide el código de verificación (llega al panel del admin) */
+  async rcode(b) {
+    if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
+    if (await evBusy()) throw new Err(EV_BLOCK, 'event');
+    const user = String(b.user || '').trim(), pass = String(b.pass || ''), nick = cleanNick(b.nick);
+    if (!checkUser(user)) throw new Err('Usuario: de 3 a 16 letras, números o _ (sin espacios).');
+    if (pass.length < 4 || pass.length > 32) throw new Err('La contraseña debe tener de 4 a 32 caracteres.');
+    if (!nick) throw new Err('Escribe un nickname.');
+    if ((ADMIN_USER && user.toLowerCase() === ADMIN_USER.toLowerCase()) || await db('EXISTS', ukey(user))) throw new Err('Ese usuario ya existe.');
+    if (VC_OFF) return { ok: true, off: true };
+    const all = await vcAll(), mine = all.find(e => e.key === user.toLowerCase());
+    if (mine && Date.now() - mine.ts < 15000) throw new Err('Espera unos segundos antes de pedir otro código.', 'vcode');
+    if (!mine && all.length >= VC_MAX) throw new Err('Hay demasiadas solicitudes pendientes. Intenta en unos minutos.', 'vcode');
+    const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+    await db('HSET', 'vc', user.toLowerCase(), JSON.stringify({ u: user, nick, code, ts: Date.now(), att: 0 }));
+    await db('EXPIRE', 'vc', 900);
+    return { ok: true };
+  },
+  /* admin: códigos pendientes (pestaña "Correo") */
+  async acodes(b) {
+    adminFromTok(b.tok);
+    const now = Date.now();
+    return { codes: (await vcAll()).sort((x, y) => y.ts - x.ts).map(e => ({ user: e.u, nick: e.nick, code: e.code, age: Math.round((now - e.ts) / 1000) })) };
   },
   async login(b) {
     const user = String(b.user || '').trim(), pass = String(b.pass || '');
@@ -266,7 +311,7 @@ const actions = {
     const r = await loadRec(user);
     if (!r || !safeEq(decPass(r.pass), pass)) { await fail(user); throw new Err('Usuario o contraseña incorrectos.'); }
     if (await isClosed()) throw new Err(CLOSED_MSG, 'closed');
-    if (await evBusy()) throw new Err(EV_BLOCK, 'event');
+    if ((await evBusy()) && !(r.seen && Date.now() - r.seen < EV_REJOIN_MS)) throw new Err(EV_BLOCK, 'event');   /* quien ya estaba jugando y se cayó puede volver; las cuentas que llevaban rato fuera no
     r.sid = crypto.randomBytes(9).toString('base64url'); r.kk = 0; r.t = Date.now(); r.seen = r.t; r.off = 0; r.lin = r.t; /* sin ingresos mientras estuviste fuera */
     settleHeld(r); touchCat(r); await ensureAid(r);
     await saveRec(r);
@@ -276,7 +321,7 @@ const actions = {
     const t = readTok(b.tok);
     if (t && t.adm && t.u === '*admin') throw new Err('Inicia sesión de nuevo.', 'auth');
     if (!(t && t.adm) && await isClosed()) throw new Err(CLOSED_MSG, 'closed');
-    if (!(t && t.adm) && await evBusy()) throw new Err(EV_BLOCK, 'event');
+    if (!(t && t.adm) && await evBusy()) { const rr = await userFromTok(b.tok).catch(() => null); if (!(rr && rr.seen && Date.now() - rr.seen < EV_REJOIN_MS)) throw new Err(EV_BLOCK, 'event'); }   /* reconexión: si estabas jugando hace menos de 2 min (se cayó la sala por lag) puedes volver */
     const r = await userFromTok(b.tok);
     r.t = Date.now(); r.seen = r.t; r.off = 0; settleHeld(r); touchCat(r); await ensureAid(r); await saveRec(r);
     return { tok: b.tok, st: view(r), ...(t && t.adm ? { admin: true } : {}), ...(await evInfo()) };
@@ -424,6 +469,7 @@ const actions = {
     const r = await userFromTok(b.tok); accrue(r, Date.now());
     const id = String(b.id || '');
     if (!OPRICE[id]) throw new Err('Jugada no válida.', 'bad');
+    if (RETIRED.includes(id)) throw new Err('Ese objeto ya no está a la venta.', 'bad');
     const inv = Array.isArray(r.inv) ? r.inv : (r.inv = []);
     if (inv.includes(id)) { await saveRec(r); throw Object.assign(new Err('Ya lo compraste.', 'bad'), { st: view(r) }); }
     if (r.money < OPRICE[id]) { await saveRec(r); throw Object.assign(new Err('No te alcanza el dinero.', 'bad'), { st: view(r) }); }
