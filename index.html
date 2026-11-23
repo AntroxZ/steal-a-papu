@@ -205,7 +205,7 @@ button:hover{background:var(--cy);color:#04060f}
 #stl .stbar{margin-top:7px;height:12px;border-radius:7px;background:rgba(40,20,5,.7);overflow:hidden;border:2px solid #4a2a12}
 #stlFill{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff8a3d,#ffd36a)}
 #admT .eye{padding:3px 8px;margin-left:6px;vertical-align:middle}#admT .eye svg{width:18px;height:18px;display:block;stroke:#fff8e6;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#netMsg{min-height:1.4em;margin-top:12px;max-width:380px;font:700 .95rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
+#panel>*{flex-shrink:0}#rgCode{font-size:1rem}#rgCode:not(:placeholder-shown){letter-spacing:.35em;font-size:1.25rem}#netMsg{min-height:1.4em;margin-top:12px;max-width:380px;font:700 .95rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b,0 0 4px #3a200b}
 #room{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);display:none;align-items:center;padding:9px 18px;font:800 .9rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#fff8e6;text-shadow:0 2px 0 #3a200b;background:var(--wd);border:3px solid #4a2a12;border-radius:999px;box-shadow:0 4px 0 #35200e,0 6px 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,225,170,.45);cursor:pointer;z-index:5}
 
 #tpRow{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);display:none;gap:8px;z-index:5}
@@ -978,7 +978,7 @@ body.hudnew #mis .misBar{border-color:#150a45}
       <input id="rgNick" class="winp" maxlength="14" placeholder="Nickname (lo ven los demás)" autocomplete="off" spellcheck="false">
       <input id="rgPass" class="winp" type="password" maxlength="32" placeholder="Contraseña" autocomplete="new-password">
       <input id="rgPass2" class="winp" type="password" maxlength="32" placeholder="Confirmar contraseña" autocomplete="new-password">
-      <input id="rgCode" class="winp" style="display:none;text-align:center;letter-spacing:.35em;font-weight:800" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" autocomplete="one-time-code" spellcheck="false">
+      <input id="rgCode" class="winp" style="display:none;text-align:center;font-weight:800" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" autocomplete="one-time-code" spellcheck="false">
       <button id="rgGo" class="wbtn">Validar</button>
     </div>
   </div>
