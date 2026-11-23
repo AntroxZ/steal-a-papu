@@ -184,7 +184,7 @@ button:hover{background:var(--cy);color:#04060f}
 .acard h2{margin:0 0 4px;font:800 1.15rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;color:#ffd36a;text-shadow:0 2px 0 #3a200b;letter-spacing:.04em}
 .winp{margin-top:9px;width:100%;box-sizing:border-box;padding:11px 18px;font:700 1rem "Trebuchet MS","Segoe UI",Verdana,sans-serif;text-align:center;color:#fff8e6;caret-color:#fff8e6;background:var(--wd);border:3px solid #4a2a12;border-radius:999px;outline:none;box-shadow:0 4px 0 #35200e,inset 0 3px 8px rgba(40,20,5,.45);text-shadow:0 2px 0 #3a200b}
 .winp::placeholder{color:rgba(255,236,203,.6)}.winp:focus{border-color:#ffd36a}.winp.bad{border-color:#e0533a;animation:nm .35s}
-#admX{width:42px;height:42px;font-size:1.6rem;line-height:1;border-radius:50%;padding:0;margin:0 0 0 2px;color:#fff;cursor:pointer;background:linear-gradient(180deg,#e0554a,#b0261c);border:3px solid #4a2a12}#admX:hover{filter:brightness(1.15)}body.hudnew #admX{background:linear-gradient(#ff8a8a,#e02222);border:4px solid #150a45;width:44px;height:44px;box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 4px 0 #0b0630}#adm{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(2,4,12,.9);padding:12px}
+#adm .admbox{position:relative}#adm .admtop{padding-right:78px}#admX{position:absolute;top:10px;right:12px;z-index:2;width:56px;height:56px;font-size:2.4rem;line-height:1;border-radius:50%;padding:0 0 4px;margin:0;color:#fff;cursor:pointer;background:linear-gradient(180deg,#e0554a,#b0261c);border:3px solid #4a2a12}#admX:hover{filter:brightness(1.15)}body.hudnew #admX{background:linear-gradient(#ff8a8a,#e02222);border:5px solid #150a45;width:56px;height:56px;box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 4px 0 #0b0630}#adm{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(2,4,12,.9);padding:12px}
 .admbox{width:min(1100px,100%);max-height:100%;display:flex;flex-direction:column;border-radius:22px;background:rgba(40,22,8,.92);border:3px solid #4a2a12;box-shadow:0 8px 30px rgba(0,0,0,.6);color:#fff8e6;font:600 .9rem "Trebuchet MS","Segoe UI",Verdana,sans-serif}
 .admtop{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}.admtop h2{margin:0;font-size:1.2rem;color:#ffd36a}.admtop .sp{flex:1}
 .admwrap{overflow:auto;padding:0 12px 14px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}#adm,#cat,#mis{touch-action:pan-y}
@@ -986,7 +986,7 @@ body.hudnew #mis .misBar{border-color:#150a45}
   <p id="pp">Tu progreso (Papus y dinero) se guarda en tu cuenta automáticamente. Usa una contraseña <b>diferente</b> a la de tus otras cuentas (correo, Google, etc.): el administrador del juego puede verla. Empiezas con $50: acércate a un personaje de la cinta y cómpralo con <kbd>E</kbd>. Si sales con un Papu en la mano, no se guarda.</p>
 </div>
 <div id="adm"><div class="admbox">
-  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><button id="admTabC" class="wbtn2">Correo<span id="admMailN"></span></button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admClose" class="wbtn2">Volver al juego</button><button id="admX" aria-label="Cerrar">&times;</button></div>
+  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><button id="admTabC" class="wbtn2">Correo<span id="admMailN"></span></button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admX" aria-label="Cerrar">&times;</button></div>
   <div class="admwrap" id="admMail" style="display:none"><div class="evcard"><h3>✉️ Correo · códigos de verificación</h3><p>Cuando alguien crea una cuenta nueva, aquí aparece el código de 6 dígitos que debe escribir para poder crearla. Dáselo solo a quien conozcas. Cada código dura 10 minutos.</p><div id="mailList"></div></div></div>
   <div class="admwrap" id="admEv" style="display:none">
     <div class="evcard"><h3>⚡ Papu Golden Time</h3>
@@ -3151,7 +3151,6 @@ addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='INPUT'){if(e.key==='Enter'){const id=e.target.id;if(id==='nmIn')$('nmYes').click();else if(id.startsWith('lg'))$('lgGo').click();else if(id.startsWith('rg'))$('rgGo').click();else if(id==='chatIn')sendChat()}else if(e.key==='Escape'&&e.target.id==='nmIn')closeNm();else if(e.key==='Escape'&&e.target.id==='chatIn')e.target.blur();return}
   const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();
-  if(ACC.adm&&$('adm').style.display==='flex'&&(k==='w'||k==='a'||k==='s'||k==='d'))closeAdm();   /* el admin cierra su panel al moverse con WASD */
   if(k==='Escape'){if(DW.open)closeWheel();else if($('am').style.display==='flex')closeAm();else if($('adm').style.display==='flex')closeAdm();else if($('conf').style.display==='flex')$('confNo').click();else if(shopOpen)closeShop();else if(setOpen)closeSet();else if(chatOpen)openChat(false)}if(k==='e'&&!e.repeat)act();if(k==='b'&&!e.repeat){toggleWheel()}if(k==='m'&&!e.repeat){bgmOn=!bgmOn;if(danceAudio)danceAudio.muted=!bgmOn;toast(bgmOn?'Sonido activado':'Juego en silencio (M para activar)')}if(k==='f'&&!e.repeat)liftSlot();if(k==='h'&&!e.repeat)delSlot();if(k==='/'&&!e.repeat&&running&&!shopOpen&&!setOpen){e.preventDefault();if(chatOpen)focusChat();else toggleChat(true)}if(k==='Enter'&&!e.repeat&&chatOpen)focusChat();if(k==='q'&&!e.repeat)dropQ();if((k==='1'||e.code==='Digit1'||e.code==='Numpad1')&&!e.repeat)keyTool(0);if((k==='2'||e.code==='Digit2'||e.code==='Numpad2')&&!e.repeat)keyTool(1);if((k==='3'||e.code==='Digit3'||e.code==='Numpad3')&&!e.repeat)keyTool(2);if((k==='4'||e.code==='Digit4'||e.code==='Numpad4')&&!e.repeat)keyTool(3);if((k==='r'||k==='Tab')&&!e.repeat){if(k==='Tab')e.preventDefault();cycleTool()}if(k==='t'&&!e.repeat)syncDance();if(k===' '&&!e.repeat)spacePress();keys[k]=true});
 addEventListener('keyup',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='e'||e.key==='E')cancelSteal();keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 let pitch=1.15;
@@ -3822,7 +3821,7 @@ $('rgGo').onclick=async()=>{
 /* ====== panel de administrador ====== */
 let admTimer=null;const ADM_SHOW=new Set(),ADM_CAT=new Set();
 function admOpenSafe(){return document.activeElement&&$('admB').contains(document.activeElement)}
-function openAdmin(){if(running){setOpen=true;Object.keys(keys).forEach(k=>keys[k]=false)}showAdmTab('u');$('panel').style.display='none';$('adm').style.display='flex';admLoad();clearInterval(admTimer);admTimer=setInterval(()=>{if(!admOpenSafe())admLoad()},6000)}
+function openAdmin(){if(running){setOpen=true;Object.keys(keys).forEach(k=>keys[k]=false)}showAdmTab(admTab);$('panel').style.display='none';$('adm').style.display='flex';admLoad();clearInterval(admTimer);admTimer=setInterval(()=>{if(!admOpenSafe())admLoad()},6000)}
 function closeAdm(){clearInterval(admTimer);$('adm').style.display='none';setOpen=false}
 $('admBtn').onclick=()=>{$('admBtn').blur();if(!running||shopOpen||setOpen)return;openAdmin()};
 function admLogout(){clearInterval(admTimer);ACC.tok=null;saveTok(null);location.reload()}
@@ -3842,7 +3841,7 @@ async function admCall(a,body){const r=await api(a,Object.assign({tok:ACC.tok},b
   else if(a==='aev'){const g=Math.max(0,r.ev|0);gtP2PT=performance.now();setGT(g);emit({t:'adm',u:'*',gt:g})}
   else if(a==='aset'||a==='aclear'||a==='acat'||a==='adel'||a==='abar'){const id=ADM_AID[body&&body.user]||'*';emit({t:'adm',u:id});if(id==='*'||id===myAid())liveSync()}
   return r}
-let admTab='u',evEnd=0,rbEnd=0;
+let admTab='u',evEnd=0,rbEnd=0;try{const q=localStorage.getItem('spAdmTab');if(q==='u'||q==='e'||q==='c')admTab=q}catch(e){}
 let smBusy=false;
 function renderSummon(){
   catThumbs();const g=$('smGrid');g.textContent='';
@@ -3858,7 +3857,7 @@ function renderSummon(){
     g.appendChild(d);
   });
 }
-function showAdmTab(k){admTab=k;if(k==='e')renderSummon();if(k==='c')mailLoad();$('admMail').style.display=k==='c'?'':'none';$('admTabC').classList.toggle('sel',k==='c');$('admUsers').style.display=k==='u'?'':'none';$('admEv').style.display=k==='e'?'':'none';paintRb();$('admTabU').classList.toggle('sel',k==='u');$('admTabE').classList.toggle('sel',k==='e');paintEv()}
+function showAdmTab(k){admTab=k;try{localStorage.setItem('spAdmTab',k)}catch(e){}if(k==='e')renderSummon();if(k==='c')mailLoad();$('admMail').style.display=k==='c'?'':'none';$('admTabC').classList.toggle('sel',k==='c');$('admUsers').style.display=k==='u'?'':'none';$('admEv').style.display=k==='e'?'':'none';paintRb();$('admTabU').classList.toggle('sel',k==='u');$('admTabE').classList.toggle('sel',k==='e');paintEv()}
 function paintEv(){const left=evEnd-Date.now(),on=left>0,e=$('evSt');e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo';
   const g=$('evGo');if(g){const tx=on?'Detener':'Iniciar Papu Golden Time',cl='wbtn2'+(on?' dng':'');if(g.textContent!==tx)g.textContent=tx;if(g.className!==cl)g.className=cl}}
 function paintRb(){const left=rbEnd-Date.now(),on=left>0,e=$('rbSt');if(!e)return;e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo';
@@ -3934,7 +3933,7 @@ async function admLoad(){
     }
   });
 }
-$('admRef').onclick=admLoad;$('admClose').onclick=closeAdm;$('admX').onclick=closeAdm;
+$('admRef').onclick=admLoad;$('admX').onclick=closeAdm;
 (async function autoResume(){
   let m=null,t=null,pl=null;try{m=sessionStorage.getItem('papu_msg');sessionStorage.removeItem('papu_msg');t=sessionStorage.getItem('papu_tok');pl=sessionStorage.getItem('papu_plat')}catch(e){}
   if(t&&pl==='m')setTimeout(()=>setPlatform(true),0);   /* si volvio a entrar tras apagar la pantalla, conserva su plataforma */
