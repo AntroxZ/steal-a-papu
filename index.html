@@ -4535,17 +4535,21 @@ const fnum=(v,a,b)=>typeof v==='number'&&isFinite(v)&&v>=a&&v<=b;
 function loadImgTex(src,cb){const t=new THREE.Texture(),im=new Image();im.onload=()=>{t.image=im;t.needsUpdate=true;if(cb)cb()};im.src=src;return t}
 let _gG=null,_gM=null,_lgT=null;
 const logoTex=()=>_lgT||(_lgT=loadImgTex(MENU_LOGO,()=>refreshIcons()));
-/* ===== carteles gigantes fuera del mapa: logo + bienvenida a la version 2.0 ===== */
-{const tc=document.createElement('canvas');tc.width=1024;tc.height=150;const x=tc.getContext('2d');
-  x.font='900 78px "Trebuchet MS","Segoe UI",Verdana,sans-serif';x.textAlign='center';x.textBaseline='middle';
-  const g=x.createLinearGradient(0,0,1024,0);['#ff3b3b','#ff9a00','#ffe600','#2bff4a','#00d5ff','#6a5cff','#ff2dd4'].forEach((c,i,a)=>g.addColorStop(i/(a.length-1),c));
-  x.lineJoin='round';x.lineWidth=14;x.strokeStyle='#14081f';x.strokeText('¡BIENVENIDOS A LA VERSIÓN 2.0!',512,78);x.fillStyle=g;x.fillText('¡BIENVENIDOS A LA VERSIÓN 2.0!',512,78);
-  const tt=new THREE.CanvasTexture(tc);tt.anisotropy=4;
-  const mkB=(px,pz,ry)=>{const G=new THREE.Group();G.position.set(px,0,pz);G.rotation.y=ry;scene.add(G);
-    const lg=new THREE.Mesh(new THREE.PlaneGeometry(190,97),new THREE.MeshBasicMaterial({map:logoTex(),transparent:true,fog:false,toneMapped:false,side:THREE.DoubleSide}));lg.position.y=76;G.add(lg);
-    const tx=new THREE.Mesh(new THREE.PlaneGeometry(190,27.8),new THREE.MeshBasicMaterial({map:tt,transparent:true,fog:false,toneMapped:false,side:THREE.DoubleSide}));tx.position.y=14;G.add(tx);
-    [-1,1].forEach(sd=>{const pl=new THREE.Mesh(new THREE.BoxGeometry(3,60,3),new THREE.MeshBasicMaterial({color:0x2a2a38,fog:false}));pl.position.set(sd*70,30,-1.8);G.add(pl)})};
-  mkB(0,-230,0);mkB(0,300,Math.PI);mkB(-290,0,Math.PI/2);mkB(290,0,-Math.PI/2)}
+/* ===== cartel gigante detras de Freddy (fuera del mapa): logo + bienvenida a la version 2.0, todo estampado en una sola imagen ===== */
+{const W=1024,H=720,tc=document.createElement('canvas');tc.width=W;tc.height=H;const x=tc.getContext('2d');
+  const tex=new THREE.CanvasTexture(tc);tex.anisotropy=4;
+  const paint=(im)=>{x.clearRect(0,0,W,H);
+    if(im){const r=Math.min(W/im.width,500/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,(W-w)/2,(520-h)/2+10,w,h)}
+    const T='¡BIENVENIDOS A LA VERSIÓN 2.0!';x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
+    let fs=96;x.font='900 '+fs+'px "Trebuchet MS","Segoe UI",Verdana,sans-serif';const mw=x.measureText(T).width;if(mw>W-110){fs=Math.floor(fs*(W-110)/mw);x.font='900 '+fs+'px "Trebuchet MS","Segoe UI",Verdana,sans-serif'}
+    x.lineWidth=Math.round(fs*.34);x.strokeStyle='#0b0612';x.strokeText(T,W/2,610);
+    x.lineWidth=Math.round(fs*.12);x.strokeStyle='#ff2dd4';x.strokeText(T,W/2,610);
+    x.fillStyle='#fff';x.fillText(T,W/2,610);tex.needsUpdate=true};
+  paint(null);const im=new Image();im.onload=()=>paint(im);im.src=MENU_LOGO;
+  const G=new THREE.Group();G.position.set(-250,0,BELT_Z);G.rotation.y=Math.PI/2;scene.add(G);   /* detras de la puerta, mirando hacia el mapa */
+  const bw=170,bh=bw*H/W;
+  const bd=new THREE.Mesh(new THREE.PlaneGeometry(bw,bh),new THREE.MeshBasicMaterial({map:tex,transparent:true,fog:false,toneMapped:false,side:THREE.DoubleSide}));bd.position.y=bh/2+6;G.add(bd);
+  [-1,1].forEach(sd=>{const pl=new THREE.Mesh(new THREE.BoxGeometry(3,bh/2+6,3),new THREE.MeshBasicMaterial({color:0x2a2a38,fog:false}));pl.position.set(sd*62,(bh/2+6)/2,-1.8);G.add(pl)})}
 function gunGeo(){
   if(_gG)return _gG;const p=new Int16Array(b64(GUN_D.p)),pf=new Float32Array(p.length);for(let i=0;i<p.length;i++)pf[i]=p[i]/20000;
   _gG=new THREE.BufferGeometry();_gG.setAttribute('position',new THREE.BufferAttribute(pf,3));_gG.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(b64(GUN_D.u)),2));
