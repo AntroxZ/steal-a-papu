@@ -2704,7 +2704,7 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const DOOR={AX:-82.0,Sd:1.4,D:1.8,T:.7,FS:4.3,G:null,rig:null,tubes:null,bulbs:null};
 const _dAq=Array.from({length:NB},()=>new THREE.Quaternion()),_dAi=new THREE.Quaternion(),_dq=new THREE.Quaternion(),_dQ={};
 const DOOR_XM=[[1,.1,.1],[.1,1,.25],[.2,.45,1],[1,.85,.1],[1,.45,.05],[1,.2,.85]];
-const DOOR_DQ={"RightArm": [-0.3882298900650632, 0.3055861387672943, -0.13917089368721863, 0.8582110035438054], "RightForeArm": [-0.0807277408263406, 0.1502928004418369, 0.09285712570598381, 0.9809549735854589], "LeftArm": [-0.38886043326432895, -0.3060727833135046, 0.13899627016063032, 0.8577803049951869], "LeftForeArm": [-0.07928511435248915, -0.14730908878831314, -0.09090300896097091, 0.9817079738722261]};
+const DOOR_DQ={"RightArm": [-0.32213934774233105, 0.26222295479062, -0.3834170627875367, 0.8248980049560068], "RightForeArm": [-0.1956491592347086, 0.46622488010744556, 0.11898498471365264, 0.8545164369818999], "LeftArm": [-0.3219276546615216, -0.26206796877674177, 0.3836437936515293, 0.8249244841184116], "LeftForeArm": [-0.1954210230795131, -0.46465575182219665, -0.11766287179419162, 0.855605694603682]};
 (function(){
   const {AX,Sd,D,T,FS}=DOOR,Wi=2.45*Sd,Wo=Wi+.8,Wm=(Wi+Wo)/2,HS=4.3*Sd;
   const G=new THREE.Group();G.position.set(AX,0,BELT_Z);scene.add(G);DOOR.G=G;
@@ -2766,9 +2766,9 @@ const DOOR_DQ={"RightArm": [-0.3882298900650632, 0.3055861387672943, -0.13917089
     g.setIndex(new THREE.BufferAttribute(new Uint16Array(idx.slice(0,gr.start).concat(keep)),1));gr.count=keep.length;
     rig=buildRig(FSK,g,{map:FTX[0]});rig.mesh.material=FMATS;rig.bo=FRED.bo}catch(e){rig=mkFredRig()}
   const fg=new THREE.Group();fg.rotation.y=Math.PI/2;fg.scale.setScalar(rig.S*FS);fg.add(rig.mesh);
-  /* Freddy inclinado hacia el frente, pivotando en la cabeza: cabeza y brazos quedan donde estaban y el cuerpo (barriga, pies) se va atras del tunel */
-  const RF=rig.S*FS,LAn=0.26,HPv=new THREE.Vector3(-D-1.0-4.8*RF,138.4*RF,0);
-  const flg=new THREE.Group();flg.position.set(HPv.x,HPv.y*Math.cos(LAn),0);flg.rotation.z=-LAn;fg.position.set(-D-1.0-HPv.x,-HPv.y,0);flg.add(fg);G.add(flg);DOOR.rig=rig;
+  /* Freddy de pie detras del portal, inclinado desde la cadera sobre el arco, con las manos apoyadas en el marco */
+  const RF=rig.S*FS,LAn=0.5,BXo=-2.1,HPv=new THREE.Vector3(-D-1.0-6.7*RF,79.9*RF,0);
+  const flg=new THREE.Group();flg.position.set(HPv.x+BXo,HPv.y*Math.cos(LAn),0);flg.rotation.z=-LAn;fg.position.set(-D-1.0-HPv.x,-HPv.y,0);flg.add(fg);G.add(flg);DOOR.rig=rig;
   poseFredDoor(0);
 })();
 function poseFredDoor(now){
