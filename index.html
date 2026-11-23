@@ -1100,7 +1100,7 @@ const cam=new THREE.PerspectiveCamera(55,1,.1,1200);
 function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();
 function applyQuality(perf){
-  QPERF=!!perf;PRMAX=QPERF?Math.min(devicePixelRatio,1.75):Math.max(1.5,Math.min(devicePixelRatio,2));PRMIN=qMin();PRLIM=PRMAX;PR=qStart();okT=0;drsT=performance.now();R.setPixelRatio(PR);resize()}
+  QPERF=!!perf;PRMAX=QPERF?Math.min(devicePixelRatio,1.75):Math.max(1.5,Math.min(devicePixelRatio,2));PRMIN=qMin();PRLIM=PRMAX;PR=qStart();okT=0;drsT=performance.now();R.setPixelRatio(PR);resize();if(window.__trees)window.__trees()}
 function perfTick(now){
   fpsN++;if(lastPf){const ft=Math.min(now-lastPf,40);ftEma=ftEma*.88+ft*.12}lastPf=now;
   if(now-fpsT>=2000){FPS=Math.round(fpsN*1000/(now-fpsT));fpsN=0;fpsT=now}
@@ -4535,6 +4535,29 @@ const fnum=(v,a,b)=>typeof v==='number'&&isFinite(v)&&v>=a&&v<=b;
 function loadImgTex(src,cb){const t=new THREE.Texture(),im=new Image();im.onload=()=>{t.image=im;t.needsUpdate=true;if(cb)cb()};im.src=src;return t}
 let _gG=null,_gM=null,_lgT=null;
 const logoTex=()=>_lgT||(_lgT=loadImgTex(MENU_LOGO,()=>refreshIcons()));
+/* ===== arboles de relleno fuera de la zona jugable: 2 mallas instanciadas (pinos y redondos), baratos para la GPU ===== */
+try{const mer=(parts)=>{const P=[],C=[];parts.forEach(([g0,c,sh])=>{const g=g0.index?g0.toNonIndexed():g0,pa=g.attributes.position.array,col=new THREE.Color(c);
+      for(let i=0;i<pa.length;i+=3){P.push(pa[i],pa[i+1],pa[i+2]);const k=sh?(.72+.28*Math.min(1,Math.max(0,(pa[i+1]-sh[0])/sh[1]))):1;C.push(col.r*k,col.g*k,col.b*k)}});
+    const o=new THREE.BufferGeometry();o.setAttribute('position',new THREE.BufferAttribute(new Float32Array(P),3));o.setAttribute('color',new THREE.BufferAttribute(new Float32Array(C),3));return o};
+  const cyl=(rt,rb,h,n,y)=>{const g=new THREE.CylinderGeometry(rt,rb,h,n);g.translate(0,y+h/2,0);return g};
+  const pine=mer([[cyl(.6,.9,4.5,5,0),0x6b4423],[cyl(0,5.2,6.5,7,3.5),0x2f8f3a,[3.5,6.5]],[cyl(0,4.2,6,7,7.6),0x37a645,[7.6,6]],[cyl(0,3,5.2,7,11.4),0x44bb52,[11.4,5.2]]]);
+  const rnd=(()=>{const a=new THREE.IcosahedronGeometry(5.2,1);a.scale(1,.85,1);a.translate(0,9.6,0);const b=new THREE.IcosahedronGeometry(3.4,0);b.translate(2.8,7.6,1.2);return mer([[cyl(.7,1,6.5,5,0),0x7a5230],[a,0x5cc04a,[5,9]],[b,0x4bae3d,[4,7]]])})();
+  const mat=()=>new THREE.MeshBasicMaterial({vertexColors:true});
+  let seed=20261122;const rn=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  const PI=[],RD=[],STEP=24;
+  for(let gx=-384;gx<=384;gx+=STEP)for(let gz=-384;gz<=384;gz+=STEP){
+    const x=gx+(rn()-.5)*STEP*.85,z=gz+(rn()-.5)*STEP*.85,k=rn(),t=rn();
+    if(k>.8)continue;
+    if(x>-158&&x<158&&z>-100&&z<140)continue;                       /* zona jugable + margen */
+    if(x<-130&&x>-262&&z>-75&&z<115)continue;                       /* no tapar el cartel ni a Freddy */
+    if(Math.abs(x)>394||Math.abs(z)>394)continue;
+    const sc=.9+rn()*.9,ry=rn()*6.283,tn=.85+rn()*.3;
+    (t<.55?PI:RD).push([x,z,sc,ry,tn,rn()])}
+  const dm=new THREE.Object3D(),col=new THREE.Color();
+  const mk=(geo,L)=>{const m=new THREE.InstancedMesh(geo,mat(),L.length);L.forEach((q,i)=>{dm.position.set(q[0],0,q[1]);dm.rotation.set(0,q[3],0);dm.scale.set(q[2],q[2]*q[4],q[2]);dm.updateMatrix();m.setMatrixAt(i,dm.matrix);col.setHSL(.3+(q[5]-.5)*.06,.5+(q[5]-.5)*.2,.5+(q[5]-.5)*.25).multiplyScalar(1.9);m.setColorAt(i,col)});
+    m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;m.frustumCulled=false;m.userData.n=L.length;scene.add(m);return m};
+  const mp=mk(pine,PI),mr=mk(rnd,RD);
+  window.__trees=()=>{const f=QPERF?.5:1;mp.count=Math.floor(mp.userData.n*f);mr.count=Math.floor(mr.userData.n*f)};window.__trees()}catch(e){console.warn('arboles',e)}
 /* ===== cartel gigante detras de Freddy (fuera del mapa): logo + bienvenida a la version 2.0, todo estampado en una sola imagen ===== */
 {const W=1024,H=720,tc=document.createElement('canvas');tc.width=W;tc.height=H;const x=tc.getContext('2d');
   const tex=new THREE.CanvasTexture(tc);tex.anisotropy=4;
