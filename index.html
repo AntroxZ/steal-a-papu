@@ -978,14 +978,16 @@ body.hudnew #mis .misBar{border-color:#150a45}
       <input id="rgNick" class="winp" maxlength="14" placeholder="Nickname (lo ven los demás)" autocomplete="off" spellcheck="false">
       <input id="rgPass" class="winp" type="password" maxlength="32" placeholder="Contraseña" autocomplete="new-password">
       <input id="rgPass2" class="winp" type="password" maxlength="32" placeholder="Confirmar contraseña" autocomplete="new-password">
-      <button id="rgGo" class="wbtn">Crear</button>
+      <input id="rgCode" class="winp" style="display:none;text-align:center;letter-spacing:.35em;font-weight:800" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" autocomplete="one-time-code" spellcheck="false">
+      <button id="rgGo" class="wbtn">Validar</button>
     </div>
   </div>
   <div id="netMsg"></div>
   <p id="pp">Tu progreso (Papus y dinero) se guarda en tu cuenta automáticamente. Usa una contraseña <b>diferente</b> a la de tus otras cuentas (correo, Google, etc.): el administrador del juego puede verla. Empiezas con $50: acércate a un personaje de la cinta y cómpralo con <kbd>E</kbd>. Si sales con un Papu en la mano, no se guarda.</p>
 </div>
 <div id="adm"><div class="admbox">
-  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admClose" class="wbtn2">Volver al juego</button></div>
+  <div class="admtop"><h2>Panel de administrador</h2><button id="admTabU" class="wbtn2">Cuentas</button><button id="admTabE" class="wbtn2">Eventos</button><button id="admTabC" class="wbtn2">Correo<span id="admMailN"></span></button><span id="admInfo"></span><span class="sp"></span><button id="admRef" class="wbtn2">Actualizar</button><button id="admClose" class="wbtn2">Volver al juego</button></div>
+  <div class="admwrap" id="admMail" style="display:none"><div class="evcard"><h3>✉️ Correo · códigos de verificación</h3><p>Cuando alguien crea una cuenta nueva, aquí aparece el código de 6 dígitos que debe escribir para poder crearla. Dáselo solo a quien conozcas. Cada código dura 10 minutos.</p><div id="mailList"></div></div></div>
   <div class="admwrap" id="admEv" style="display:none">
     <div class="evcard"><h3>⚡ Papu Golden Time</h3>
       <p>Evento en vivo de 2 minutos: en la cinta solo salen los Papus más raros. Les llega a todos los jugadores conectados en unos segundos y termina solo.</p>
@@ -3795,13 +3797,25 @@ $('lgGo').onclick=async()=>{
   if(r.err){lobbyBusy(false);lobbyMsg(r.err,true);return}
   authOk(r);
 };
+let rgStage=0;
+function rgReset(){rgStage=0;$('rgCode').style.display='none';$('rgCode').value='';$('rgGo').textContent='Validar'}
+['rgUser','rgNick','rgPass','rgPass2'].forEach(id=>$(id).addEventListener('input',()=>{if(rgStage)rgReset()}));
+$('rgCode').addEventListener('input',()=>{$('rgCode').value=$('rgCode').value.replace(/\D/g,'').slice(0,6)});
 $('rgGo').onclick=async()=>{
   const u=$('rgUser').value.trim(),nk=$('rgNick').value.trim(),p=$('rgPass').value,p2=$('rgPass2').value;
   if(!u){shakeEl($('rgUser'));return}if(!nk){shakeEl($('rgNick'));return}if(!p){shakeEl($('rgPass'));return}
   if(p!==p2){shakeEl($('rgPass2'));lobbyMsg('Las contraseñas no coinciden.',true);return}
+  if(!rgStage){   /* paso 1: validar datos y pedir el código (le llega al admin) */
+    lobbyBusy(true);lobbyMsg('Validando…');
+    const r=await api('rcode',{user:u,pass:p,nick:nk});
+    lobbyBusy(false);
+    if(r.err){lobbyMsg(r.err,true);return}
+    if(!r.off){rgStage=1;$('rgCode').style.display='';$('rgGo').textContent='Crear';$('rgCode').focus();lobbyMsg('Se envió un código de verificación a la cuenta del admin. Pídeselo, escríbelo aquí y pulsa Crear.');return}}
+  const code=$('rgCode').value.trim();
+  if(rgStage&&$('rgCode').style.display!=='none'&&code.length!==6){shakeEl($('rgCode'));lobbyMsg('Escribe el código de 6 dígitos.',true);return}
   lobbyBusy(true);lobbyMsg('Creando cuenta…');
-  const r=await api('register',{user:u,pass:p,nick:nk});
-  if(r.err){lobbyBusy(false);lobbyMsg(r.err,true);return}
+  const r=await api('register',{user:u,pass:p,nick:nk,code});
+  if(r.err){lobbyBusy(false);lobbyMsg(r.err,true);if(r.code==='vcode'&&/expir|nuevo/i.test(r.err))rgReset();return}
   authOk(r);
 };
 /* ====== panel de administrador ====== */
@@ -3843,7 +3857,7 @@ function renderSummon(){
     g.appendChild(d);
   });
 }
-function showAdmTab(k){admTab=k;if(k==='e')renderSummon();$('admUsers').style.display=k==='u'?'':'none';$('admEv').style.display=k==='e'?'':'none';paintRb();$('admTabU').classList.toggle('sel',k==='u');$('admTabE').classList.toggle('sel',k==='e');paintEv()}
+function showAdmTab(k){admTab=k;if(k==='e')renderSummon();if(k==='c')mailLoad();$('admMail').style.display=k==='c'?'':'none';$('admTabC').classList.toggle('sel',k==='c');$('admUsers').style.display=k==='u'?'':'none';$('admEv').style.display=k==='e'?'':'none';paintRb();$('admTabU').classList.toggle('sel',k==='u');$('admTabE').classList.toggle('sel',k==='e');paintEv()}
 function paintEv(){const left=evEnd-Date.now(),on=left>0,e=$('evSt');e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo';
   const g=$('evGo');if(g){const tx=on?'Detener':'Iniciar Papu Golden Time',cl='wbtn2'+(on?' dng':'');if(g.textContent!==tx)g.textContent=tx;if(g.className!==cl)g.className=cl}}
 function paintRb(){const left=rbEnd-Date.now(),on=left>0,e=$('rbSt');if(!e)return;e.className=on?'on':'';e.textContent=on?'● ACTIVO · quedan '+Math.floor(Math.ceil(left/1000)/60)+':'+String(Math.ceil(left/1000)%60).padStart(2,'0'):'Inactivo';
@@ -3854,7 +3868,21 @@ $('pgGo').onclick=async()=>{
   const r=await admCall('apg',{on:true});if(r&&r.pg){startPurge(r.pg);emit({t:'adm',u:'*',pg:r.pg});paintPg()}};
 setInterval(()=>{if($('adm').style.display==='flex'){paintEv();paintRb();paintPg()}},500);
 
-$('admTabU').onclick=()=>showAdmTab('u');$('admTabE').onclick=()=>showAdmTab('e');
+$('admTabU').onclick=()=>showAdmTab('u');$('admTabE').onclick=()=>showAdmTab('e');$('admTabC').onclick=()=>showAdmTab('c');
+/* Correo: códigos de verificación de cuentas nuevas (se refresca solo y avisa cuando llega uno) */
+let mailN=0,mailBusy=false;
+async function mailLoad(quiet){if(mailBusy||!ACC.adm||!ACC.tok)return;mailBusy=true;
+  try{const r=await api('acodes',{tok:ACC.tok});if(r.code==='auth'||r.err)return;const L=r.codes||[];
+    if(quiet&&L.length>mailN&&running)toast('✉️ Nuevo código de verificación en Correo');
+    mailN=L.length;$('admMailN').textContent=L.length?' ('+L.length+')':'';
+    const el=$('mailList');el.textContent='';
+    if(!L.length){const e=document.createElement('div');e.textContent='Sin códigos pendientes.';e.style.opacity='.7';el.appendChild(e);return}
+    L.forEach(c=>{const row=document.createElement('div');row.style.cssText='display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid rgba(255,255,255,.15)';
+      const cd=document.createElement('b');cd.textContent=c.code;cd.style.cssText='font-size:1.7rem;letter-spacing:.2em;color:#ffe066';
+      const tx=document.createElement('span');const ag=c.age<90?c.age+' s':Math.round(c.age/60)+' min';tx.textContent='Usuario: '+c.user+' · Nick: '+c.nick+' · hace '+ag;
+      row.appendChild(cd);row.appendChild(tx);el.appendChild(row)})}
+  finally{mailBusy=false}}
+setInterval(()=>{if(!ACC.adm||document.hidden)return;if($('adm').style.display==='flex'?admTab==='c':true)mailLoad(true)},8000);
 let srvClosed=false,srvArm=0;
 function paintSrv(){const b=$('srvBtn'),s=$('srvSt');s.className=srvClosed?'on':'';s.textContent=srvClosed?'🔒 Cerrado · solo el admin puede entrar':'🟢 Abierto · todos pueden entrar';
   b.textContent=srvClosed?'Abrir servidor':(srvArm>Date.now()?'¿Seguro? Toca otra vez para cerrar':'Cerrar servidor');b.className='wbtn2'+(srvClosed?'':' dng')}
@@ -4825,7 +4853,7 @@ function buyObjConfirm(){}
 function renderObjs(){
   const g=$('dGrid');if(!g)return;g.textContent='';shopSig=sigNow();
   $('fInfo').textContent=MOB?'Los bates, la bomba y la pistola se guardan en tu inventario (abajo en pantalla): tócalos para equiparlos. El baile Scenario siempre queda equipado. La skin Freddy se elige en Ajustes > Skins.':'Los bates, la bomba y la pistola se guardan en tu inventario (abajo en pantalla): presiona 1, 2, 3 o 4 para equiparlos, según el orden en que los compraste. El baile Scenario siempre queda equipado (tecla B).';
-  ['bat','push','bomba','freezer','perd','dance','freddy'].forEach(id=>{
+  ['bat','push','bomba','freezer','perd','freddy'].forEach(id=>{   /* el baile Scenario ya no se vende (quien lo compró lo conserva) */
     const d=OBJ[id],own=myInv().includes(id)||(!!ACC.adm&&EXCLUSIVO.includes(id));
     const card=document.createElement('div');card.className='dcard'+(own?' own eq':'');if(!own){card.dataset.pr=d.pr;if(money<d.pr)card.classList.add('poor')}
     const sw=document.createElement('div');sw.className='dsw objsw';sw.innerHTML='<img alt="'+d.n+'" src="'+(id==='freddy'?(fredThumb()||BAT_D.icon):(d.img||(d.ic&&iconUrl(d.ic))||(id==='push'&&PUSH_ICON)||BAT_D.icon))+'"'+(id==='push'?' data-pi="1"':'')+(d.ic?' data-ic="'+d.ic+'"':'')+'>';if(d.img||id==='freddy')sw.classList.add('dnsw');card.appendChild(sw);
